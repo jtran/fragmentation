@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>blocks</title>
+<style type="text/css">
+#field {
+height: 250px; width: 100px; border: 1px solid #ccc; margin: 10px auto;
+position: relative;
+}
+.block {
+height: 8px; width: 8px; background-color: #aaa;
+border: 1px solid #888; border-top-color: #bbb; border-left-color: #bbb;
+position: absolute;
+/*-webkit-transition: left 0.1s ease-out, top 0.1s ease-out;*/
+}
+</style>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+<script type="text/javascript" src="underscore.js"></script>
+<script type="text/javascript">//<![CDATA[
+var fieldHeight = 25;
+var fieldWidth = 10;
+var blockHeight = 10;
+var blockWidth = 10;
+var blocks = [];
+
+function FloatingBlock() {
+  this.type = 0;
+  this.elms = $.map([0,1,2,3], function() {
+    var e = document.createElement('div');
+    e.className = 'block';
+    return e;
+  });
+  switch (this.type) {
+  case 0:  // Square
+    setPosition($(this.elms[0]),
+                Math.floor(fieldWidth / 2)       * blockWidth, 0);
+    setPosition($(this.elms[1]),
+                (Math.floor(fieldWidth / 2) - 1) * blockWidth, 0);
+    setPosition($(this.elms[2]),
+                Math.floor(fieldWidth / 2)       * blockWidth, blockHeight);
+    setPosition($(this.elms[3]),
+                (Math.floor(fieldWidth / 2) - 1) * blockWidth, blockHeight);
+    break;
+  }
+}
+
+function setPosition(sel, left, top) {
+  $(sel).css({'left': left + 'px', 'top': top + 'px'});
+}
+
+function xyOf(selector) {
+  var pos = $(selector).position();
+  return [Math.floor(pos.left / blockWidth), Math.floor(pos.top / blockHeight)];
+}
+
+function blockFromXy(xy) {
+  var row = xy[1];
+  if (row >= blocks.length) return false;
+  var col = xy[0];
+  if (col >= blocks[row].length) return false;
+  return blocks[row][col];
+}
+
+function storeBlock(blk, xy) {
+  blocks[xy[1]][xy[0]] = blk;
+}
+
+function ltFromXy(xy) {
+  return [xy[0] * blockWidth, xy[1] * blockHeight];
+}
+
+function isXyFree(xy) {
+  return blockFromXy(xy) === null &&
+    xy[0] >= 0 && xy[0] < fieldWidth &&
+    xy[1] >= 0 && xy[1] < fieldHeight;
+}
+
+function isXyTaken(xy) {
+  return ! isXyFree(xy);
+}
+
+function moveLeft() {
+  xys2 = _.map(curFloating.elms, function(e) {
+    var xy = xyOf(e);
+    return [xy[0] - 1, xy[1]];
+  });
+  if (_(xys2).some(isXyTaken)) return false;
+  $.each(curFloating.elms, function(i, e) {
+    var lt = ltFromXy(xys2[i]);
+    setPosition(e, lt[0], lt[1]);
+  });
+  return true;
+}
+
+function moveRight() {
+  xys2 = _.map(curFloating.elms, function(e) {
+    var xy = xyOf(e);
+    return [xy[0] + 1, xy[1]];
+  });
+  if (_(xys2).some(isXyTaken)) return false;
+  $.each(curFloating.elms, function(i, e) {
+    var lt = ltFromXy(xys2[i]);
+    setPosition(e, lt[0], lt[1]);
+  });
+  return true;
+}
+
+function moveDown() {
+  xys2 = _.map(curFloating.elms, function(e) {
+    var xy = xyOf(e);
+    return [xy[0], xy[1] + 1];
+  });
+  if (_(xys2).some(isXyTaken)) return false;
+  $.each(curFloating.elms, function(i, e) {
+    var lt = ltFromXy(xys2[i]);
+    setPosition(e, lt[0], lt[1]);
+  });
+  return true;
+}
+
+function landFloatingBlock(blk) {
+  _.each(blk.elms, function(e) {
+    storeBlock(e, xyOf(e));
+  });
+}
+
+function showNewFloatingBlock() {
+  curFloating = new FloatingBlock();
+  $(curFloating.elms).appendTo('#field');
+}
+
+function fall() {
+  var fell = moveDown();
+  if (! fell) {
+    landFloatingBlock(curFloating);
+    showNewFloatingBlock();
+  }
+}
+
+var curFloating;
+var fallTimer;
+
+$(function() {
+  for (var i = 0; i < fieldHeight; i++) {
+    var row = [];
+    for (var j = 0; j < fieldWidth; j++) { row.push(null); }
+    blocks.push(row);
+  }
+  showNewFloatingBlock();
+
+  $(document).bind('keydown', function(event) {
+    if (event.which == 37) moveLeft();
+    if (event.which == 39) moveRight();
+    if (event.which == 40) fall();
+  });
+
+  fallTimer = window.setInterval(fall, 700);
+});
+//]]></script>
+</head>
+<body>
+
+
+<div id="background">
+  <div id="field">
+
+  </div>
+</div>
+
+</body>
+</html>
