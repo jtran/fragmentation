@@ -4,49 +4,124 @@
 <title>blocks</title>
 <style type="text/css">
 #field {
-height: 250px; width: 100px; border: 1px solid #ccc; margin: 10px auto;
+height: 400px; width: 200px; border: 1px solid #ccc; margin: 10px auto;
 position: relative;
 }
 .block {
-height: 8px; width: 8px; background-color: #aaa;
+padding: 2px;
+height: 14px; width: 14px;
 border: 1px solid #888; border-top-color: #bbb; border-left-color: #bbb;
+-webkit-border-radius: 3px;
 position: absolute;
 /*-webkit-transition: left 0.1s ease-out, top 0.1s ease-out;*/
+}
+.light {
+background-color: #ddd;
+}
+.dark {
+background-color: #666;
+}
+.block-innard {
+height: 10px; width: 10px;
+-webkit-border-radius: 3px;
+}
+.light .block-innard {
+background-color: #eee;
+border: 2px solid #eee;
+}
+.dark .block-innard {
+background-color: #444;
+border: 2px solid #444;
 }
 </style>
 <!-- <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script> -->
 <script type="text/javascript" src="jquery.min.js"></script>
 <script type="text/javascript" src="underscore.js"></script>
 <script type="text/javascript">//<![CDATA[
-var fieldHeight = 25;
+var fieldHeight = 20;
 var fieldWidth = 10;
-var blockHeight = 10;
-var blockWidth = 10;
+var blockHeight = 20;
+var blockWidth = 20;
 var blocks = [];
+var NUM_TYPES_OF_BLOCKS = 7;
+
+// Return random integer in interval [0...n].
+function randInt(n) {
+  return Math.floor(Math.random() * (n+1));
+}
 
 function FloatingBlock() {
-  this.type = 0;
+  this.type = randInt(NUM_TYPES_OF_BLOCKS - 1);
   this.elms = $.map([0,1,2,3], function() {
     var e = document.createElement('div');
     e.className = 'block';
+    var eInnard = document.createElement('div');
+    eInnard.className = 'block-innard';
+    $(e).append(eInnard);
     return e;
   });
+  var mid = Math.floor(fieldWidth / 2) - 1;
   switch (this.type) {
-  case 0:  // Square
-    setPosition($(this.elms[0]),
-                Math.floor(fieldWidth / 2)       * blockWidth, 0);
-    setPosition($(this.elms[1]),
-                (Math.floor(fieldWidth / 2) - 1) * blockWidth, 0);
-    setPosition($(this.elms[2]),
-                Math.floor(fieldWidth / 2)       * blockWidth, blockHeight);
-    setPosition($(this.elms[3]),
-                (Math.floor(fieldWidth / 2) - 1) * blockWidth, blockHeight);
+  case 0:  // O
+    setXy(this.elms[0], [mid,     0]);
+    setXy(this.elms[1], [mid + 1, 0]);
+    setXy(this.elms[2], [mid,     1]);
+    setXy(this.elms[3], [mid + 1, 1]);
+    $(this.elms).addClass('light');
     break;
+  case 1:  // T
+    setXy(this.elms[0], [mid - 1, 0]);
+    setXy(this.elms[1], [mid,     0]);
+    setXy(this.elms[2], [mid + 1, 0]);
+    setXy(this.elms[3], [mid,     1]);
+    $(this.elms).addClass('light');
+    break;
+  case 2:  // S
+    setXy(this.elms[0], [mid + 1, 0]);
+    setXy(this.elms[1], [mid,     0]);
+    setXy(this.elms[2], [mid,     1]);
+    setXy(this.elms[3], [mid - 1, 1]);
+    $(this.elms).addClass('dark');
+    break;
+  case 3:  // Z
+    setXy(this.elms[0], [mid - 1, 0]);
+    setXy(this.elms[1], [mid,     0]);
+    setXy(this.elms[2], [mid,     1]);
+    setXy(this.elms[3], [mid + 1, 1]);
+    $(this.elms).addClass('dark');
+    break;
+  case 4:  // L
+    setXy(this.elms[0], [mid - 1, 0]);
+    setXy(this.elms[1], [mid,     0]);
+    setXy(this.elms[2], [mid + 1, 0]);
+    setXy(this.elms[3], [mid - 1, 1]);
+    $(this.elms).addClass('dark');
+    break;
+  case 5:  // J
+    setXy(this.elms[0], [mid - 1, 0]);
+    setXy(this.elms[1], [mid,     0]);
+    setXy(this.elms[2], [mid + 1, 0]);
+    setXy(this.elms[3], [mid + 1, 1]);
+    $(this.elms).addClass('dark');
+    break;
+  case 6:  // I
+    setXy(this.elms[0], [mid - 1, 0]);
+    setXy(this.elms[1], [mid,     0]);
+    setXy(this.elms[2], [mid + 1, 0]);
+    setXy(this.elms[3], [mid + 2, 0]);
+    $(this.elms).addClass('light');
+    break;
+  default:
+    throw "I don't know how to create a floating block of this type: " + this.type;
   }
 }
 
 function setPosition(sel, left, top) {
   $(sel).css({'left': left + 'px', 'top': top + 'px'});
+}
+
+function setXy(sel, xy) {
+  setPosition(sel, xy[0] * blockWidth, xy[1] * blockHeight);
 }
 
 function xyOf(selector) {
@@ -135,7 +210,18 @@ function fall() {
   if (! fell) {
     landFloatingBlock(curFloating);
     showNewFloatingBlock();
+    if (_(curFloating.elms).map(xyOf).some(isXyTaken)) {
+      // Game over.
+      window.clearInterval(fallTimer);
+      fallTimer = null;
+      return false;
+    }
   }
+  return fell;
+}
+
+function drop() {
+  while (fall()) ;
 }
 
 var curFloating;
@@ -150,9 +236,11 @@ $(function() {
   showNewFloatingBlock();
 
   $(document).bind('keydown', function(event) {
-    if (event.which == 37) moveLeft();
-    if (event.which == 39) moveRight();
-    if (event.which == 40) fall();
+    console.log('keydown', event.which, String.fromCharCode(event.which));
+    if (event.which == 37)  moveLeft();
+    if (event.which == 39)  moveRight();
+    if (event.which == 40)  fall();
+    if (event.which == 191) drop();
   });
 
   fallTimer = window.setInterval(fall, 700);
