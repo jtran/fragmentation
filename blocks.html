@@ -44,6 +44,7 @@ function randInt(n) {
 
 function FloatingBlock() {
   this.type = randInt(NUM_TYPES_OF_BLOCKS - 1);
+  this.canRotate = true;
   this.elms = $.map([0,1,2,3], function() {
     var e = document.createElement('div');
     e.className = 'block';
@@ -56,6 +57,8 @@ function FloatingBlock() {
     setXy(this.elms[1], [mid + 1, 0]);
     setXy(this.elms[2], [mid,     1]);
     setXy(this.elms[3], [mid + 1, 1]);
+    this.centerIndex = 0;
+    this.canRotate = false;
     $(this.elms).addClass('light');
     break;
   case 1:  // T
@@ -63,6 +66,7 @@ function FloatingBlock() {
     setXy(this.elms[1], [mid,     0]);
     setXy(this.elms[2], [mid + 1, 0]);
     setXy(this.elms[3], [mid,     1]);
+    this.centerIndex = 1;
     $(this.elms).addClass('light');
     break;
   case 2:  // S
@@ -70,6 +74,7 @@ function FloatingBlock() {
     setXy(this.elms[1], [mid,     0]);
     setXy(this.elms[2], [mid,     1]);
     setXy(this.elms[3], [mid - 1, 1]);
+    this.centerIndex = 2;
     $(this.elms).addClass('dark');
     break;
   case 3:  // Z
@@ -77,6 +82,7 @@ function FloatingBlock() {
     setXy(this.elms[1], [mid,     0]);
     setXy(this.elms[2], [mid,     1]);
     setXy(this.elms[3], [mid + 1, 1]);
+    this.centerIndex = 2;
     $(this.elms).addClass('dark');
     break;
   case 4:  // L
@@ -84,6 +90,7 @@ function FloatingBlock() {
     setXy(this.elms[1], [mid,     0]);
     setXy(this.elms[2], [mid + 1, 0]);
     setXy(this.elms[3], [mid - 1, 1]);
+    this.centerIndex = 1;
     $(this.elms).addClass('dark');
     break;
   case 5:  // J
@@ -91,6 +98,7 @@ function FloatingBlock() {
     setXy(this.elms[1], [mid,     0]);
     setXy(this.elms[2], [mid + 1, 0]);
     setXy(this.elms[3], [mid + 1, 1]);
+    this.centerIndex = 1;
     $(this.elms).addClass('dark');
     break;
   case 6:  // I
@@ -98,11 +106,44 @@ function FloatingBlock() {
     setXy(this.elms[1], [mid,     0]);
     setXy(this.elms[2], [mid + 1, 0]);
     setXy(this.elms[3], [mid + 2, 0]);
+    this.centerIndex = 1;
     $(this.elms).addClass('light');
     break;
   default:
     throw "I don't know how to create a floating block of this type: " + this.type;
   }
+}
+
+FloatingBlock.prototype.rotateClockwise = function() {
+  if (! this.canRotate) return false;
+  var xyCenter = xyOf(this.elms[this.centerIndex]);
+  var xys2 = _(this.elms).map(function(e) {
+    var xy = xyOf(e);
+    var dx = xy[0] - xyCenter[0];
+    var dy = xy[1] - xyCenter[1];
+    return [xyCenter[0] - dy, xyCenter[1] + dx];
+  });
+  if (_(xys2).some(isXyTaken)) return false;
+  $.each(this.elms, function(i, e) {
+    setXy(e, xys2[i]);
+  });
+  return true;
+}
+
+FloatingBlock.prototype.rotateCounterclockwise = function() {
+  if (! this.canRotate) return false;
+  var xyCenter = xyOf(this.elms[this.centerIndex]);
+  var xys2 = _(this.elms).map(function(e) {
+    var xy = xyOf(e);
+    var dx = xy[0] - xyCenter[0];
+    var dy = xy[1] - xyCenter[1];
+    return [xyCenter[0] + dy, xyCenter[1] - dx];
+  });
+  if (_(xys2).some(isXyTaken)) return false;
+  $.each(this.elms, function(i, e) {
+    setXy(e, xys2[i]);
+  });
+  return true;
 }
 
 function setPosition(sel, left, top) {
@@ -229,7 +270,11 @@ $(function() {
     if (event.which == 37)  moveLeft();
     if (event.which == 39)  moveRight();
     if (event.which == 40)  fall();
-    if (event.which == 191) drop();
+    if (event.which == 191) drop(); // slash
+    var letter = String.fromCharCode(event.which).toLowerCase();
+    if (letter == 'f') curFloating.rotateClockwise();
+    if (letter == 'd') curFloating.rotateCounterclockwise();
+    if (letter == 'c') drop();
   });
 
   fallTimer = window.setInterval(fall, 700);
