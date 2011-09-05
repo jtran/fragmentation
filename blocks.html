@@ -25,15 +25,26 @@ box-shadow: 0 0 15px #0AD8FF;
 background-color: #000;
 box-shadow: 0 0 15px #0AD8FF;
 }
+#tail {
+position: absolute;
+opacity: 0.9;
+background-color: #fff;
+box-shadow: 0 0 15px #0AD8FF;
+border-top-left-radius: 8px;
+border-top-right-radius: 8px;
+}
 </style>
 <!-- <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script> -->
 <script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="jquery-ui.custom.min.js"></script>
 <script type="text/javascript" src="underscore.js"></script>
 <script type="text/javascript">//<![CDATA[
 var fieldHeight = 20;
 var fieldWidth = 10;
 var blockHeight = 20;
 var blockWidth = 20;
+var borderWidth = 1;
+var borderHeight = 1;
 var blocks = [];
 var NUM_TYPES_OF_BLOCKS = 7;
 
@@ -251,7 +262,35 @@ function fall() {
 }
 
 function drop() {
+  // Get initial position.
+  var floating = curFloating;
+  var xys = _(floating.elms).map(xyOf);
+  var minX1 = _(xys).chain().map(function(xy) { return xy[0] }).min().value();
+  var minY1 = _(xys).chain().map(function(xy) { return xy[1] }).min().value();
+
+  // Drop.
   while (fall()) ;
+
+  // Set position and size of tail.
+  var xys2 = _(floating.elms).map(xyOf);
+  setXy('#tail', [minX1, minY1]);
+
+  var minX = _(xys).chain()
+    .map(function(xy) { return xy[0] }).min().value();
+  var maxX = _(xys2).chain()
+    .map(function(xy) { return xy[0] }).max().value();
+  var minY = _(xys).chain()
+    .map(function(xy) { return xy[1] }).min().value();
+  var maxY = _(xys2).chain()
+    .map(function(xy) { return xy[1] }).min().value();
+  $('#tail').width(blockWidth * (maxX - minX + 1) - 2 * borderWidth).height(blockHeight * (maxY - minY + 1) - 2 * borderHeight);
+
+  // Show tail and hide after delay.
+  $('#tail').show();
+  window.setTimeout(function() {
+    $e = $('#tail');
+    $e.animate({'height': 0, 'top': $e.position().top + $e.height()}, 500, 'easeOutExpo');
+  }, 500);
 }
 
 var curFloating;
@@ -286,7 +325,7 @@ $(function() {
 
 <div id="background">
   <div id="field">
-
+    <div id="tail"></div>
   </div>
 </div>
 
