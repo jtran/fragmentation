@@ -172,9 +172,9 @@ function xyOf(selector) {
 
 function blockFromXy(xy) {
   var row = xy[1];
-  if (row >= blocks.length) return false;
+  if (row < 0 || row >= blocks.length) return null;
   var col = xy[0];
-  if (col >= blocks[row].length) return false;
+  if (col < 0 || col >= blocks[row].length) return null;
   return blocks[row][col];
 }
 
