@@ -241,21 +241,80 @@ function landFloatingBlock(blk) {
   });
 }
 
+// Returns array of y's of lines that need to be cleared.
+function linesToClear(flt) {
+  var linesToCheck = _(flt.elms).chain()
+    .map(function(e) { return xyOf(e)[1] }).uniq().value();
+  var linesToClear = _(linesToCheck).select(function(y) {
+    return _(blocks[y]).all(_.identity);
+  });
+  return linesToClear;
+}
+
+function fillLinesFromAbove(ys) {
+  if (_.isEmpty(ys)) return;
+  var shift = 1;
+  ys.sort();
+  for (var y = _.last(ys); y >= 0; y--) {
+    while (_.include(ys, y - shift)) shift++;
+    for (var x = 0; x < fieldWidth; x++) {
+      var blk = blockFromXy([x, y - shift]);
+      if (blk) setXy(blk, [x, y]);
+      storeBlock(blk, [x, y]);
+    }
+  }
+}
+
+function clearLine(y) {
+  for (var x = 0; x < fieldWidth; x++) {
+    var blk = blocks[y][x];
+    $(blk).remove();
+    storeBlock(null, [x, y]);
+  }
+}
+
+function clearLines(ys) {
+  _(ys).each(clearLine);
+}
+
 function showNewFloatingBlock() {
   curFloating = new FloatingBlock();
   $(curFloating.elms).appendTo('#field');
+}
+
+// Returns true if game is over.
+function checkForGameOver() {
+  if (_(curFloating.elms).chain().map(xyOf).some(isXyTaken).value()) {
+    window.clearInterval(fallTimer);
+    fallTimer = null;
+    return true;
+  }
+  return false;
 }
 
 function fall() {
   var fell = moveDown();
   if (! fell) {
     landFloatingBlock(curFloating);
-    showNewFloatingBlock();
-    if (_(curFloating.elms).map(xyOf).some(isXyTaken)) {
-      // Game over.
+    var ysToClear = linesToClear(curFloating);
+    var clearedLines = ysToClear.length > 0;
+    if (clearedLines) {
+      // Lines were cleared.  Pause the game timer.
       window.clearInterval(fallTimer);
       fallTimer = null;
-      return false;
+    }
+    showNewFloatingBlock();
+    clearLines(ysToClear);
+    if (clearedLines) {
+      _.delay(function() {
+        fillLinesFromAbove(ysToClear);
+        if (! checkForGameOver()) {
+          fallTimer = window.setInterval(fall, 700);
+        }
+      }, 500);
+    }
+    else {
+      if (checkForGameOver()) return false;
     }
   }
   return fell;
@@ -305,7 +364,7 @@ $(function() {
   showNewFloatingBlock();
 
   $(document).bind('keydown', function(event) {
-    console.log('keydown', event.which, String.fromCharCode(event.which));
+//    console.log('keydown', event.which, String.fromCharCode(event.which));
     if (event.which == 37)  moveLeft();
     if (event.which == 39)  moveRight();
     if (event.which == 40)  fall();
