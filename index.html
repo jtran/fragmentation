@@ -287,6 +287,10 @@ function checkForGameOver() {
   if (_(curFloating.elms).chain().map(xyOf).some(isXyTaken).value()) {
     window.clearInterval(fallTimer);
     fallTimer = null;
+
+    var music = $('#music').get(0);
+    if (music) music.pause();
+
     return true;
   }
   return false;
@@ -375,6 +379,10 @@ $(function() {
     if (letter == 'c') drop();
   });
 
+  // Play background music if present.
+  var music = $('#music').get(0);
+  if (music) music.play();
+
   fallTimer = window.setInterval(fall, 700);
 });
 //]]></script>
@@ -387,6 +395,8 @@ $(function() {
     <div id="tail"></div>
   </div>
 </div>
+
+<audio id="music" src="sea-of-simulation.mp3" preload="preload" />
 
 </body>
 </html>
