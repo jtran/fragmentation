@@ -15,7 +15,7 @@ background-color: #0E2F38;
 padding: 2px;
 height: 14px; width: 14px;
 position: absolute;
-/*-webkit-transition: left 0.1s ease-out, top 0.1s ease-out;*/
+-webkit-transition: left 0.1s ease-out, top 0.1s ease-out;
 }
 .light {
 background-color: #fff;
@@ -53,108 +53,129 @@ function randInt(n) {
   return Math.floor(Math.random() * (n+1));
 }
 
+// Represents a single square.
+function Block(x, y) {
+  this.x = x;
+  this.y = y;
+  this.elm = document.createElement('div');
+  this.elm.className = 'block';
+  this.setXy([x, y]);
+}
+
+Block.prototype.setXy = function(xy) {
+  this.x = xy[0];
+  this.y = xy[1];
+  setPosition(this.elm, xy[0] * blockWidth, xy[1] * blockHeight);
+}
+
+Block.prototype.getXy = function() {
+  return [this.x, this.y];
+}
+
 function FloatingBlock() {
   this.type = randInt(NUM_TYPES_OF_BLOCKS - 1);
   this.canRotate = true;
-  this.elms = $.map([0,1,2,3], function() {
-    var e = document.createElement('div');
-    e.className = 'block';
-    return e;
-  });
+  this.blocks = [];
   var mid = Math.floor(fieldWidth / 2) - 1;
   switch (this.type) {
   case 0:  // O
-    setXy(this.elms[0], [mid,     0]);
-    setXy(this.elms[1], [mid + 1, 0]);
-    setXy(this.elms[2], [mid,     1]);
-    setXy(this.elms[3], [mid + 1, 1]);
+    this.blocks.push(new Block(mid,     0));
+    this.blocks.push(new Block(mid + 1, 0));
+    this.blocks.push(new Block(mid,     1));
+    this.blocks.push(new Block(mid + 1, 1));
     this.centerIndex = 0;
     this.canRotate = false;
-    $(this.elms).addClass('light');
+    $(this.elms()).addClass('light');
     break;
   case 1:  // T
-    setXy(this.elms[0], [mid - 1, 0]);
-    setXy(this.elms[1], [mid,     0]);
-    setXy(this.elms[2], [mid + 1, 0]);
-    setXy(this.elms[3], [mid,     1]);
+    this.blocks.push(new Block(mid - 1, 0));
+    this.blocks.push(new Block(mid,     0));
+    this.blocks.push(new Block(mid + 1, 0));
+    this.blocks.push(new Block(mid,     1));
     this.centerIndex = 1;
-    $(this.elms).addClass('light');
+    $(this.elms()).addClass('light');
     break;
   case 2:  // S
-    setXy(this.elms[0], [mid + 1, 0]);
-    setXy(this.elms[1], [mid,     0]);
-    setXy(this.elms[2], [mid,     1]);
-    setXy(this.elms[3], [mid - 1, 1]);
+    this.blocks.push(new Block(mid + 1, 0));
+    this.blocks.push(new Block(mid,     0));
+    this.blocks.push(new Block(mid,     1));
+    this.blocks.push(new Block(mid - 1, 1));
     this.centerIndex = 2;
-    $(this.elms).addClass('dark');
+    $(this.elms()).addClass('dark');
     break;
   case 3:  // Z
-    setXy(this.elms[0], [mid - 1, 0]);
-    setXy(this.elms[1], [mid,     0]);
-    setXy(this.elms[2], [mid,     1]);
-    setXy(this.elms[3], [mid + 1, 1]);
+    this.blocks.push(new Block(mid - 1, 0));
+    this.blocks.push(new Block(mid,     0));
+    this.blocks.push(new Block(mid,     1));
+    this.blocks.push(new Block(mid + 1, 1));
     this.centerIndex = 2;
-    $(this.elms).addClass('dark');
+    $(this.elms()).addClass('dark');
     break;
   case 4:  // L
-    setXy(this.elms[0], [mid - 1, 0]);
-    setXy(this.elms[1], [mid,     0]);
-    setXy(this.elms[2], [mid + 1, 0]);
-    setXy(this.elms[3], [mid - 1, 1]);
+    this.blocks.push(new Block(mid - 1, 0));
+    this.blocks.push(new Block(mid,     0));
+    this.blocks.push(new Block(mid + 1, 0));
+    this.blocks.push(new Block(mid - 1, 1));
     this.centerIndex = 1;
-    $(this.elms).addClass('dark');
+    $(this.elms()).addClass('dark');
     break;
   case 5:  // J
-    setXy(this.elms[0], [mid - 1, 0]);
-    setXy(this.elms[1], [mid,     0]);
-    setXy(this.elms[2], [mid + 1, 0]);
-    setXy(this.elms[3], [mid + 1, 1]);
+    this.blocks.push(new Block(mid - 1, 0));
+    this.blocks.push(new Block(mid,     0));
+    this.blocks.push(new Block(mid + 1, 0));
+    this.blocks.push(new Block(mid + 1, 1));
     this.centerIndex = 1;
-    $(this.elms).addClass('dark');
+    $(this.elms()).addClass('dark');
     break;
   case 6:  // I
-    setXy(this.elms[0], [mid - 1, 0]);
-    setXy(this.elms[1], [mid,     0]);
-    setXy(this.elms[2], [mid + 1, 0]);
-    setXy(this.elms[3], [mid + 2, 0]);
+    this.blocks.push(new Block(mid - 1, 0));
+    this.blocks.push(new Block(mid,     0));
+    this.blocks.push(new Block(mid + 1, 0));
+    this.blocks.push(new Block(mid + 2, 0));
     this.centerIndex = 1;
-    $(this.elms).addClass('light');
+    $(this.elms()).addClass('light');
     break;
   default:
     throw "I don't know how to create a floating block of this type: " + this.type;
   }
 }
 
-FloatingBlock.prototype.rotateClockwise = function() {
-  if (! this.canRotate) return false;
-  var xyCenter = xyOf(this.elms[this.centerIndex]);
-  var xys2 = _(this.elms).map(function(e) {
-    var xy = xyOf(e);
-    var dx = xy[0] - xyCenter[0];
-    var dy = xy[1] - xyCenter[1];
-    return [xyCenter[0] - dy, xyCenter[1] + dx];
-  });
+FloatingBlock.prototype.elms = function() {
+  return _(this.blocks).map(function(blk) { return blk.elm });
+}
+
+// Takes a function that takes single argument the Block to be
+// transformed, which returns the Block's new xy.  Returns true if the
+// transformation was possible.
+FloatingBlock.prototype.transform = function(f) {
+  var xys2 = _(this.blocks).map(f);
   if (_(xys2).some(isXyTaken)) return false;
-  $.each(this.elms, function(i, e) {
-    setXy(e, xys2[i]);
+  _.each(this.blocks, function(blk, i) {
+    blk.setXy(xys2[i]);
   });
   return true;
 }
 
+FloatingBlock.prototype.rotateClockwise = function() {
+  if (! this.canRotate) return false;
+  var xyCenter = this.blocks[this.centerIndex].getXy();
+  return this.transform(function(blk) {
+    var xy = blk.getXy();
+    var dx = xy[0] - xyCenter[0];
+    var dy = xy[1] - xyCenter[1];
+    return [xyCenter[0] - dy, xyCenter[1] + dx];
+  });
+}
+
 FloatingBlock.prototype.rotateCounterclockwise = function() {
   if (! this.canRotate) return false;
-  var xyCenter = xyOf(this.elms[this.centerIndex]);
-  var xys2 = _(this.elms).map(function(e) {
-    var xy = xyOf(e);
+  var xyCenter = this.blocks[this.centerIndex].getXy();
+  return this.transform(function(blk) {
+    var xy = blk.getXy()
     var dx = xy[0] - xyCenter[0];
     var dy = xy[1] - xyCenter[1];
     return [xyCenter[0] + dy, xyCenter[1] - dx];
   });
-  if (_(xys2).some(isXyTaken)) return false;
-  $.each(this.elms, function(i, e) {
-    setXy(e, xys2[i]);
-  });
-  return true;
 }
 
 function setPosition(sel, left, top) {
@@ -165,9 +186,8 @@ function setXy(sel, xy) {
   setPosition(sel, xy[0] * blockWidth, xy[1] * blockHeight);
 }
 
-function xyOf(selector) {
-  var pos = $(selector).position();
-  return [Math.floor(pos.left / blockWidth), Math.floor(pos.top / blockHeight)];
+function xyOf(blk) {
+  return blk.getXy();
 }
 
 function blockFromXy(xy) {
@@ -182,10 +202,6 @@ function storeBlock(blk, xy) {
   blocks[xy[1]][xy[0]] = blk;
 }
 
-function ltFromXy(xy) {
-  return [xy[0] * blockWidth, xy[1] * blockHeight];
-}
-
 function isXyFree(xy) {
   return blockFromXy(xy) === null &&
     xy[0] >= 0 && xy[0] < fieldWidth &&
@@ -197,54 +213,36 @@ function isXyTaken(xy) {
 }
 
 function moveLeft() {
-  xys2 = _.map(curFloating.elms, function(e) {
-    var xy = xyOf(e);
+  return curFloating.transform(function(blk) {
+    var xy = blk.getXy();
     return [xy[0] - 1, xy[1]];
   });
-  if (_(xys2).some(isXyTaken)) return false;
-  $.each(curFloating.elms, function(i, e) {
-    var lt = ltFromXy(xys2[i]);
-    setPosition(e, lt[0], lt[1]);
-  });
-  return true;
 }
 
 function moveRight() {
-  xys2 = _.map(curFloating.elms, function(e) {
-    var xy = xyOf(e);
+  return curFloating.transform(function(blk) {
+    var xy = blk.getXy();
     return [xy[0] + 1, xy[1]];
   });
-  if (_(xys2).some(isXyTaken)) return false;
-  $.each(curFloating.elms, function(i, e) {
-    var lt = ltFromXy(xys2[i]);
-    setPosition(e, lt[0], lt[1]);
-  });
-  return true;
 }
 
 function moveDown() {
-  xys2 = _.map(curFloating.elms, function(e) {
-    var xy = xyOf(e);
+  return curFloating.transform(function(blk) {
+    var xy = blk.getXy();
     return [xy[0], xy[1] + 1];
   });
-  if (_(xys2).some(isXyTaken)) return false;
-  $.each(curFloating.elms, function(i, e) {
-    var lt = ltFromXy(xys2[i]);
-    setPosition(e, lt[0], lt[1]);
-  });
-  return true;
 }
 
-function landFloatingBlock(blk) {
-  _.each(blk.elms, function(e) {
-    storeBlock(e, xyOf(e));
+function landFloatingBlock(flt) {
+  _.each(flt.blocks, function(blk) {
+    storeBlock(blk, blk.getXy());
   });
 }
 
 // Returns array of y's of lines that need to be cleared.
 function linesToClear(flt) {
-  var linesToCheck = _(flt.elms).chain()
-    .map(function(e) { return xyOf(e)[1] }).uniq().value();
+  var linesToCheck = _(flt.blocks).chain()
+    .map(function(blk) { return blk.getXy()[1] }).uniq().value();
   var linesToClear = _(linesToCheck).select(function(y) {
     return _(blocks[y]).all(_.identity);
   });
@@ -259,7 +257,7 @@ function fillLinesFromAbove(ys) {
     while (_.include(ys, y - shift)) shift++;
     for (var x = 0; x < fieldWidth; x++) {
       var blk = blockFromXy([x, y - shift]);
-      if (blk) setXy(blk, [x, y]);
+      if (blk) blk.setXy([x, y]);
       storeBlock(blk, [x, y]);
     }
   }
@@ -268,7 +266,7 @@ function fillLinesFromAbove(ys) {
 function clearLine(y) {
   for (var x = 0; x < fieldWidth; x++) {
     var blk = blocks[y][x];
-    $(blk).remove();
+    $(blk.elm).remove();
     storeBlock(null, [x, y]);
   }
 }
@@ -279,12 +277,12 @@ function clearLines(ys) {
 
 function showNewFloatingBlock() {
   curFloating = new FloatingBlock();
-  $(curFloating.elms).appendTo('#field');
+  $(curFloating.elms()).appendTo('#field');
 }
 
 // Returns true if game is over.
 function checkForGameOver() {
-  if (_(curFloating.elms).chain().map(xyOf).some(isXyTaken).value()) {
+  if (_(curFloating.blocks).chain().map(xyOf).some(isXyTaken).value()) {
     window.clearInterval(fallTimer);
     fallTimer = null;
 
@@ -327,7 +325,7 @@ function fall() {
 function drop() {
   // Get initial position.
   var floating = curFloating;
-  var xys = _(floating.elms).map(xyOf);
+  var xys = _(floating.blocks).map(xyOf);
   var minX1 = _(xys).chain().map(function(xy) { return xy[0] }).min().value();
   var minY1 = _(xys).chain().map(function(xy) { return xy[1] }).min().value();
 
@@ -335,7 +333,7 @@ function drop() {
   while (fall()) ;
 
   // Set position and size of tail.
-  var xys2 = _(floating.elms).map(xyOf);
+  var xys2 = _(floating.blocks).map(xyOf);
   setXy('#tail', [minX1, minY1]);
 
   var minX = _(xys).chain()
@@ -360,6 +358,7 @@ var curFloating;
 var fallTimer;
 
 $(function() {
+  // Initialize blocks matrix.
   for (var i = 0; i < fieldHeight; i++) {
     var row = [];
     for (var j = 0; j < fieldWidth; j++) { row.push(null); }
