@@ -7,7 +7,7 @@ html {
 background-color: #000;
 }
 #field {
-height: 400px; width: 200px; margin: 10px auto;
+height: 402px; width: 202px; margin: 10px auto;
 position: relative;
 background-color: #0E2F38;
 }
@@ -66,7 +66,7 @@ function Block(x, y) {
 Block.prototype.setXy = function(xy) {
   this.x = xy[0];
   this.y = xy[1];
-  setPosition(this.elm, xy[0] * blockWidth, xy[1] * blockHeight);
+  setElementXy(this.elm, xy);
 }
 
 Block.prototype.getXy = function() {
@@ -183,8 +183,10 @@ function setPosition(sel, left, top) {
   $(sel).css({'left': left + 'px', 'top': top + 'px'});
 }
 
-function setXy(sel, xy) {
-  setPosition(sel, xy[0] * blockWidth, xy[1] * blockHeight);
+function setElementXy(sel, xy) {
+  setPosition(sel,
+              2 * borderWidth  + xy[0] * blockWidth,
+              2 * borderHeight + xy[1] * blockHeight);
 }
 
 function xyOf(blk) {
@@ -335,7 +337,7 @@ function drop() {
 
   // Set position and size of tail.
   var xys2 = _(floating.blocks).map(xyOf);
-  setXy('#tail', [minX1, minY1]);
+  setElementXy('#tail', [minX1, minY1]);
 
   var minX = _(xys).chain()
     .map(function(xy) { return xy[0] }).min().value();
