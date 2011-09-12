@@ -172,23 +172,33 @@ FloatingBlock.prototype.transform = function(f) {
 FloatingBlock.prototype.rotateClockwise = function() {
   if (! this.canRotate) return false;
   var xyCenter = this.blocks[this.centerIndex].getXy();
-  return this.transform(function(blk) {
-    var xy = blk.getXy();
-    var dx = xy[0] - xyCenter[0];
-    var dy = xy[1] - xyCenter[1];
-    return [xyCenter[0] - dy, xyCenter[1] + dx];
-  });
+  var rotateWithShift = function(shift) {
+    return function(blk) {
+      var xy = blk.getXy();
+      var dx = xy[0] - xyCenter[0];
+      var dy = xy[1] - xyCenter[1];
+      return [xyCenter[0] - dy + shift, xyCenter[1] + dx];
+    };
+  };
+  return this.transform(rotateWithShift(0)) ||
+    this.transform(rotateWithShift(1)) ||
+    this.transform(rotateWithShift(-1));
 }
 
 FloatingBlock.prototype.rotateCounterclockwise = function() {
   if (! this.canRotate) return false;
   var xyCenter = this.blocks[this.centerIndex].getXy();
-  return this.transform(function(blk) {
-    var xy = blk.getXy()
-    var dx = xy[0] - xyCenter[0];
-    var dy = xy[1] - xyCenter[1];
-    return [xyCenter[0] + dy, xyCenter[1] - dx];
-  });
+  var rotateWithShift = function(shift) {
+    return function(blk) {
+      var xy = blk.getXy()
+      var dx = xy[0] - xyCenter[0];
+      var dy = xy[1] - xyCenter[1];
+      return [xyCenter[0] + dy + shift, xyCenter[1] - dx];
+    };
+  };
+  return this.transform(rotateWithShift(0)) ||
+    this.transform(rotateWithShift(1)) ||
+    this.transform(rotateWithShift(-1));
 }
 
 function setPosition(sel, left, top) {
