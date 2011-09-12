@@ -7,16 +7,20 @@ html {
 background-color: #000;
 }
 #field {
-height: 402px; width: 202px; margin: 10px auto;
+height: 442px; width: 202px; margin: 10px auto;
 position: relative;
+}
+#field_background {
+width: 100%; height: 402px;
+position: relative; top: 40px;
 background-color: #0E2F38;
 }
 .block {
 padding: 2px;
 height: 14px; width: 14px;
 position: absolute;
--webkit-transition: left 0.1s ease-out, top 0.1s ease-out;
--moz-transition: left 0.1s ease-out, top 0.1s ease-out;
+-webkit-transition: left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out;
+-moz-transition: left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out;
 }
 .light {
 background-color: #fff;
@@ -34,13 +38,16 @@ box-shadow: 0 0 15px #0AD8FF;
 border-top-left-radius: 8px;
 border-top-right-radius: 8px;
 }
+.next {
+opacity: 0.7;
+}
 </style>
 <!-- <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script> -->
 <script type="text/javascript" src="jquery.min.js"></script>
 <script type="text/javascript" src="jquery-ui.custom.min.js"></script>
 <script type="text/javascript" src="underscore.js"></script>
 <script type="text/javascript">//<![CDATA[
-var fieldHeight = 20;
+var fieldHeight = 22;
 var fieldWidth = 10;
 var blockHeight = 20;
 var blockWidth = 20;
@@ -48,6 +55,11 @@ var borderWidth = 1;
 var borderHeight = 1;
 var blocks = [];
 var NUM_TYPES_OF_BLOCKS = 7;
+
+var curFloating;
+var nextFloating;
+var fallTimer;
+
 
 // Return random integer in interval [0...n].
 function randInt(n) {
@@ -59,7 +71,7 @@ function Block(x, y) {
   this.x = x;
   this.y = y;
   this.elm = document.createElement('div');
-  this.elm.className = 'block';
+  this.elm.className = 'block next';
   this.setXy([x, y]);
 }
 
@@ -279,8 +291,18 @@ function clearLines(ys) {
 }
 
 function showNewFloatingBlock() {
-  curFloating = new FloatingBlock();
-  $(curFloating.elms()).appendTo('#field');
+  // The first time this is called, next will be null.
+  if (! nextFloating) {
+    nextFloating = new FloatingBlock();
+    $(nextFloating.elms()).appendTo('#field');
+  }
+  // Make next be current and spawn a new next.
+  curFloating = nextFloating;
+  nextFloating = new FloatingBlock();
+  // Move the new current into position.
+  $(curFloating.elms()).removeClass('next');
+  _(curFloating.blocks).each(function(blk) { blk.setXy([blk.x, blk.y + 2]) });
+  $(nextFloating.elms()).appendTo('#field');
 }
 
 // Returns true if game is over.
@@ -357,9 +379,6 @@ function drop() {
   }, 500);
 }
 
-var curFloating;
-var fallTimer;
-
 $(function() {
   // Initialize blocks matrix.
   for (var i = 0; i < fieldHeight; i++) {
@@ -394,6 +413,7 @@ $(function() {
 
 <div id="background">
   <div id="field">
+    <div id="field_background"></div>
     <div id="tail"></div>
   </div>
 </div>
