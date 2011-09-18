@@ -18,8 +18,9 @@ background-color: #0E2F38;
 .block {
 height: 18px; width: 18px;
 position: absolute;
--webkit-transition: left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out;
--moz-transition:    left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out;
+border-radius: 3px;
+-webkit-transition: left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out, border-radius 0.5s linear;
+-moz-transition:    left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out, border-radius 0.5s linear;
 }
 .light {
 background-color: #fff;
@@ -42,6 +43,8 @@ opacity: 0.9;
 background-color: #fff;
 border-top-left-radius: 8px;
 border-top-right-radius: 8px;
+border-bottom-left-radius: 3px;
+border-bottom-right-radius: 3px;
 }
 #tail.blue {
 box-shadow: 0 0 15px #0AD8FF;
@@ -309,16 +312,20 @@ function fillLinesFromAbove(ys) {
   }
 }
 
-function clearLine(y) {
-  for (var x = 0; x < fieldWidth; x++) {
-    var blk = blocks[y][x];
-    $(blk.elm).remove();
-    storeBlock(null, [x, y]);
-  }
-}
-
 function clearLines(ys) {
-  _(ys).each(clearLine);
+  blksToRemove = [];
+  _.each(ys, function(y) {
+    for (var x = 0; x < fieldWidth; x++) {
+      var blk = blocks[y][x];
+      storeBlock(null, [x, y]);
+      if (! blk) continue;
+      $(blk.elm).css({'border-radius': '0', 'width': blockWidth + 'px', 'left': (blk.x * blockWidth + borderWidth) + 'px'});
+      blksToRemove.push(blk.elm);
+    }
+  });
+  _.delay(function() {
+    $(blksToRemove).remove();
+  }, 500);
 }
 
 function showNewFloatingBlock() {
