@@ -82,6 +82,9 @@ var borderHeight = 1;
 var blocks = [];
 var NUM_TYPES_OF_BLOCKS = 7;
 
+var THEMES = ['blue', 'orange', 'yellow'];
+var themeIndex = 0;
+
 var curFloating;
 var nextFloating;
 var fallTimer;
@@ -90,6 +93,16 @@ var fallTimer;
 // Return random integer in interval [0...n].
 function randInt(n) {
   return Math.floor(Math.random() * (n+1));
+}
+
+function setTheme(theme) {
+  $('.block, #tail').addClass(theme);
+}
+
+function rotateTheme() {
+  $('.block, #tail').removeClass(THEMES[themeIndex]);
+  themeIndex = (themeIndex + 1) % THEMES.length;
+  setTheme(THEMES[themeIndex]);
 }
 
 // Represents a single square.
@@ -177,13 +190,8 @@ function FloatingBlock() {
   default:
     throw "I don't know how to create a floating block of this type: " + this.type;
   }
-  // Set the theme.
-  $(this.elms()).addClass('blue');
-  $('#tail').addClass('blue');
-//  $(this.elms()).addClass('orange');
-//  $('#tail').addClass('orange');
-//  $(this.elms()).addClass('yellow');
-//  $('#tail').addClass('yellow');
+  // Use theme.
+  $(this.elms()).addClass(THEMES[themeIndex]);
 }
 
 FloatingBlock.prototype.elms = function() {
@@ -433,8 +441,12 @@ $(function() {
     for (var j = 0; j < fieldWidth; j++) { row.push(null); }
     blocks.push(row);
   }
+  // Use default theme.
+  setTheme(THEMES[themeIndex]);
+
   showNewFloatingBlock();
 
+  $(document).bind('mousedown', function(event) { rotateTheme(); });
   $(document).bind('keydown', function(event) {
 //    console.log('keydown', event.which, String.fromCharCode(event.which));
     if (event.which == 37)  moveLeft();
