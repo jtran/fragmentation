@@ -24,19 +24,28 @@ position: absolute;
 }
 .light {
 background-color: #fff;
-box-shadow: 0 0 15px #0AD8FF;
 }
 .dark {
 background-color: #000;
+}
+.block.blue {
 box-shadow: 0 0 15px #0AD8FF;
+}
+.block.orange {
+box-shadow: 0 0 15px #FF9D02;
 }
 #tail {
 position: absolute;
 opacity: 0.9;
 background-color: #fff;
-box-shadow: 0 0 15px #0AD8FF;
 border-top-left-radius: 8px;
 border-top-right-radius: 8px;
+}
+#tail.blue {
+box-shadow: 0 0 15px #0AD8FF;
+}
+#tail.orange {
+box-shadow: 0 0 15px #FF9D02;
 }
 .next {
 opacity: 0.7;
@@ -151,6 +160,11 @@ function FloatingBlock() {
   default:
     throw "I don't know how to create a floating block of this type: " + this.type;
   }
+  // Set the theme.
+  $(this.elms()).addClass('blue');
+  $('#tail').addClass('blue');
+//  $(this.elms()).addClass('orange');
+//  $('#tail').addClass('orange');
 }
 
 FloatingBlock.prototype.elms = function() {
