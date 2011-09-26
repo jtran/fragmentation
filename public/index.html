@@ -84,8 +84,9 @@ opacity: 0.7;
 
 <script type="text/javascript">//<![CDATA[
 head.js("/javascripts/jquery-1.6.2.min.js",
-        "/javascripts/jquery-ui-1.8.16.custom.min.js",
-        "/javascripts/underscore-1.1.7.js");
+        "/javascripts/jquery-ui-1.8.16.custom.min.js");
+head.js("/javascripts/underscore-1.1.7.js");
+head.js("/nowjs/now.js");
 
 var fieldHeight = 22;
 var fieldWidth = 10;
@@ -448,7 +449,15 @@ function drop() {
   }, 500);
 }
 
-head.ready(function() {
+function sendMessage(msg) {
+  now.distributeMessage(msg);
+}
+
+function receiveMessage(clientId, name, msg) {
+  console.log(name + ": " + msg);
+}
+
+head(function() {
   // Initialize blocks matrix.
   for (var i = 0; i < fieldHeight; i++) {
     var row = [];
@@ -457,6 +466,12 @@ head.ready(function() {
   }
   // Use default theme.
   setTheme(THEMES[themeIndex]);
+
+  // Get ready for server events.
+  now.ready(function() {
+    now.name = 'user-' + randInt(100);
+    now.receiveMessage = receiveMessage;
+  });
 
   showNewFloatingBlock();
 
