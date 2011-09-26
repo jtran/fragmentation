@@ -68,11 +68,25 @@ box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
 opacity: 0.7;
 }
 </style>
-<!-- <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script> -->
-<script type="text/javascript" src="/javascripts/jquery-1.6.2.min.js"></script>
-<script type="text/javascript" src="/javascripts/jquery-ui-1.8.16.custom.min.js"></script>
-<script type="text/javascript" src="/javascripts/underscore-1.1.7.js"></script>
+<script type="text/javascript" src="/javascripts/head-0.96.min.js"></script>
+</head>
+<body>
+
+
+<div id="background">
+  <div id="field">
+    <div id="field_background"></div>
+    <div id="tail"></div>
+  </div>
+</div>
+
+<audio id="music" src="sea-of-simulation.mp3" preload="preload" />
+
 <script type="text/javascript">//<![CDATA[
+head.js("/javascripts/jquery-1.6.2.min.js",
+        "/javascripts/jquery-ui-1.8.16.custom.min.js",
+        "/javascripts/underscore-1.1.7.js");
+
 var fieldHeight = 22;
 var fieldWidth = 10;
 var blockHeight = 20;
@@ -434,7 +448,7 @@ function drop() {
   }, 500);
 }
 
-$(function() {
+head.ready(function() {
   // Initialize blocks matrix.
   for (var i = 0; i < fieldHeight; i++) {
     var row = [];
@@ -466,18 +480,5 @@ $(function() {
   fallTimer = window.setInterval(fall, 700);
 });
 //]]></script>
-</head>
-<body>
-
-
-<div id="background">
-  <div id="field">
-    <div id="field_background"></div>
-    <div id="tail"></div>
-  </div>
-</div>
-
-<audio id="music" src="sea-of-simulation.mp3" preload="preload" />
-
 </body>
 </html>
