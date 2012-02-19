@@ -86,6 +86,7 @@ opacity: 0.7;
 head.js("/javascripts/jquery-1.6.2.min.js",
         "/javascripts/jquery-ui-1.8.16.custom.min.js");
 head.js("/javascripts/underscore-1.1.7.js");
+head.js("/util.js");
 head.js("/nowjs/now.js");
 
 var fieldHeight = 22;
@@ -104,11 +105,6 @@ var curFloating;
 var nextFloating;
 var fallTimer;
 
-
-// Return random integer in interval [0...n].
-function randInt(n) {
-  return Math.floor(Math.random() * (n+1));
-}
 
 function setTheme(theme) {
   $('.block, #tail').addClass(theme);

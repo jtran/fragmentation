@@ -11,12 +11,19 @@ var app = module.exports = express.createServer();
 // Configuration
 
 app.configure(function(){
-  app.set('views', __dirname + '/views');
+  var publicDir = __dirname + '/public';
+  var viewsDir = __dirname + '/views';
+  app.set('views', viewsDir);
   app.set('view engine', 'jade');
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(app.router);
-  app.use(express.static(__dirname + '/public'));
+  app.use(express.compiler({
+    src: viewsDir,
+    dest: publicDir,
+    enable: ['coffeescript']
+  }));
+  app.use(express.static(publicDir));
 });
 
 app.configure('development', function(){
