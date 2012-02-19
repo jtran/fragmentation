@@ -86,7 +86,8 @@ opacity: 0.7;
 head.js("/javascripts/jquery-1.6.2.min.js",
         "/javascripts/jquery-ui-1.8.16.custom.min.js");
 head.js("/javascripts/underscore-1.1.7.js");
-head.js("/util.js");
+head.js('/util.js');
+head.js('/tetromino-engine.js');
 head.js("/nowjs/now.js");
 
 var fieldHeight = 22;
@@ -116,142 +117,6 @@ function rotateTheme() {
   setTheme(THEMES[themeIndex]);
 }
 
-// Represents a single square.
-function Block(x, y) {
-  this.x = x;
-  this.y = y;
-  this.elm = document.createElement('div');
-  this.elm.className = 'block next';
-  this.setXy([x, y]);
-}
-
-Block.prototype.setXy = function(xy) {
-  this.x = xy[0];
-  this.y = xy[1];
-  setElementXy(this.elm, xy);
-}
-
-Block.prototype.getXy = function() {
-  return [this.x, this.y];
-}
-
-function FloatingBlock() {
-  this.type = randInt(NUM_TYPES_OF_BLOCKS - 1);
-  this.canRotate = true;
-  this.blocks = [];
-  var mid = Math.floor(fieldWidth / 2) - 1;
-  switch (this.type) {
-  case 0:  // O
-    this.blocks.push(new Block(mid,     0));
-    this.blocks.push(new Block(mid + 1, 0));
-    this.blocks.push(new Block(mid,     1));
-    this.blocks.push(new Block(mid + 1, 1));
-    this.centerIndex = 0;
-    this.canRotate = false;
-    $(this.elms()).addClass('light');
-    break;
-  case 1:  // T
-    this.blocks.push(new Block(mid - 1, 0));
-    this.blocks.push(new Block(mid,     0));
-    this.blocks.push(new Block(mid + 1, 0));
-    this.blocks.push(new Block(mid,     1));
-    this.centerIndex = 1;
-    $(this.elms()).addClass('light');
-    break;
-  case 2:  // S
-    this.blocks.push(new Block(mid + 1, 0));
-    this.blocks.push(new Block(mid,     0));
-    this.blocks.push(new Block(mid,     1));
-    this.blocks.push(new Block(mid - 1, 1));
-    this.centerIndex = 2;
-    $(this.elms()).addClass('dark');
-    break;
-  case 3:  // Z
-    this.blocks.push(new Block(mid - 1, 0));
-    this.blocks.push(new Block(mid,     0));
-    this.blocks.push(new Block(mid,     1));
-    this.blocks.push(new Block(mid + 1, 1));
-    this.centerIndex = 2;
-    $(this.elms()).addClass('dark');
-    break;
-  case 4:  // L
-    this.blocks.push(new Block(mid - 1, 0));
-    this.blocks.push(new Block(mid,     0));
-    this.blocks.push(new Block(mid + 1, 0));
-    this.blocks.push(new Block(mid - 1, 1));
-    this.centerIndex = 1;
-    $(this.elms()).addClass('dark');
-    break;
-  case 5:  // J
-    this.blocks.push(new Block(mid - 1, 0));
-    this.blocks.push(new Block(mid,     0));
-    this.blocks.push(new Block(mid + 1, 0));
-    this.blocks.push(new Block(mid + 1, 1));
-    this.centerIndex = 1;
-    $(this.elms()).addClass('dark');
-    break;
-  case 6:  // I
-    this.blocks.push(new Block(mid - 1, 0));
-    this.blocks.push(new Block(mid,     0));
-    this.blocks.push(new Block(mid + 1, 0));
-    this.blocks.push(new Block(mid + 2, 0));
-    this.centerIndex = 1;
-    $(this.elms()).addClass('light');
-    break;
-  default:
-    throw "I don't know how to create a floating block of this type: " + this.type;
-  }
-  // Use theme.
-  $(this.elms()).addClass(THEMES[themeIndex]);
-}
-
-FloatingBlock.prototype.elms = function() {
-  return _(this.blocks).map(function(blk) { return blk.elm });
-}
-
-// Takes a function that takes single argument the Block to be
-// transformed, which returns the Block's new xy.  Returns true if the
-// transformation was possible.
-FloatingBlock.prototype.transform = function(f) {
-  var xys2 = _(this.blocks).map(f);
-  if (_(xys2).some(isXyTaken)) return false;
-  _.each(this.blocks, function(blk, i) {
-    blk.setXy(xys2[i]);
-  });
-  return true;
-}
-
-FloatingBlock.prototype.rotateClockwise = function() {
-  if (! this.canRotate) return false;
-  var xyCenter = this.blocks[this.centerIndex].getXy();
-  var rotateWithShift = function(shift) {
-    return function(blk) {
-      var xy = blk.getXy();
-      var dx = xy[0] - xyCenter[0];
-      var dy = xy[1] - xyCenter[1];
-      return [xyCenter[0] - dy + shift, xyCenter[1] + dx];
-    };
-  };
-  return this.transform(rotateWithShift(0)) ||
-    this.transform(rotateWithShift(1)) ||
-    this.transform(rotateWithShift(-1));
-}
-
-FloatingBlock.prototype.rotateCounterclockwise = function() {
-  if (! this.canRotate) return false;
-  var xyCenter = this.blocks[this.centerIndex].getXy();
-  var rotateWithShift = function(shift) {
-    return function(blk) {
-      var xy = blk.getXy()
-      var dx = xy[0] - xyCenter[0];
-      var dy = xy[1] - xyCenter[1];
-      return [xyCenter[0] + dy + shift, xyCenter[1] - dx];
-    };
-  };
-  return this.transform(rotateWithShift(0)) ||
-    this.transform(rotateWithShift(1)) ||
-    this.transform(rotateWithShift(-1));
-}
 
 function setPosition(sel, left, top) {
   $(sel).css({'left': left + 'px', 'top': top + 'px'});
