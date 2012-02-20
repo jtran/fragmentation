@@ -90,225 +90,7 @@ head.js('/util.js');
 head.js('/tetromino-engine.js');
 head.js("/nowjs/now.js");
 
-var fieldHeight = 22;
-var fieldWidth = 10;
-var blockHeight = 20;
-var blockWidth = 20;
-var borderWidth = 1;
-var borderHeight = 1;
-var blocks = [];
-var NUM_TYPES_OF_BLOCKS = 7;
-
-var THEMES = ['blue', 'orange', 'yellow'];
-var themeIndex = 0;
-
-var curFloating;
-var nextFloating;
-var fallTimer;
-
-
-function setTheme(theme) {
-  $('.block, #tail').addClass(theme);
-}
-
-function rotateTheme() {
-  $('.block, #tail').removeClass(THEMES[themeIndex]);
-  themeIndex = (themeIndex + 1) % THEMES.length;
-  setTheme(THEMES[themeIndex]);
-}
-
-
-function setPosition(sel, left, top) {
-  $(sel).css({'left': left + 'px', 'top': top + 'px'});
-}
-
-function setElementXy(sel, xy) {
-  setPosition(sel,
-              2 * borderWidth  + xy[0] * blockWidth,
-              2 * borderHeight + xy[1] * blockHeight);
-}
-
-function xyOf(blk) {
-  return blk.getXy();
-}
-
-function blockFromXy(xy) {
-  var row = xy[1];
-  if (row < 0 || row >= blocks.length) return null;
-  var col = xy[0];
-  if (col < 0 || col >= blocks[row].length) return null;
-  return blocks[row][col];
-}
-
-function storeBlock(blk, xy) {
-  blocks[xy[1]][xy[0]] = blk;
-}
-
-function isXyFree(xy) {
-  return blockFromXy(xy) === null &&
-    xy[0] >= 0 && xy[0] < fieldWidth &&
-    xy[1] >= 0 && xy[1] < fieldHeight;
-}
-
-function isXyTaken(xy) {
-  return ! isXyFree(xy);
-}
-
-function moveLeft() {
-  return curFloating.transform(function(blk) {
-    var xy = blk.getXy();
-    return [xy[0] - 1, xy[1]];
-  });
-}
-
-function moveRight() {
-  return curFloating.transform(function(blk) {
-    var xy = blk.getXy();
-    return [xy[0] + 1, xy[1]];
-  });
-}
-
-function moveDown() {
-  return curFloating.transform(function(blk) {
-    var xy = blk.getXy();
-    return [xy[0], xy[1] + 1];
-  });
-}
-
-function landFloatingBlock(flt) {
-  _.each(flt.blocks, function(blk) {
-    storeBlock(blk, blk.getXy());
-  });
-}
-
-// Returns array of y's of lines that need to be cleared.
-function linesToClear(flt) {
-  var linesToCheck = _(flt.blocks).chain()
-    .map(function(blk) { return blk.getXy()[1] }).uniq().value();
-  var linesToClear = _(linesToCheck).select(function(y) {
-    return _(blocks[y]).all(_.identity);
-  });
-  return linesToClear;
-}
-
-function fillLinesFromAbove(ys) {
-  if (_.isEmpty(ys)) return;
-  var shift = 1;
-  ys.sort();
-  for (var y = _.last(ys); y >= 0; y--) {
-    while (_.include(ys, y - shift)) shift++;
-    for (var x = 0; x < fieldWidth; x++) {
-      var blk = blockFromXy([x, y - shift]);
-      if (blk) blk.setXy([x, y]);
-      storeBlock(blk, [x, y]);
-    }
-  }
-}
-
-function clearLines(ys) {
-  blksToRemove = [];
-  _.each(ys, function(y) {
-    for (var x = 0; x < fieldWidth; x++) {
-      var blk = blocks[y][x];
-      storeBlock(null, [x, y]);
-      if (! blk) continue;
-      $(blk.elm).css({'border-radius': '0', 'width': blockWidth + 'px', 'left': (blk.x * blockWidth + borderWidth) + 'px'});
-      blksToRemove.push(blk.elm);
-    }
-  });
-  _.delay(function() {
-    $(blksToRemove).remove();
-  }, 500);
-}
-
-function showNewFloatingBlock() {
-  // The first time this is called, next will be null.
-  if (! nextFloating) {
-    nextFloating = new FloatingBlock();
-    $(nextFloating.elms()).appendTo('#field');
-  }
-  // Make next be current and spawn a new next.
-  curFloating = nextFloating;
-  nextFloating = new FloatingBlock();
-  // Move the new current into position.
-  $(curFloating.elms()).removeClass('next');
-  _(curFloating.blocks).each(function(blk) { blk.setXy([blk.x, blk.y + 2]) });
-  $(nextFloating.elms()).appendTo('#field');
-}
-
-// Returns true if game is over.
-function checkForGameOver() {
-  if (_(curFloating.blocks).chain().map(xyOf).some(isXyTaken).value()) {
-    window.clearInterval(fallTimer);
-    fallTimer = null;
-
-    var music = $('#music').get(0);
-    if (music) music.pause();
-
-    return true;
-  }
-  return false;
-}
-
-function fall() {
-  var fell = moveDown();
-  if (! fell) {
-    landFloatingBlock(curFloating);
-    var ysToClear = linesToClear(curFloating);
-    var clearedLines = ysToClear.length > 0;
-    if (clearedLines) {
-      // Lines were cleared.  Pause the game timer.
-      window.clearInterval(fallTimer);
-      fallTimer = null;
-    }
-    showNewFloatingBlock();
-    clearLines(ysToClear);
-    if (clearedLines) {
-      _.delay(function() {
-        fillLinesFromAbove(ysToClear);
-        if (! checkForGameOver()) {
-          fallTimer = window.setInterval(fall, 700);
-        }
-      }, 500);
-    }
-    else {
-      if (checkForGameOver()) return false;
-    }
-  }
-  return fell;
-}
-
-function drop() {
-  // Get initial position.
-  var floating = curFloating;
-  var xys = _(floating.blocks).map(xyOf);
-  var minX1 = _(xys).chain().map(function(xy) { return xy[0] }).min().value();
-  var minY1 = _(xys).chain().map(function(xy) { return xy[1] }).min().value();
-
-  // Drop.
-  while (fall()) ;
-
-  // Set position and size of tail.
-  var xys2 = _(floating.blocks).map(xyOf);
-  setElementXy('#tail', [minX1, minY1]);
-
-  var minX = _(xys).chain()
-    .map(function(xy) { return xy[0] }).min().value();
-  var maxX = _(xys2).chain()
-    .map(function(xy) { return xy[0] }).max().value();
-  var minY = _(xys).chain()
-    .map(function(xy) { return xy[1] }).min().value();
-  var maxY = _(xys2).chain()
-    .map(function(xy) { return xy[1] }).min().value();
-  $('#tail').width(blockWidth * (maxX - minX + 1) - 2 * borderWidth).height(blockHeight * (maxY - minY + 1) - 2 * borderHeight);
-
-  // Show tail and hide after delay.
-  $('#tail').show();
-  window.setTimeout(function() {
-    $e = $('#tail');
-    $e.animate({'height': 0, 'top': $e.position().top + $e.height()}, 500, 'easeOutExpo');
-  }, 500);
-}
+var localField;
 
 function sendMessage(msg) {
   now.distributeMessage(msg);
@@ -319,14 +101,7 @@ function receiveMessage(clientId, name, msg) {
 }
 
 head(function() {
-  // Initialize blocks matrix.
-  for (var i = 0; i < fieldHeight; i++) {
-    var row = [];
-    for (var j = 0; j < fieldWidth; j++) { row.push(null); }
-    blocks.push(row);
-  }
-  // Use default theme.
-  setTheme(THEMES[themeIndex]);
+  localField = new PlayingField();
 
   // Get ready for server events.
   now.ready(function() {
@@ -334,26 +109,26 @@ head(function() {
     now.receiveMessage = receiveMessage;
   });
 
-  showNewFloatingBlock();
+  localField.showNewFloatingBlock();
 
-  $(document).bind('mousedown', function(event) { rotateTheme(); });
+  $(document).bind('mousedown', function(event) { localField.rotateTheme(); });
   $(document).bind('keydown', function(event) {
 //    console.log('keydown', event.which, String.fromCharCode(event.which));
-    if (event.which == 37)  moveLeft();
-    if (event.which == 39)  moveRight();
-    if (event.which == 40)  fall();
-    if (event.which == 191) drop(); // slash
+    if (event.which == 37)  localField.moveLeft();
+    if (event.which == 39)  localField.moveRight();
+    if (event.which == 40)  localField.fall();
+    if (event.which == 191) localField.drop(); // slash
     var letter = String.fromCharCode(event.which).toLowerCase();
-    if (letter == 'f') curFloating.rotateClockwise();
-    if (letter == 'd') curFloating.rotateCounterclockwise();
-    if (letter == 'c') drop();
+    if (letter == 'f') localField.curFloating.rotateClockwise();
+    if (letter == 'd') localField.curFloating.rotateCounterclockwise();
+    if (letter == 'c') localField.drop();
   });
 
   // Play background music if present.
   var music = $('#music').get(0);
 //  if (music) music.play();
 
-  fallTimer = window.setInterval(fall, 700);
+  localField.fallTimer = window.setInterval(_.bind(localField.fall, localField), localField.fallInterval());
 });
 //]]></script>
 </body>

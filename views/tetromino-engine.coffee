@@ -1,6 +1,6 @@
 # Represents a single square.
 class Block
-  constructor: (@x, @y) ->
+  constructor: (@field, @x, @y) ->
     @elm = document.createElement('div')
     @elm.className = 'block next'
     @setXy([x, y])
@@ -8,74 +8,79 @@ class Block
   setXy: (xy) ->
     @x = xy[0]
     @y = xy[1]
-    setElementXy(@elm, xy)
+    @field.setElementXy(@elm, xy)
 
   getXy: -> [@x, @y]
 
 
+# Convenience for chaining.
+xyOf = (blk) -> blk.getXy()
+
 
 class FloatingBlock
-  constructor: ->
+  NUM_TYPES_OF_BLOCKS = 7;
+
+  constructor: (@field) ->
     @type = randInt(NUM_TYPES_OF_BLOCKS - 1)
     @canRotate = true
     @blocks = []
-    mid = Math.floor(fieldWidth / 2) - 1
+    mid = Math.floor(@field.fieldWidth / 2) - 1
     switch @type
       when 0  # O
-        @blocks.push(new Block(mid,     0))
-        @blocks.push(new Block(mid + 1, 0))
-        @blocks.push(new Block(mid,     1))
-        @blocks.push(new Block(mid + 1, 1))
+        @blocks.push(new Block(@field, mid,     0))
+        @blocks.push(new Block(@field, mid + 1, 0))
+        @blocks.push(new Block(@field, mid,     1))
+        @blocks.push(new Block(@field, mid + 1, 1))
         @centerIndex = 0
         @canRotate = false
         $(@elms()).addClass('light')
       when 1  # T
-        @blocks.push(new Block(mid - 1, 0))
-        @blocks.push(new Block(mid,     0))
-        @blocks.push(new Block(mid + 1, 0))
-        @blocks.push(new Block(mid,     1))
+        @blocks.push(new Block(@field, mid - 1, 0))
+        @blocks.push(new Block(@field, mid,     0))
+        @blocks.push(new Block(@field, mid + 1, 0))
+        @blocks.push(new Block(@field, mid,     1))
         @centerIndex = 1
         $(@elms()).addClass('light')
       when 2  # S
-        @blocks.push(new Block(mid + 1, 0))
-        @blocks.push(new Block(mid,     0))
-        @blocks.push(new Block(mid,     1))
-        @blocks.push(new Block(mid - 1, 1))
+        @blocks.push(new Block(@field, mid + 1, 0))
+        @blocks.push(new Block(@field, mid,     0))
+        @blocks.push(new Block(@field, mid,     1))
+        @blocks.push(new Block(@field, mid - 1, 1))
         @centerIndex = 2
         $(@elms()).addClass('dark')
       when 3  # Z
-        @blocks.push(new Block(mid - 1, 0))
-        @blocks.push(new Block(mid,     0))
-        @blocks.push(new Block(mid,     1))
-        @blocks.push(new Block(mid + 1, 1))
+        @blocks.push(new Block(@field, mid - 1, 0))
+        @blocks.push(new Block(@field, mid,     0))
+        @blocks.push(new Block(@field, mid,     1))
+        @blocks.push(new Block(@field, mid + 1, 1))
         @centerIndex = 2
         $(@elms()).addClass('dark')
       when 4  # L
-        @blocks.push(new Block(mid - 1, 0))
-        @blocks.push(new Block(mid,     0))
-        @blocks.push(new Block(mid + 1, 0))
-        @blocks.push(new Block(mid - 1, 1))
+        @blocks.push(new Block(@field, mid - 1, 0))
+        @blocks.push(new Block(@field, mid,     0))
+        @blocks.push(new Block(@field, mid + 1, 0))
+        @blocks.push(new Block(@field, mid - 1, 1))
         @centerIndex = 1
         $(@elms()).addClass('dark')
       when 5  # J
-        @blocks.push(new Block(mid - 1, 0))
-        @blocks.push(new Block(mid,     0))
-        @blocks.push(new Block(mid + 1, 0))
-        @blocks.push(new Block(mid + 1, 1))
+        @blocks.push(new Block(@field, mid - 1, 0))
+        @blocks.push(new Block(@field, mid,     0))
+        @blocks.push(new Block(@field, mid + 1, 0))
+        @blocks.push(new Block(@field, mid + 1, 1))
         @centerIndex = 1
         $(@elms()).addClass('dark')
       when 6  # I
-        @blocks.push(new Block(mid - 1, 0))
-        @blocks.push(new Block(mid,     0))
-        @blocks.push(new Block(mid + 1, 0))
-        @blocks.push(new Block(mid + 2, 0))
+        @blocks.push(new Block(@field, mid - 1, 0))
+        @blocks.push(new Block(@field, mid,     0))
+        @blocks.push(new Block(@field, mid + 1, 0))
+        @blocks.push(new Block(@field, mid + 2, 0))
         @centerIndex = 1
         $(@elms()).addClass('light')
       else
         throw "I don't know how to create a floating block of this type: " + @type
 
     # Use theme.
-    $(@elms()).addClass(THEMES[themeIndex])
+    $(@elms()).addClass(@field.getTheme())
 
 
   elms: -> blk.elm for blk in @blocks
@@ -85,7 +90,7 @@ class FloatingBlock
   # transformation was possible.
   transform: (f) ->
     xys2 = (f(blk) for blk in @blocks)
-    return false if _(xys2).some(isXyTaken)
+    return false if _(xys2).some(_.bind(@field.isXyTaken, @field))
     _.each(@blocks, (blk, i) ->
       blk.setXy(xys2[i]))
     true
@@ -118,7 +123,217 @@ class FloatingBlock
 
 
 
+class PlayingField
+  THEMES = ['blue', 'orange', 'yellow']
+
+  constructor: ->
+    @fieldHeight = 22
+    @fieldWidth = 10
+    @blockHeight = 20
+    @blockWidth = 20
+    @borderWidth = 1
+    @borderHeight = 1
+    @blocks = []
+
+    @themeIndex = 0
+
+    @curFloating
+    @nextFloating
+    @fallTimer
+
+    # Initialize blocks matrix.
+    for i in [0 ... @fieldHeight]
+      row = []
+      row.push(null) for j in [0 ... @fieldWidth]
+      @blocks.push(row)
+
+    # Use default theme.
+    @setTheme(THEMES[@themeIndex]);
+
+
+  getTheme: -> THEMES[@themeIndex]
+
+
+  setTheme: (theme) ->
+    $('.block, #tail').addClass(theme)
+
+
+  rotateTheme: ->
+    $('.block, #tail').removeClass(THEMES[@themeIndex])
+    @themeIndex = (@themeIndex + 1) % THEMES.length
+    @setTheme(THEMES[@themeIndex])
+
+
+  setElementXy: (sel, xy) ->
+    setPosition(sel,
+                2 * @borderWidth  + xy[0] * @blockWidth,
+                2 * @borderHeight + xy[1] * @blockHeight)
+
+
+  blockFromXy: (xy) ->
+    row = xy[1]
+    return null if row < 0 || row >= @blocks.length
+    col = xy[0]
+    return null if col < 0 || col >= @blocks[row].length
+    @blocks[row][col]
+
+
+  storeBlock: (blk, xy) -> @blocks[xy[1]][xy[0]] = blk
+
+
+  isXyFree: (xy) ->
+    @blockFromXy(xy) == null &&
+      xy[0] >= 0 && xy[0] < @fieldWidth &&
+      xy[1] >= 0 && xy[1] < @fieldHeight
+
+
+  isXyTaken: (xy) -> ! @isXyFree(xy)
+
+
+  moveLeft: ->
+    @curFloating.transform((blk) ->
+      xy = blk.getXy()
+      [xy[0] - 1, xy[1]]
+    )
+
+  moveRight: ->
+    @curFloating.transform((blk) ->
+      xy = blk.getXy()
+      [xy[0] + 1, xy[1]]
+    )
+
+
+  moveDown: ->
+    @curFloating.transform((blk) ->
+      xy = blk.getXy()
+      [xy[0], xy[1] + 1]
+    )
+
+
+  landFloatingBlock: (flt) ->
+    for blk in flt.blocks
+      @storeBlock(blk, blk.getXy())
+    null
+
+
+  # Returns array of y's of lines that need to be cleared.
+  linesToClear: (flt) ->
+    linesToCheck = _(blk.getXy()[1] for blk in flt.blocks).uniq()
+    y for y in linesToCheck when _(@blocks[y]).all(_.identity)
+
+
+  fillLinesFromAbove: (ys) ->
+    return if _.isEmpty(ys)
+    shift = 1
+    ys.sort()
+    for y in [_.last(ys) .. 0]
+      shift++ while _.include(ys, y - shift)
+      for x in [0 ... @fieldWidth]
+        blk = @blockFromXy([x, y - shift])
+        blk?.setXy([x, y])
+        @storeBlock(blk, [x, y])
+    null
+
+
+  clearLines: (ys) ->
+    blksToRemove = []
+    for y in ys
+      for x in [0 ... @fieldWidth]
+        blk = @blocks[y][x]
+        @storeBlock(null, [x, y])
+        continue unless blk
+        $(blk.elm).css({'border-radius': '0', 'width': @blockWidth + 'px', 'left': (blk.x * @blockWidth + @borderWidth) + 'px'})
+        blksToRemove.push(blk.elm)
+    _.delay((-> $(blksToRemove).remove()), 500)
+    null
+
+
+  showNewFloatingBlock: ->
+    # The first time this is called, next will be null.
+    if ! @nextFloating
+      @nextFloating = new FloatingBlock(this)
+      $(@nextFloating.elms()).appendTo('#field')
+
+    # Make next be current and spawn a new next.
+    @curFloating = @nextFloating
+    @nextFloating = new FloatingBlock(this)
+    # Move the new current into position.
+    $(@curFloating.elms()).removeClass('next')
+    blk.setXy([blk.x, blk.y + 2]) for blk in @curFloating.blocks
+    $(@nextFloating.elms()).appendTo('#field')
+    null
+
+
+  # Returns true if game is over.
+  checkForGameOver: ->
+    return false if _(blk.getXy() for blk in @curFloating.blocks).all(_.bind(@isXyFree, this))
+    window.clearInterval(@fallTimer)
+    @fallTimer = null
+
+    music = $('#music').get(0)
+    music.pause() if music
+
+    true
+
+
+  fallInterval: -> 700
+
+
+  fall: ->
+    fell = @moveDown()
+    if ! fell
+      @landFloatingBlock(@curFloating)
+      ysToClear = @linesToClear(@curFloating)
+      clearedLines = ysToClear.length > 0
+      if clearedLines
+        # Lines were cleared.  Pause the game timer.
+        window.clearInterval(@fallTimer)
+        @fallTimer = null
+      @showNewFloatingBlock()
+      @clearLines(ysToClear)
+      if clearedLines
+        field = this
+        _.delay((->
+          field.fillLinesFromAbove(ysToClear)
+          if ! field.checkForGameOver()
+            field.fallTimer = window.setInterval(_.bind(field.fall, field), field.fallInterval())
+        ), 500)
+      else
+        return false if @checkForGameOver()
+    fell
+
+
+  drop: ->
+    # Get initial position.
+    floating = @curFloating
+    xys = _(floating.blocks).map(xyOf)
+    minX1 = _(xy[0] for xy in xys).min()
+    minY1 = _(xy[1] for xy in xys).min()
+
+    # Drop.
+    null while @fall()
+
+    # Set position and size of tail.
+    xys2 = _(floating.blocks).map(xyOf)
+    @setElementXy('#tail', [minX1, minY1])
+
+    minX = _(xy[0] for xy in xys ).min()
+    maxX = _(xy[0] for xy in xys2).max()
+    minY = _(xy[1] for xy in xys ).min()
+    maxY = _(xy[1] for xy in xys2).min()
+    $('#tail').width(@blockWidth * (maxX - minX + 1) - 2 * @borderWidth).height(@blockHeight * (maxY - minY + 1) - 2 * @borderHeight)
+
+    # Show tail and hide after delay.
+    $('#tail').show()
+    window.setTimeout((->
+      $e = $('#tail')
+      $e.animate({'height': 0, 'top': $e.position().top + $e.height()}, 500, 'easeOutExpo')
+    ), 500)
+
+
+
 # Exports
 root = exports ? this
 root.Block = Block
 root.FloatingBlock = FloatingBlock
+root.PlayingField = PlayingField
