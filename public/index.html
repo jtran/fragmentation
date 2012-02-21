@@ -100,6 +100,14 @@ function receiveMessage(clientId, name, msg) {
   console.log(name + ": " + msg);
 }
 
+function addPlayer(player) {
+  console.log("New player joined game", player.id, player);
+}
+
+function removePlayer(playerId) {
+  console.log("Player left game", playerId);
+}
+
 head(function() {
   localField = new PlayingField();
 
@@ -107,6 +115,10 @@ head(function() {
   now.ready(function() {
     now.name = 'user-' + randInt(100);
     now.receiveMessage = receiveMessage;
+    now.addPlayer = addPlayer;
+    now.removePlayer = removePlayer;
+
+    now.joinGame({ name: now.name });
   });
 
   localField.showNewFloatingBlock();

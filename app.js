@@ -42,14 +42,37 @@ console.log("Express server listening on port %d in %s mode", app.address().port
 
 var everyone = nowjs.initialize(app);
 
+players = [];
+
 nowjs.on("connect", function(){
-  console.log("Joined: " + this.now.name);
+  console.log("Connected clientId:" + this.user.clientId);
 });
 
 nowjs.on("disconnect", function(){
-  console.log("Left: " + this.now.name);
+  console.log("Disconnected clientId:" + this.user.clientId + ", name:" + this.now.name);
+  for (var i = 0; i < players.length; i++) {
+    if (players[i].id == this.user.clientId) {
+      for (var j = i + 1; j < players.length; j++) players[j - 1] = players[j];
+      players.pop();
+      break;
+    }
+  }
+  console.log("players", players);
+  everyone.now.players = players;
+  everyone.now.removePlayer(this.user.clientId);
 });
+
+
+everyone.now.getPlayers = function(callback) { callback(players); };
 
 everyone.now.distributeMessage = function(msg) {
   everyone.now.receiveMessage(this.user.clientId, this.now.name, msg);
+};
+
+everyone.now.joinGame = function(player) {
+  player.id = this.user.clientId;
+  players.push(player);
+  console.log("players", players);
+  everyone.now.players = players;
+  everyone.now.addPlayer(player);
 };
