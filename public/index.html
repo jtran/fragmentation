@@ -6,11 +6,11 @@
 html {
 background-color: #000;
 }
-#field {
+.field {
 height: 442px; width: 202px; margin: 10px auto;
 position: relative;
 }
-#field_background {
+.field_background {
 width: 100%; height: 402px;
 position: relative; top: 40px;
 background-color: #0E2F38;
@@ -46,7 +46,7 @@ box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
 .block.dark.yellow {
 box-shadow: 0 0 5px #000, 0 0 15px #FF9D02;
 }
-#tail {
+.tail {
 position: absolute;
 opacity: 0.9;
 background-color: #fff;
@@ -55,13 +55,13 @@ border-top-right-radius: 8px;
 border-bottom-left-radius: 3px;
 border-bottom-right-radius: 3px;
 }
-#tail.blue {
+.tail.blue {
 box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
 }
-#tail.orange {
+.tail.orange {
 box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
 }
-#tail.yellow {
+.tail.yellow {
 box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
 }
 .next {
@@ -74,10 +74,6 @@ opacity: 0.7;
 
 
 <div id="background">
-  <div id="field">
-    <div id="field_background"></div>
-    <div id="tail"></div>
-  </div>
 </div>
 
 <audio id="music" src="sea-of-simulation.mp3" preload="preload" />
@@ -90,6 +86,7 @@ head.js('/util.js');
 head.js('/tetromino-engine.js');
 head.js("/nowjs/now.js");
 
+var game;
 var localField;
 
 function sendMessage(msg) {
@@ -109,7 +106,8 @@ function removePlayer(playerId) {
 }
 
 head(function() {
-  localField = new PlayingField();
+  game = new TetrominoGame();
+  localField = game.localField;
 
   // Get ready for server events.
   now.ready(function() {

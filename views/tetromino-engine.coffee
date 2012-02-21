@@ -126,7 +126,8 @@ class FloatingBlock
 class PlayingField
   THEMES = ['blue', 'orange', 'yellow']
 
-  constructor: ->
+  constructor: (options) ->
+    @ordinal = options.ordinal
     @fieldHeight = 22
     @fieldWidth = 10
     @blockHeight = 20
@@ -137,9 +138,9 @@ class PlayingField
 
     @themeIndex = 0
 
-    @curFloating
-    @nextFloating
-    @fallTimer
+    @curFloating = null
+    @nextFloating = null
+    @fallTimer = null
 
     # Initialize blocks matrix.
     for i in [0 ... @fieldHeight]
@@ -150,16 +151,27 @@ class PlayingField
     # Use default theme.
     @setTheme(THEMES[@themeIndex]);
 
+    # Create elements on page.
+    $('#background').append("""
+      <div id="field_#{@ordinal}" class="field">
+        <div class="field_background"></div>
+        <div id="tail_#{@ordinal}" class="tail"></div>
+      </div>
+      """)
+
+
+  fieldSelector: -> "#field_#{@ordinal}"
+  tailSelector:  -> "#tail_#{@ordinal}"
 
   getTheme: -> THEMES[@themeIndex]
 
 
   setTheme: (theme) ->
-    $('.block, #tail').addClass(theme)
+    $('.block, .tail', @fieldSelector()).addClass(theme)
 
 
   rotateTheme: ->
-    $('.block, #tail').removeClass(THEMES[@themeIndex])
+    $('.block, .tail', @fieldSelector()).removeClass(THEMES[@themeIndex])
     @themeIndex = (@themeIndex + 1) % THEMES.length
     @setTheme(THEMES[@themeIndex])
 
@@ -252,7 +264,7 @@ class PlayingField
     # The first time this is called, next will be null.
     if ! @nextFloating
       @nextFloating = new FloatingBlock(this)
-      $(@nextFloating.elms()).appendTo('#field')
+      $(@nextFloating.elms()).appendTo(@fieldSelector())
 
     # Make next be current and spawn a new next.
     @curFloating = @nextFloating
@@ -260,7 +272,7 @@ class PlayingField
     # Move the new current into position.
     $(@curFloating.elms()).removeClass('next')
     blk.setXy([blk.x, blk.y + 2]) for blk in @curFloating.blocks
-    $(@nextFloating.elms()).appendTo('#field')
+    $(@nextFloating.elms()).appendTo(@fieldSelector())
     null
 
 
@@ -315,20 +327,27 @@ class PlayingField
 
     # Set position and size of tail.
     xys2 = _(floating.blocks).map(xyOf)
-    @setElementXy('#tail', [minX1, minY1])
+    @setElementXy(@tailSelector(), [minX1, minY1])
 
     minX = _(xy[0] for xy in xys ).min()
     maxX = _(xy[0] for xy in xys2).max()
     minY = _(xy[1] for xy in xys ).min()
     maxY = _(xy[1] for xy in xys2).min()
-    $('#tail').width(@blockWidth * (maxX - minX + 1) - 2 * @borderWidth).height(@blockHeight * (maxY - minY + 1) - 2 * @borderHeight)
+    $(@tailSelector()).width(@blockWidth * (maxX - minX + 1) - 2 * @borderWidth).height(@blockHeight * (maxY - minY + 1) - 2 * @borderHeight)
 
     # Show tail and hide after delay.
-    $('#tail').show()
-    window.setTimeout((->
-      $e = $('#tail')
+    $(@tailSelector()).show()
+    window.setTimeout((=>
+      $e = $(@tailSelector())
       $e.animate({'height': 0, 'top': $e.position().top + $e.height()}, 500, 'easeOutExpo')
     ), 500)
+
+
+
+class TetrominoGame
+  constructor: ->
+    @localField = new PlayingField({ ordinal: 0 })
+    @fields = [@localField]
 
 
 
@@ -337,3 +356,4 @@ root = exports ? this
 root.Block = Block
 root.FloatingBlock = FloatingBlock
 root.PlayingField = PlayingField
+root.TetrominoGame = TetrominoGame
