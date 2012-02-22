@@ -279,16 +279,12 @@ class PlayingField
   # Returns true if game is over.
   checkForGameOver: ->
     return false if _(blk.getXy() for blk in @curFloating.blocks).all(_.bind(@isXyFree, this))
-    window.clearInterval(@fallTimer)
-    @fallTimer = null
+    @stopGravity()
 
     music = $('#music').get(0)
     music.pause() if music
 
     true
-
-
-  fallInterval: -> 700
 
 
   fall: ->
@@ -299,15 +295,14 @@ class PlayingField
       clearedLines = ysToClear.length > 0
       if clearedLines
         # Lines were cleared.  Pause the game timer.
-        window.clearInterval(@fallTimer)
-        @fallTimer = null
+        @stopGravity()
       @showNewFloatingBlock()
       @clearLines(ysToClear)
       if clearedLines
         _.delay((=>
           @fillLinesFromAbove(ysToClear)
           if ! @checkForGameOver()
-            @fallTimer = window.setInterval(_.bind(@fall, @), @fallInterval())
+            @startGravity()
         ), 500)
       else
         return false if @checkForGameOver()
@@ -336,10 +331,22 @@ class PlayingField
 
     # Show tail and hide after delay.
     $(@tailSelector()).show()
-    window.setTimeout((=>
+    _.delay((=>
       $e = $(@tailSelector())
       $e.animate({'height': 0, 'top': $e.position().top + $e.height()}, 500, 'easeOutExpo')
     ), 500)
+
+
+  gravityInterval: -> 700
+
+
+  startGravity: ->
+    @fallTimer = window.setInterval(_.bind(@fall, @), @gravityInterval())
+
+
+  stopGravity: ->
+    window.clearInterval(@fallTimer)
+    @fallTimer = null
 
 
 
@@ -347,6 +354,9 @@ class TetrominoGame
   constructor: ->
     @localField = new PlayingField({ ordinal: 0 })
     @fields = [@localField]
+
+  start: ->
+    @localField.startGravity()
 
 
 
