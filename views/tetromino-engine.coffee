@@ -304,11 +304,10 @@ class PlayingField
       @showNewFloatingBlock()
       @clearLines(ysToClear)
       if clearedLines
-        field = this
-        _.delay((->
-          field.fillLinesFromAbove(ysToClear)
-          if ! field.checkForGameOver()
-            field.fallTimer = window.setInterval(_.bind(field.fall, field), field.fallInterval())
+        _.delay((=>
+          @fillLinesFromAbove(ysToClear)
+          if ! @checkForGameOver()
+            @fallTimer = window.setInterval(_.bind(@fall, @), @fallInterval())
         ), 500)
       else
         return false if @checkForGameOver()
