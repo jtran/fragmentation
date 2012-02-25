@@ -68,7 +68,6 @@ box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
 opacity: 0.7;
 }
 </style>
-<script type="text/javascript" src="/javascripts/head-0.96.min.js"></script>
 </head>
 <body>
 
@@ -78,41 +77,15 @@ opacity: 0.7;
 
 <audio id="music" src="sea-of-simulation.mp3" preload="preload" />
 
-<script type="text/javascript">//<![CDATA[
-head.js("/javascripts/jquery-1.6.2.min.js",
-        "/javascripts/jquery-ui-1.8.16.custom.min.js");
-head.js("/javascripts/underscore-1.1.7.js");
-head.js('/util.js');
-head.js('/tetromino-engine.js');
-
-var game;
-var localField;
-
-head(function() {
-  game = new TetrominoGame();
-  localField = game.localField;
-
-  localField.showNewFloatingBlock();
-
-  $(document).bind('mousedown', function(event) { localField.rotateTheme(); });
-  $(document).bind('keydown', function(event) {
-//    console.log('keydown', event.which, String.fromCharCode(event.which));
-    if (event.which == 37)  localField.moveLeft();
-    if (event.which == 39)  localField.moveRight();
-    if (event.which == 40)  localField.fall();
-    if (event.which == 191) localField.drop(); // slash
-    var letter = String.fromCharCode(event.which).toLowerCase();
-    if (letter == 'f') localField.curFloating.rotateClockwise();
-    if (letter == 'd') localField.curFloating.rotateCounterclockwise();
-    if (letter == 'c') localField.drop();
-  });
-
-  // Play background music if present.
-  var music = $('#music').get(0);
-//  if (music) music.play();
-
-  game.start()
-});
-//]]></script>
+<script type="text/javascript" src="/javascripts/require.js"></script>
+<script type="text/javascript">
+require({
+  paths: {
+    jquery: '/javascripts/jquery-1.6.2.min',
+    jqueryui: '/javascripts/jquery-ui-1.8.16.custom.min'
+  },
+  priority: ['jquery']
+}, ['main']);
+</script>
 </body>
 </html>
