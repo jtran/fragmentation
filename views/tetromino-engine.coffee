@@ -150,9 +150,6 @@ define ['underscore', 'util', 'jquery', 'jqueryui'], (_, util, $, jqueryui) ->
         row.push(null) for j in [0 ... @fieldWidth]
         @blocks.push(row)
 
-      # Use default theme.
-      @setTheme(THEMES[@themeIndex]);
-
       # Create elements on page.
       $('#background').append("""
         <div id="field_#{@ordinal}" class="field">
@@ -160,6 +157,9 @@ define ['underscore', 'util', 'jquery', 'jqueryui'], (_, util, $, jqueryui) ->
           <div id="tail_#{@ordinal}" class="tail"></div>
         </div>
         """)
+
+      # Use default theme.
+      @setTheme(THEMES[@themeIndex]);
 
 
     fieldSelector: -> "#field_#{@ordinal}"
