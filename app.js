@@ -3,6 +3,14 @@
  * Module dependencies.
  */
 
+var requirejs = require('requirejs');
+requirejs.config({
+    //Pass the top-level main.js/index.js require
+    //function to requirejs so that node modules
+    //are loaded relative to the top-level JS file.
+    nodeRequire: require
+});
+
 var express = require('express');
 
 var app = module.exports = express.createServer();
@@ -38,3 +46,20 @@ app.configure('production', function(){
 var port = process.env.PORT || 3001;
 app.listen(port);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+
+
+requirejs.define('jquery', [], function() {
+  return function() {
+    console.error("You tried to use jQuery on the server side.");
+  };
+});
+
+requirejs.define('jqueryui', [], function() {
+  return function() {
+    console.error("You tried to use jQueryUI on the server side.");
+  };
+});
+
+requirejs(['./public/tetromino-engine'], function(engine) {
+  console.log(engine);
+});
