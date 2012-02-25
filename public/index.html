@@ -84,40 +84,13 @@ head.js("/javascripts/jquery-1.6.2.min.js",
 head.js("/javascripts/underscore-1.1.7.js");
 head.js('/util.js');
 head.js('/tetromino-engine.js');
-head.js("/nowjs/now.js");
 
 var game;
 var localField;
 
-function sendMessage(msg) {
-  now.distributeMessage(msg);
-}
-
-function receiveMessage(clientId, name, msg) {
-  console.log(name + ": " + msg);
-}
-
-function addPlayer(player) {
-  console.log("New player joined game", player.id, player);
-}
-
-function removePlayer(playerId) {
-  console.log("Player left game", playerId);
-}
-
 head(function() {
   game = new TetrominoGame();
   localField = game.localField;
-
-  // Get ready for server events.
-  now.ready(function() {
-    now.name = 'user-' + randInt(100);
-    now.receiveMessage = receiveMessage;
-    now.addPlayer = addPlayer;
-    now.removePlayer = removePlayer;
-
-    now.joinGame({ name: now.name });
-  });
 
   localField.showNewFloatingBlock();
 
