@@ -1,3 +1,7 @@
+`if (typeof define !== 'function') {
+    define = require('amdefine')(module);
+  }`
+
 define ['underscore', 'util', 'events'], (_, util, events) ->
 
   # Represents a single square.
