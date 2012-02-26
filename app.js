@@ -5,7 +5,11 @@
 
 var requirejs = require('requirejs');
 requirejs.config({
-  baseUrl: __dirname + '/public',
+  baseUrl: __dirname + '/lib',
+  paths: {
+    'require': 'vendor/javascripts/require'
+  , 'underscore': 'vendor/javascripts/underscore'
+  },
   //Pass the top-level main.js/index.js require
   //function to requirejs so that node modules
   //are loaded relative to the top-level JS file.
@@ -21,17 +25,25 @@ var app = module.exports = express.createServer();
 app.configure(function(){
   var publicDir = __dirname + '/public';
   var viewsDir = __dirname + '/views';
+  var libDir = __dirname + '/lib';
   app.set('views', viewsDir);
   app.set('view engine', 'jade');
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(app.router);
   app.use(express.compiler({
+    src: __dirname + '/src',
+    dest: libDir,
+    enable: ['coffeescript']
+  }));
+  app.use(express.compiler({
     src: viewsDir,
     dest: publicDir,
     enable: ['coffeescript']
   }));
   app.use(express.static(publicDir));
+  app.use(express.static(libDir));
+  app.use(express.static(__dirname + '/vendor/javascripts'));
 });
 
 app.configure('development', function(){

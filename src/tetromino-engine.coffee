@@ -1,7 +1,3 @@
-`if (typeof define !== 'function') {
-    define = require('amdefine')(module);
-  }`
-
 define ['underscore', 'util', 'decouple'], (_, util, decouple) ->
 
   # Represents a single square.
