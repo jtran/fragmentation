@@ -1,13 +1,15 @@
-require(['jquery', 'tetromino-engine'], function($, TetrominoEngine) {
+require(['jquery', 'tetromino-engine', 'tetromino-dom-view'], function($, TetrominoEngine, DomView) {
   var game;
   var localField;
 
   game = new TetrominoEngine.TetrominoGame();
   localField = game.localField;
 
+  localFieldView = new DomView.PlayingFieldDomView(localField);
+
   localField.showNewFloatingBlock();
 
-  $(document).bind('mousedown', function(event) { localField.rotateTheme(); });
+  $(document).bind('mousedown', function(event) { localFieldView.rotateTheme(); });
   $(document).bind('keydown', function(event) {
 //    console.log('keydown', event.which, String.fromCharCode(event.which));
     if (event.which == 37)  localField.moveLeft();
