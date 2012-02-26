@@ -2,20 +2,20 @@
     define = require('amdefine')(module);
   }`
 
-define ['underscore', 'util', 'events'], (_, util, events) ->
+define ['underscore', 'util', 'decouple'], (_, util, decouple) ->
 
   # Represents a single square.
   class Block
 
     # Need the piece to style it.  After that it's discarded.
     constructor: (@field, @piece, @x, @y) ->
-      events.trigger(@field, 'new Block', @, @piece)
+      decouple.trigger(@field, 'new Block', @, @piece)
       @setXy([x, y])
 
     setXy: (xy) ->
       @x = xy[0]
       @y = xy[1]
-      events.trigger(@, 'move Block')
+      decouple.trigger(@, 'move Block')
 
     getXy: -> [@x, @y]
 
@@ -131,7 +131,7 @@ define ['underscore', 'util', 'events'], (_, util, events) ->
         row.push(null) for j in [0 ... @fieldWidth]
         @blocks.push(row)
 
-      events.trigger(@, 'new PlayingField')
+      decouple.trigger(@, 'new PlayingField')
 
 
     blockFromXy: (xy) ->
@@ -207,7 +207,7 @@ define ['underscore', 'util', 'events'], (_, util, events) ->
           @storeBlock(null, [x, y])
           continue unless blk
           blksToRemove.push(blk)
-      events.trigger(@, 'clear', ys, blksToRemove)
+      decouple.trigger(@, 'clear', ys, blksToRemove)
       null
 
 
@@ -220,7 +220,7 @@ define ['underscore', 'util', 'events'], (_, util, events) ->
       @curFloating = @nextFloating
       # Move the new current into position.
       for blk in @curFloating.blocks
-        events.trigger(blk, 'activate Block')
+        decouple.trigger(blk, 'activate Block')
         blk.setXy([blk.x, blk.y + 2])
       # Spawn a new next.
       @nextFloating = new FloatingBlock(this)
@@ -232,7 +232,7 @@ define ['underscore', 'util', 'events'], (_, util, events) ->
       return false if _(blk.getXy() for blk in @curFloating.blocks).all(_.bind(@isXyFree, this))
       @stopGravity()
 
-      events.trigger(@, 'gameOver')
+      decouple.trigger(@, 'gameOver')
 
       true
 
@@ -260,12 +260,12 @@ define ['underscore', 'util', 'events'], (_, util, events) ->
 
 
     drop: ->
-      events.trigger(@, 'beforeDrop')
+      decouple.trigger(@, 'beforeDrop')
 
       # Drop.
       null while @fall()
 
-      events.trigger(@, 'afterDrop')
+      decouple.trigger(@, 'afterDrop')
 
 
     gravityInterval: -> 700

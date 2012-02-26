@@ -1,4 +1,4 @@
-define ['jquery', 'jqueryui', 'util', 'underscore', 'events'], ($, jqueryui, util, _, events) ->
+define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, util, _, decouple) ->
 
   class BlockDomView
     constructor: (@fieldView, @blockModel, @pieceModel) ->
@@ -28,16 +28,16 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'events'], ($, jqueryui, uti
       # Show it.
       $(@elm).appendTo(@fieldView.fieldSelector())
 
-      events.listen @blockModel, 'move Block', (caller, event) =>
+      decouple.on @blockModel, 'move Block', (caller, event) =>
         @fieldView.setElementXy(@elm, @blockModel.getXy())
 
-      events.listen @blockModel, 'activate Block', (caller, event) =>
+      decouple.on @blockModel, 'activate Block', (caller, event) =>
         $(@elm).removeClass('next')
 
-      events.listen @blockModel, 'beforeClear Block', (caller, event) =>
+      decouple.on @blockModel, 'beforeClear Block', (caller, event) =>
         @expand()
 
-      events.listen @blockModel, 'afterClear Block', (caller, event) =>
+      decouple.on @blockModel, 'afterClear Block', (caller, event) =>
         $(@elm).remove()
 
     expand: ->
@@ -72,17 +72,17 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'events'], ($, jqueryui, uti
       # Use default theme.
       @setTheme(THEMES[@themeIndex]);
 
-      events.listen @fieldModel, 'new Block', (fieldModel, event, block, piece) =>
+      decouple.on @fieldModel, 'new Block', (fieldModel, event, block, piece) =>
         new BlockDomView(@, block, piece)
 
-      events.listen @fieldModel, 'beforeDrop', (caller, event) => @beforeDrop()
-      events.listen @fieldModel, 'afterDrop',  (caller, event) => @afterDrop()
+      decouple.on @fieldModel, 'beforeDrop', (caller, event) => @beforeDrop()
+      decouple.on @fieldModel, 'afterDrop',  (caller, event) => @afterDrop()
 
-      events.listen @fieldModel, 'clear', (caller, event, ys, blocks) =>
-        events.trigger(blk, 'beforeClear Block') for blk in blocks
-        _.delay((-> events.trigger(blk, 'afterClear Block') for blk in blocks), 500)
+      decouple.on @fieldModel, 'clear', (caller, event, ys, blocks) =>
+        decouple.trigger(blk, 'beforeClear Block') for blk in blocks
+        _.delay((-> decouple.trigger(blk, 'afterClear Block') for blk in blocks), 500)
 
-      events.listen @fieldModel, 'gameOver', (caller, event) =>
+      decouple.on @fieldModel, 'gameOver', (caller, event) =>
         music = $('#music').get(0)
         music?.pause()
 

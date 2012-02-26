@@ -1,11 +1,11 @@
 # De-coupling with events.
 define [], ->
 
-  class Events
+  class Decouple
     constructor: ->
       @bindings = []
 
-    listen: (caller, event, callback) ->
+    on: (caller, event, callback) ->
       @bindings.push({ caller: caller, event: event, callback: callback })
       callback
 
@@ -17,4 +17,4 @@ define [], ->
 
   # Export singleton.
   root = exports ? this
-  root.events = new Events()
+  root.decouple = new Decouple()
