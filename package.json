@@ -9,7 +9,6 @@
       "express": "2.4.6"
     , "jade": ">= 0.0.1"
     , "requirejs": "1.0.x"
-    , "amdefine": ">=0.0.1"
     , "underscore": "1.2.x"
     , "coffee-script": "1.2.x"
   }
