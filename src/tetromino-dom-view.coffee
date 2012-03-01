@@ -39,6 +39,9 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
       decouple.on @blockModel, 'afterClear Block', (caller, event) =>
         $(@elm).remove()
+        # Remove references to prevent memory leak.
+        @elm = null
+        decouple.removeAllForCaller(@blockModel)
 
     expand: ->
       $(@elm).css {
