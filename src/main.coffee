@@ -1,9 +1,24 @@
-require ['jquery', 'tetromino-engine', 'tetromino-dom-view'], ($, TetrominoEngine, DomView) ->
+require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-server-view', 'decouple', 'now'], ($, TetrominoEngine, DomView, PushToServerView, decouple, now) ->
 
-  game = new TetrominoEngine.TetrominoGame()
+  now ?= window.now
+  game = null
+  localField = null
+  localFieldView = null
+  pushToServerView = null
+  fieldViews = []
+
+  decouple.on null, 'new PlayingField', (field, event) ->
+    console.log("adding DOM view #{fieldViews.length}", event, field)
+    if field.viewType == 'local'
+      fieldView = new DomView.PlayingFieldDomView(field, { ordinal: fieldViews.length })
+      fieldViews.push(fieldView)
+      # Keep a reference to the local view.
+      localFieldView = fieldView
+      # Create a push-to-server view on the local playing field.
+      pushToServerView = new PushToServerView.PlayingFieldView(field, now)
+
+  game = new TetrominoEngine.TetrominoGame(now)
   localField = game.localField
-
-  localFieldView = new DomView.PlayingFieldDomView(localField)
 
   localField.showNewFloatingBlock()
 
@@ -26,5 +41,7 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view'], ($, TetrominoEngin
   game.start()
 
   # Give us easy access from the console.
-  window.game = game;
-  window.localField = localField;
+  window.game = game
+  window.localField = localField
+  window.localFieldView = localFieldView
+  window.fieldViews = fieldViews

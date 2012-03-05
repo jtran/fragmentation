@@ -56,7 +56,8 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
     THEMES = ['blue', 'orange', 'yellow']
 
-    constructor: (@fieldModel) ->
+    constructor: (@fieldModel, options) ->
+      @ordinal = options.ordinal
       @blockHeight = 20
       @blockWidth = 20
       @borderWidth = 1
@@ -66,9 +67,9 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
       # Create elements on page.
       $('#background').append("""
-        <div id="field_#{@fieldModel.ordinal}" class="field">
+        <div id="field_#{@ordinal}" class="field">
           <div class="field_background"></div>
-          <div id="tail_#{@fieldModel.ordinal}" class="tail"></div>
+          <div id="tail_#{@ordinal}" class="tail"></div>
         </div>
         """)
 
@@ -90,8 +91,8 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
         music?.pause()
 
 
-    fieldSelector: -> "#field_#{@fieldModel.ordinal}"
-    tailSelector:  -> "#tail_#{@fieldModel.ordinal}"
+    fieldSelector: -> "#field_#{@ordinal}"
+    tailSelector:  -> "#tail_#{@ordinal}"
 
     getTheme: -> THEMES[@themeIndex]
 

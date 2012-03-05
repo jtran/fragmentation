@@ -1,11 +1,11 @@
-define ['underscore', 'util', 'decouple'], (_, util, decouple) ->
+define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
 
   # Represents a single square.
   class Block
 
     # Need the piece to style it.  After that it's discarded.
-    constructor: (@field, @piece, @x, @y) ->
-      decouple.trigger(@field, 'new Block', @, @piece)
+    constructor: (field, piece, @x, @y) ->
+      decouple.trigger(field, 'new Block', @, piece)
       @setXy([x, y])
 
     setXy: (xy) ->
@@ -72,6 +72,13 @@ define ['underscore', 'util', 'decouple'], (_, util, decouple) ->
           throw "I don't know how to create a floating block of this type: " + @type
 
 
+    asJson: ->
+      {
+        type: @type
+        blocks: @blocks
+      }
+
+
     # Takes a function that takes single argument the Block to be
     # transformed, which returns the Block's new xy.  Returns true if the
     # transformation was possible.
@@ -112,7 +119,7 @@ define ['underscore', 'util', 'decouple'], (_, util, decouple) ->
 
   class PlayingField
     constructor: (options) ->
-      @ordinal = options.ordinal
+      @viewType = options.viewType
       @fieldHeight = 22
       @fieldWidth = 10
       @blocks = []
@@ -128,6 +135,16 @@ define ['underscore', 'util', 'decouple'], (_, util, decouple) ->
         @blocks.push(row)
 
       decouple.trigger(@, 'new PlayingField')
+
+
+    # Returns a hash representation of this object with the intent of
+    # serializing to JSON.  Will contain no functions and no circular
+    # references.  Borrowed from as_json in Rails.
+    asJson: ->
+      {
+        blocks: @blocks
+        curFloating: @curFloating.asJson()
+      }
 
 
     blockFromXy: (xy) ->
@@ -236,7 +253,9 @@ define ['underscore', 'util', 'decouple'], (_, util, decouple) ->
     fall: ->
       fell = @moveDown()
       if ! fell
+        decouple.trigger(@, 'beforeLandPiece')
         @landFloatingBlock(@curFloating)
+        decouple.trigger(@, 'afterLandPiece')
         ysToClear = @linesToClear(@curFloating)
         clearedLines = ysToClear.length > 0
         if clearedLines
@@ -277,13 +296,69 @@ define ['underscore', 'util', 'decouple'], (_, util, decouple) ->
 
 
 
+  # A game on the client.
   class TetrominoGame
-    constructor: ->
-      @localField = new PlayingField({ ordinal: 0 })
-      @fields = [@localField]
+    constructor: (@now) ->
+      @joinedRemoteGame = false
+      @localField = null
+      @localPlayer = null
+      @fields = []
+      @players = {}
+      @addLocalPlayer()
+      game = @
+      @now.ready =>
+        @setLocalPlayerId(@now.core.clientId)
+        @now.receiveMessage = (playerId, msg) -> console.log "#{game.players[playerId].name}: #{msg}"
+        @now.addPlayer = _.bind(@addRemotePlayer, @)
+        @now.removePlayer = _.bind(@removePlayer, @)
+        @now.updateRemotePlayingField = _.bind(@updateRemotePlayingField, @)
+        @now.getPlayers (players) =>
+          console.log 'getPlayers', players
+          @addRemotePlayer(p) for id, p of players
+          @now.join(@localField.asJson())
+          @joinedRemoteGame = true
+
+    addLocalPlayer: (player = {}) ->
+      throw("You tried to add a local player, but I already have one.") if @localField
+      @localField = new PlayingField({ viewType: 'local' })
+      @fields = @fields.concat([@localField])
+      @localPlayer = player
+      @addPlayer(player) if player.id
+      @localPlayer
+
+    setLocalPlayerId: (id) ->
+      console.log 'setLocalPlayerId', id
+      @removePlayer(@localPlayer.id) if @localPlayer.id
+      @localPlayer.id = id
+      @addPlayer(@localPlayer)
+
+    addRemotePlayer: (player) ->
+      return if player.id in _.pluck(_.values(@players), 'id')
+      console.log 'addRemotePlayer', player.id
+      @fields.push(new PlayingField({ viewType: 'remote' }))
+      @addPlayer(player)
+
+    # player must have an id.
+    addPlayer: (player) ->
+      console.log("addPlayer", player.id)
+      @players[player.id] = player
+
+    removePlayer: (playerId) ->
+      id = playerId.id ? playerId
+      console.log("removePlayer", id)
+      delete @players[id]
+
+    # The server calls this when a player has an update to his/her
+    # playing field.
+    updateRemotePlayingField: (playerId, field) ->
+      player = @players[playerId]
+      return unless player
+      console.log("updateRemotePlayingField #{playerId}", field)
+      # Not doing anything with this... yet.
+      player.field = field
 
     start: ->
-      @localField.startGravity()
+      @localField?.startGravity()
 
 
 
