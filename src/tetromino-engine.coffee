@@ -5,6 +5,7 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
 
     # Need the piece to style it.  After that it's discarded.
     constructor: (field, piece, @x, @y) ->
+      @pieceType = piece.type
       decouple.trigger(field, 'new Block', @, piece)
       @setXy([x, y])
 
@@ -118,7 +119,7 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
 
 
   class PlayingField
-    constructor: (options) ->
+    constructor: (game, options) ->
       @viewType = options.viewType
       @fieldHeight = 22
       @fieldWidth = 10
@@ -134,7 +135,7 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
         row.push(null) for j in [0 ... @fieldWidth]
         @blocks.push(row)
 
-      decouple.trigger(@, 'new PlayingField')
+      decouple.trigger(game, 'new PlayingField', @)
 
 
     # Returns a hash representation of this object with the intent of
@@ -145,6 +146,24 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
         blocks: @blocks
         curFloating: @curFloating.asJson()
       }
+
+
+    # The inverse of asJson.  When we have a PlayingField that
+    # represents a remote game, a remote client calls asJson, and
+    # sends the result to us.  We must then update our representation
+    # of their playing field based on it.
+    updateFromJson: (field) ->
+      for row, i in field.blocks
+        for blk, j in row
+          if blk && not @blocks[i][j]
+            block = new Block(@, { type: blk.pieceType }, blk.x, blk.y)
+            @storeBlock(block, [blk.x, blk.y])
+            # Activate immediately.
+            decouple.trigger(block, 'activate Block')
+          if not blk && @blocks[i][j]
+            decouple.trigger(@blocks[i][j], 'afterClear Block')
+
+      null
 
 
     blockFromXy: (xy) ->
@@ -320,7 +339,7 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
 
     addLocalPlayer: (player = {}) ->
       throw("You tried to add a local player, but I already have one.") if @localField
-      @localField = new PlayingField({ viewType: 'local' })
+      @localField = player.field = new PlayingField(@, { viewType: 'local' })
       @fields = @fields.concat([@localField])
       @localPlayer = player
       @addPlayer(player) if player.id
@@ -333,9 +352,10 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
       @addPlayer(@localPlayer)
 
     addRemotePlayer: (player) ->
-      return if player.id in _.pluck(_.values(@players), 'id')
+      return if player.id in _.keys(@players, 'id')
       console.log 'addRemotePlayer', player.id
-      @fields.push(new PlayingField({ viewType: 'remote' }))
+      player.field = new PlayingField(@, { viewType: 'remote' })
+      @fields.push(player.field)
       @addPlayer(player)
 
     # player must have an id.
@@ -346,7 +366,10 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
     removePlayer: (playerId) ->
       id = playerId.id ? playerId
       console.log("removePlayer", id)
+      player = @players[id]
+      decouple.trigger(@, 'beforeRemovePlayer', player)
       delete @players[id]
+      decouple.trigger(@, 'afterRemovePlayer', player)
 
     # The server calls this when a player has an update to his/her
     # playing field.
@@ -354,8 +377,7 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
       player = @players[playerId]
       return unless player
       console.log("updateRemotePlayingField #{playerId}", field)
-      # Not doing anything with this... yet.
-      player.field = field
+      player.field.updateFromJson(field) if playerId != @localPlayer.id
 
     start: ->
       @localField?.startGravity()
