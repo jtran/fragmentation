@@ -1,4 +1,4 @@
-define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
+define ['underscore', 'util', 'decouple', 'now', 'tetromino-player', 'tetromino-event-model-mirror'], (_, util, decouple, nowjs, tetrominoPlayer, modelMirror) ->
 
   # Represents a single square.
   class Block
@@ -176,8 +176,13 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
       }
 
 
-    # The inverse of asJson.  When we have a PlayingField that
-    # represents a remote game, a remote client calls asJson, and
+    # True inverse of asJson.
+    @fromJson = (playerId, game, fieldHash) ->
+      new PlayingField(game, _.extend(fieldHash, { playerId: playerId, viewType: 'remote' }))
+
+
+    # The (sort of) inverse of asJson.  When we have a PlayingField
+    # that represents a remote game, a remote client calls asJson, and
     # sends the result to us.  We must then update our representation
     # of their playing field based on it.
     updateFromJson: (field) ->
@@ -367,6 +372,7 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
       @localField = null
       @localPlayer = null
       @players = {}
+      @eventModelMirror = new modelMirror.Mirror(@players, FloatingBlock)
       @addLocalPlayer()
       game = @
       @now.ready =>
@@ -383,11 +389,11 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
           @now.join(@localField.asJson())
           @joinedRemoteGame = true
 
-    addLocalPlayer: (player = {}) ->
+    addLocalPlayer: ->
       throw("You tried to add a local player, but I already have one.") if @localField
-      @localField = player.field = new PlayingField(@, { viewType: 'local' })
-      @localPlayer = player
-      @addPlayer(player) if player.id
+      @localField = new PlayingField(@, { viewType: 'local' })
+      @localPlayer = new tetrominoPlayer.Player(null, @localField)
+      @addPlayer(@localPlayer) if @localPlayer.id
       @localPlayer
 
     setLocalPlayerId: (id) ->
@@ -417,36 +423,11 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
 
     receiveBlockEvent: (playerId, blockId, event, args...) ->
       return if playerId == @localPlayer.id
-      #console.log 'receiveBlockEvent', playerId, blockId, event, args...
-      block = @players[playerId].field.blockFromId(blockId)
-      if not block
-        console.log 'receiveBlockEvent', playerId, blockId, event, args...
-        throw "couldn't find block #{blockId}"
-      #console.log block.id, block
-      if event == 'move Block'
-        block.setXy(args[0])
-      else
-        decouple.trigger(block, event, args...)
+      @eventModelMirror.receiveBlockEvent(playerId, blockId, event, args...)
 
     receiveFieldEvent: (playerId, event, args...) ->
       return if playerId == @localPlayer.id
-      console.log 'receiveFieldEvent', playerId, event, args...
-      field = @players[playerId].field
-      if event == 'afterLandPiece'
-        console.log 'receive afterLandPiece', (b.id for b in field.curFloating.blocks), playerId
-        for blk in field.curFloating.blocks
-          field.storeBlock(blk, blk.getXy())
-      else if event == 'new FloatingBlock'
-        [opts] = args
-        field.curFloating = field.nextFloating
-        field.nextFloating = new FloatingBlock(field, _.extend(opts, { playerId: playerId }))
-        for blk in field.curFloating.blocks
-          decouple.trigger(blk, 'activate Block')
-      else if event == 'clear'
-        [ys, blks] = args
-        field.clearLinesSequence(ys)
-      else
-        decouple.trigger(field, event, args...)
+      @eventModelMirror.receiveFieldEvent(playerId, event, args...)
 
     # The server calls this when a player has an update to his/her
     # playing field.
