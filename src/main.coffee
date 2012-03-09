@@ -18,7 +18,7 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
       # Keep a reference to the local view.
       localFieldView = fieldView
       # Create a push-to-server view on the local playing field.
-      pushToServerView = new PushToServerView.PlayingFieldView(field, now)
+      pushToServerView = new PushToServerView.PlayingFieldView(game, field, now)
 
   fieldViewsFromPlayer = (player) ->
     fieldView for fieldView in fieldViews when fieldView.fieldModel == player.field

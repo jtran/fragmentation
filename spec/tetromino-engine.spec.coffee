@@ -23,11 +23,6 @@ requirejs ['tetromino-engine', 'decouple'], (engine, decouple) ->
       blk = new engine.Block(field, piece, 1, 2)
       expect(decouple.trigger).toHaveBeenCalledWith(field, 'new Block', blk, piece)
 
-    it "triggers move block event when constructing", ->
-      spyOn(decouple, 'trigger')
-      blk = new engine.Block({}, {}, 1, 2)
-      expect(decouple.trigger).toHaveBeenCalledWith(blk, 'move Block')
-
     it "triggers move block event when setting xy", ->
       blk = new engine.Block({}, {}, 1, 2)
       spyOn(decouple, 'trigger')
@@ -39,17 +34,18 @@ requirejs ['tetromino-engine', 'decouple'], (engine, decouple) ->
 
     it "triggers new playing field event", ->
       spyOn(decouple, 'trigger')
-      field = new engine.PlayingField({ ordinal: 0 })
-      expect(decouple.trigger).toHaveBeenCalledWith(field, 'new PlayingField')
+      game = {}
+      field = new engine.PlayingField(game, {})
+      expect(decouple.trigger).toHaveBeenCalledWith(game, 'new PlayingField', field)
 
     it "stores block at coordinate", ->
-      field = new engine.PlayingField({ ordinal: 0 })
+      field = new engine.PlayingField({}, {})
       blk = new engine.Block(field, {}, 1, 2)
       field.storeBlock(blk, [1, 2])
       expect(field.blockFromXy([1, 2])).toBe(blk)
 
     it "takes away coordinate after storing", ->
-      field = new engine.PlayingField({ ordinal: 0 })
+      field = new engine.PlayingField({}, {})
       blk = new engine.Block(field, {}, 1, 2)
       expect(field.isXyFree([1, 2])).toBeTruthy()
       expect(field.isXyTaken([1, 2])).toBeFalsy()

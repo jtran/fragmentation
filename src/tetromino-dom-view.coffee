@@ -22,6 +22,9 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
         else
           throw "I don't know how to style a block of this type: " + @pieceModel.type
 
+      # Initial position.
+      @fieldView.setElementXy(@elm, @blockModel.getXy())
+
       # Use theme.
       $(@elm).addClass(@fieldView.getTheme())
 
@@ -72,7 +75,7 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
       # don't leak to lambdas further down.
       (=>
         $field = $("""
-          <div id="field_#{@domId}" class="field">
+          <div id="field_#{@domId}" class="field" style="display: none">
             <div class="field_background"></div>
             <div id="tail_#{@domId}" class="tail"></div>
           </div>
@@ -84,6 +87,7 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
           width: "#{fieldPixelWidth}px"
           height: "#{fieldPixelHeight}px"
         $field.appendTo('#background')
+        $field.fadeIn('fast')
       )()
 
       # Use default theme.
@@ -106,7 +110,9 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
     leaveGame: (callback = null) =>
       $(@fieldSelector()).fadeOut 'slow', =>
-        decouple.trigger(blk, 'afterClear') for blk in @fieldModel.blocks
+        for row in @fieldModel.blocks
+          for blk in row
+            decouple.trigger(blk, 'afterClear Block') if blk
         $(@fieldSelector()).remove()
         callback?()
 

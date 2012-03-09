@@ -4,10 +4,11 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
   class Block
 
     # Need the piece to style it.  After that it's discarded.
-    constructor: (field, piece, @x, @y) ->
+    constructor: (field, piece, @x, @y, options = {}) ->
+      @id = options.id ? _.uniqueId('b')
       @pieceType = piece.type
+      @playerId = field.playerId if field.playerId?
       decouple.trigger(field, 'new Block', @, piece)
-      @setXy([x, y])
 
     setXy: (xy) ->
       @x = xy[0]
@@ -20,57 +21,69 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
   class FloatingBlock
     NUM_TYPES_OF_BLOCKS = 7;
 
-    constructor: (@field) ->
-      @type = util.randInt(NUM_TYPES_OF_BLOCKS - 1)
+    constructor: (@field, options = {}) ->
+      @type = options.type ? util.randInt(NUM_TYPES_OF_BLOCKS - 1)
       @canRotate = true
       @blocks = []
+      if options.blocks?
+        for b in options.blocks
+          @blocks.push(new Block(@field, { type: @type }, b.x, b.y, { id: b.id }))
       mid = Math.floor(@field.fieldWidth / 2) - 1
       switch @type
         when 0  # O
-          @blocks.push(new Block(@field, @, mid,     0))
-          @blocks.push(new Block(@field, @, mid + 1, 0))
-          @blocks.push(new Block(@field, @, mid,     1))
-          @blocks.push(new Block(@field, @, mid + 1, 1))
+          if @blocks.length == 0
+            @blocks.push(new Block(@field, @, mid,     0))
+            @blocks.push(new Block(@field, @, mid + 1, 0))
+            @blocks.push(new Block(@field, @, mid,     1))
+            @blocks.push(new Block(@field, @, mid + 1, 1))
           @centerIndex = 0
           @canRotate = false
         when 1  # T
-          @blocks.push(new Block(@field, @, mid - 1, 0))
-          @blocks.push(new Block(@field, @, mid,     0))
-          @blocks.push(new Block(@field, @, mid + 1, 0))
-          @blocks.push(new Block(@field, @, mid,     1))
+          if @blocks.length == 0
+            @blocks.push(new Block(@field, @, mid - 1, 0))
+            @blocks.push(new Block(@field, @, mid,     0))
+            @blocks.push(new Block(@field, @, mid + 1, 0))
+            @blocks.push(new Block(@field, @, mid,     1))
           @centerIndex = 1
         when 2  # S
-          @blocks.push(new Block(@field, @, mid + 1, 0))
-          @blocks.push(new Block(@field, @, mid,     0))
-          @blocks.push(new Block(@field, @, mid,     1))
-          @blocks.push(new Block(@field, @, mid - 1, 1))
+          if @blocks.length == 0
+            @blocks.push(new Block(@field, @, mid + 1, 0))
+            @blocks.push(new Block(@field, @, mid,     0))
+            @blocks.push(new Block(@field, @, mid,     1))
+            @blocks.push(new Block(@field, @, mid - 1, 1))
           @centerIndex = 2
         when 3  # Z
-          @blocks.push(new Block(@field, @, mid - 1, 0))
-          @blocks.push(new Block(@field, @, mid,     0))
-          @blocks.push(new Block(@field, @, mid,     1))
-          @blocks.push(new Block(@field, @, mid + 1, 1))
+          if @blocks.length == 0
+            @blocks.push(new Block(@field, @, mid - 1, 0))
+            @blocks.push(new Block(@field, @, mid,     0))
+            @blocks.push(new Block(@field, @, mid,     1))
+            @blocks.push(new Block(@field, @, mid + 1, 1))
           @centerIndex = 2
         when 4  # L
-          @blocks.push(new Block(@field, @, mid - 1, 0))
-          @blocks.push(new Block(@field, @, mid,     0))
-          @blocks.push(new Block(@field, @, mid + 1, 0))
-          @blocks.push(new Block(@field, @, mid - 1, 1))
+          if @blocks.length == 0
+            @blocks.push(new Block(@field, @, mid - 1, 0))
+            @blocks.push(new Block(@field, @, mid,     0))
+            @blocks.push(new Block(@field, @, mid + 1, 0))
+            @blocks.push(new Block(@field, @, mid - 1, 1))
           @centerIndex = 1
         when 5  # J
-          @blocks.push(new Block(@field, @, mid - 1, 0))
-          @blocks.push(new Block(@field, @, mid,     0))
-          @blocks.push(new Block(@field, @, mid + 1, 0))
-          @blocks.push(new Block(@field, @, mid + 1, 1))
+          if @blocks.length == 0
+            @blocks.push(new Block(@field, @, mid - 1, 0))
+            @blocks.push(new Block(@field, @, mid,     0))
+            @blocks.push(new Block(@field, @, mid + 1, 0))
+            @blocks.push(new Block(@field, @, mid + 1, 1))
           @centerIndex = 1
         when 6  # I
-          @blocks.push(new Block(@field, @, mid - 1, 0))
-          @blocks.push(new Block(@field, @, mid,     0))
-          @blocks.push(new Block(@field, @, mid + 1, 0))
-          @blocks.push(new Block(@field, @, mid + 2, 0))
+          if @blocks.length == 0
+            @blocks.push(new Block(@field, @, mid - 1, 0))
+            @blocks.push(new Block(@field, @, mid,     0))
+            @blocks.push(new Block(@field, @, mid + 1, 0))
+            @blocks.push(new Block(@field, @, mid + 2, 0))
           @centerIndex = 1
         else
           throw "I don't know how to create a floating block of this type: " + @type
+
+      decouple.trigger(@field, 'new FloatingBlock', @)
 
 
     asJson: ->
@@ -120,6 +133,7 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
 
   class PlayingField
     constructor: (game, options) ->
+      @playerId = options.playerId if options.playerId?
       @viewType = options.viewType
       @fieldHeight = 22
       @fieldWidth = 10
@@ -137,6 +151,19 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
 
       decouple.trigger(game, 'new PlayingField', @)
 
+      # Initialize blocks after new PlayingField event so that
+      # listeners can be installed.
+      @curFloating = new FloatingBlock(@, { type: options.curFloating.type, blocks: options.curFloating.blocks, playerId: options.playerId }) if options.curFloating?
+      @nextFloating = new FloatingBlock(@, { type: options.nextFloating.type, blocks: options.nextFloating.blocks, playerId: options.playerId }) if options.nextFloating?
+      if options.blocks?
+        for row in options.blocks
+          for b, x in row
+            if b
+              block = new Block(@, { type: b.pieceType }, b.x, b.y, { id: b.id })
+              @storeBlock(block, [b.x, b.y])
+              # Activate immediately.
+              decouple.trigger(block, 'activate Block')
+
 
     # Returns a hash representation of this object with the intent of
     # serializing to JSON.  Will contain no functions and no circular
@@ -145,6 +172,7 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
       {
         blocks: @blocks
         curFloating: @curFloating.asJson()
+        nextFloating: @nextFloating.asJson()
       }
 
 
@@ -153,16 +181,28 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
     # sends the result to us.  We must then update our representation
     # of their playing field based on it.
     updateFromJson: (field) ->
+      console.log 'updateFromJson', field.curFloating
       for row, i in field.blocks
         for blk, j in row
           if blk && not @blocks[i][j]
-            block = new Block(@, { type: blk.pieceType }, blk.x, blk.y)
+            block = new Block(@, { type: blk.pieceType }, blk.x, blk.y, { id: blk.id })
             @storeBlock(block, [blk.x, blk.y])
             # Activate immediately.
             decouple.trigger(block, 'activate Block')
           if not blk && @blocks[i][j]
             decouple.trigger(@blocks[i][j], 'afterClear Block')
 
+      null
+
+
+    blockFromId: (blockId) ->
+      for blk in @curFloating.blocks
+        return blk if blk?.id == blockId
+      for blk in @nextFloating.blocks
+        return blk if blk?.id == blockId
+      for row in @blocks
+        for blk in row
+          return blk if blk?.id == blockId
       null
 
 
@@ -243,6 +283,17 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
       null
 
 
+    clearLinesSequence: (ys) ->
+      return false if ys.length == 0
+      @clearLines(ys)
+      _.delay((=>
+        @fillLinesFromAbove(ys)
+        if ! @checkForGameOver()
+          @startGravity()
+      ), 500)
+      true
+
+
     showNewFloatingBlock: ->
       # The first time this is called, next will be null.
       if ! @nextFloating
@@ -281,15 +332,9 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
           # Lines were cleared.  Pause the game timer.
           @stopGravity()
         @showNewFloatingBlock()
-        @clearLines(ysToClear)
-        if clearedLines
-          _.delay((=>
-            @fillLinesFromAbove(ysToClear)
-            if ! @checkForGameOver()
-              @startGravity()
-          ), 500)
-        else
-          return false if @checkForGameOver()
+        @clearLinesSequence(ysToClear)
+        if not clearedLines && @checkForGameOver()
+          return false
       fell
 
 
@@ -321,7 +366,6 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
       @joinedRemoteGame = false
       @localField = null
       @localPlayer = null
-      @fields = []
       @players = {}
       @addLocalPlayer()
       game = @
@@ -330,6 +374,8 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
         @now.receiveMessage = (playerId, msg) -> console.log "#{game.players[playerId].name}: #{msg}"
         @now.addPlayer = _.bind(@addRemotePlayer, @)
         @now.removePlayer = _.bind(@removePlayer, @)
+        @now.receiveBlockEvent = _.bind(@receiveBlockEvent, @)
+        @now.receiveFieldEvent = _.bind(@receiveFieldEvent, @)
         @now.updateRemotePlayingField = _.bind(@updateRemotePlayingField, @)
         @now.getPlayers (players) =>
           console.log 'getPlayers', players
@@ -340,7 +386,6 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
     addLocalPlayer: (player = {}) ->
       throw("You tried to add a local player, but I already have one.") if @localField
       @localField = player.field = new PlayingField(@, { viewType: 'local' })
-      @fields = @fields.concat([@localField])
       @localPlayer = player
       @addPlayer(player) if player.id
       @localPlayer
@@ -353,9 +398,8 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
 
     addRemotePlayer: (player) ->
       return if player.id in _.keys(@players, 'id')
-      console.log 'addRemotePlayer', player.id
-      player.field = new PlayingField(@, { viewType: 'remote' })
-      @fields.push(player.field)
+      player.field = new PlayingField(@, { playerId: player.id, viewType: 'remote', blocks: player.field.blocks, curFloating: player.field.curFloating, nextFloating: player.field.nextFloating })
+      console.log 'addRemotePlayer', (b.id for b in player.field.curFloating.blocks), player.id
       @addPlayer(player)
 
     # player must have an id.
@@ -370,6 +414,39 @@ define ['underscore', 'util', 'decouple', 'now'], (_, util, decouple, nowjs) ->
       decouple.trigger(@, 'beforeRemovePlayer', player)
       delete @players[id]
       decouple.trigger(@, 'afterRemovePlayer', player)
+
+    receiveBlockEvent: (playerId, blockId, event, args...) ->
+      return if playerId == @localPlayer.id
+      #console.log 'receiveBlockEvent', playerId, blockId, event, args...
+      block = @players[playerId].field.blockFromId(blockId)
+      if not block
+        console.log 'receiveBlockEvent', playerId, blockId, event, args...
+        throw "couldn't find block #{blockId}"
+      #console.log block.id, block
+      if event == 'move Block'
+        block.setXy(args[0])
+      else
+        decouple.trigger(block, event, args...)
+
+    receiveFieldEvent: (playerId, event, args...) ->
+      return if playerId == @localPlayer.id
+      console.log 'receiveFieldEvent', playerId, event, args...
+      field = @players[playerId].field
+      if event == 'afterLandPiece'
+        console.log 'receive afterLandPiece', (b.id for b in field.curFloating.blocks), playerId
+        for blk in field.curFloating.blocks
+          field.storeBlock(blk, blk.getXy())
+      else if event == 'new FloatingBlock'
+        [opts] = args
+        field.curFloating = field.nextFloating
+        field.nextFloating = new FloatingBlock(field, _.extend(opts, { playerId: playerId }))
+        for blk in field.curFloating.blocks
+          decouple.trigger(blk, 'activate Block')
+      else if event == 'clear'
+        [ys, blks] = args
+        field.clearLinesSequence(ys)
+      else
+        decouple.trigger(field, event, args...)
 
     # The server calls this when a player has an update to his/her
     # playing field.

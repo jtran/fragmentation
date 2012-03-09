@@ -23,6 +23,11 @@ define ['tetromino-engine', 'now'], (engine, now) ->
         everyone.now.addPlayer(player)
       everyone.now.distributeMessage = (msg) ->
         everyone.now.receiveMessage(@user.clientId, msg)
+      everyone.now.distributeBlockEvent = (blockId, event, args...) ->
+        everyone.now.receiveBlockEvent(@user.clientId, blockId, event, args...)
+      everyone.now.distributeFieldEvent = (event, args...) ->
+        console.log 'fieldEvent', @user.clientId, event, args...
+        everyone.now.receiveFieldEvent(@user.clientId, event, args...)
       everyone.now.updatePlayingField = (field) ->
         # Client is sending us an update to his/her playing field.
         id = @user.clientId
@@ -32,8 +37,11 @@ define ['tetromino-engine', 'now'], (engine, now) ->
         console.log("Update playing field #{id}", field)
         # Store the updated field.
         players[id].field = field
-        # Broadcast the update to all players.
-        everyone.now.updateRemotePlayingField(id, field)
+        # We do not broadcast the update.  This is only used when a
+        # new player joins and needs to initialize a full view of a
+        # remote player's game.
+        ## Broadcast the update to all players.
+        ##everyone.now.updateRemotePlayingField(id, field)
 
 
   # Export singleton.
