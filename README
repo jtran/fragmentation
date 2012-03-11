@@ -1,0 +1,7 @@
+To run the server:
+
+    cake build && node app.js
+
+To run tests:
+
+    cake build && cake test
