@@ -22,6 +22,9 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
         else
           throw "I don't know how to style a block of this type: " + @pieceModel.type
 
+      # Initial position.
+      @fieldView.setElementXy(@elm, @blockModel.getXy())
+
       # Use theme.
       $(@elm).addClass(@fieldView.getTheme())
 
@@ -34,14 +37,15 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
       decouple.on @blockModel, 'activate Block', (caller, event) =>
         $(@elm).removeClass('next')
 
-      decouple.on @blockModel, 'beforeClear Block', (caller, event) =>
-        @expand()
+      decouple.on @blockModel, 'beforeClear Block', (caller, event) => @expand()
 
-      decouple.on @blockModel, 'afterClear Block', (caller, event) =>
-        $(@elm).remove()
-        # Remove references to prevent memory leak.
-        @elm = null
-        decouple.removeAllForCaller(@blockModel)
+      decouple.on @blockModel, 'afterClear Block', (caller, event) => @dispose()
+
+    dispose: ->
+      $(@elm).remove()
+      # Remove references to prevent memory leak.
+      @elm = null
+      decouple.removeAllForCaller(@blockModel)
 
     expand: ->
       $(@elm).css {
@@ -56,21 +60,35 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
     THEMES = ['blue', 'orange', 'yellow']
 
-    constructor: (@fieldModel) ->
+    constructor: (@fieldModel, options) ->
+      @ordinal = options.ordinal
+      @domId = _.uniqueId()
       @blockHeight = 20
       @blockWidth = 20
       @borderWidth = 1
       @borderHeight = 1
+      @marginLeft = 20
 
-      @themeIndex = 0
+      @themeIndex = options.themeIndex ? 0
 
-      # Create elements on page.
-      $('#background').append("""
-        <div id="field_#{@fieldModel.ordinal}" class="field">
-          <div class="field_background"></div>
-          <div id="tail_#{@fieldModel.ordinal}" class="tail"></div>
-        </div>
+      # Create elements on page.  Wrap in a lambda so that references
+      # don't leak to lambdas further down.
+      (=>
+        $field = $("""
+          <div id="field_#{@domId}" class="field" style="display: none">
+            <div class="field_background"></div>
+            <div id="tail_#{@domId}" class="tail"></div>
+          </div>
         """)
+        fieldPixelWidth = @fieldPixelWidth()
+        fieldPixelHeight = @fieldPixelHeight()
+        $field.css
+          left: "#{@ordinal * (fieldPixelWidth + @marginLeft) + @marginLeft}px"
+          width: "#{fieldPixelWidth}px"
+          height: "#{fieldPixelHeight}px"
+        $field.appendTo('#background')
+        $field.fadeIn('fast')
+      )()
 
       # Use default theme.
       @setTheme(THEMES[@themeIndex]);
@@ -90,8 +108,20 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
         music?.pause()
 
 
-    fieldSelector: -> "#field_#{@fieldModel.ordinal}"
-    tailSelector:  -> "#tail_#{@fieldModel.ordinal}"
+    leaveGame: (callback = null) =>
+      $(@fieldSelector()).fadeOut 'slow', =>
+        for row in @fieldModel.blocks
+          for blk in row
+            decouple.trigger(blk, 'afterClear Block') if blk
+        $(@fieldSelector()).remove()
+        callback?()
+
+
+    fieldPixelWidth: -> @blockWidth * @fieldModel.fieldWidth + 2 * @borderWidth
+    fieldPixelHeight: -> @blockHeight * @fieldModel.fieldHeight + 2 * @borderHeight
+
+    fieldSelector: -> "#field_#{@domId}"
+    tailSelector:  -> "#tail_#{@domId}"
 
     getTheme: -> THEMES[@themeIndex]
 
@@ -105,6 +135,10 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
       @themeIndex = (@themeIndex + 1) % THEMES.length
       @setTheme(THEMES[@themeIndex])
 
+
+    setOrdinal: (ordinal) ->
+      @ordinal = ordinal
+      $(@fieldSelector).css('left', "#{@ordinal * (@fieldPixelWidth() + @marginLeft) + @marginLeft}px")
 
     setElementXy: (sel, xy) ->
       util.setPosition(sel,

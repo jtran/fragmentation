@@ -1,9 +1,44 @@
-require ['jquery', 'tetromino-engine', 'tetromino-dom-view'], ($, TetrominoEngine, DomView) ->
+require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-server-view', 'decouple', 'now'], ($, TetrominoEngine, DomView, PushToServerView, decouple, now) ->
 
-  game = new TetrominoEngine.TetrominoGame()
+  now ?= window.now
+  game = null
+  localField = null
+  localFieldView = null
+  pushToServerView = null
+  fieldViews = []
+
+  decouple.on null, 'new PlayingField', (game, event, field) ->
+    console.log("adding DOM view #{fieldViews.length}", event, field)
+    options =
+      ordinal: fieldViews.length
+      themeIndex: if field.viewType == 'local' then 0 else 2
+    fieldView = new DomView.PlayingFieldDomView(field, options)
+    fieldViews.push(fieldView)
+    if field.viewType == 'local'
+      # Keep a reference to the local view.
+      localFieldView = fieldView
+      # Create a push-to-server view on the local playing field.
+      pushToServerView = new PushToServerView.PlayingFieldView(game, field, now)
+
+  fieldViewsFromPlayer = (player) ->
+    fieldView for fieldView in fieldViews when fieldView.fieldModel == player.field
+
+  game = new TetrominoEngine.TetrominoGame(now)
   localField = game.localField
 
-  localFieldView = new DomView.PlayingFieldDomView(localField)
+  # Re-organize the view when a player leaves the game.
+  decouple.on game, 'afterRemovePlayer', (caller, event, player) =>
+    for fieldView in fieldViewsFromPlayer(player)
+      fieldView.leaveGame? =>
+        # Remove from list.
+        fieldViews = (fv for fv in fieldViews when fv != fieldView)
+        # Set ordinals of remaining views.
+        i = 0
+        for id, p of game.players
+          for fv in fieldViewsFromPlayer(p)
+            fv.setOrdinal(i)
+          i++
+
 
   localField.showNewFloatingBlock()
 
@@ -26,5 +61,6 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view'], ($, TetrominoEngin
   game.start()
 
   # Give us easy access from the console.
-  window.game = game;
-  window.localField = localField;
+  window.game = game
+  window.localField = localField
+  window.localFieldView = localFieldView

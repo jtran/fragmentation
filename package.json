@@ -11,6 +11,7 @@
     , "requirejs": "1.0.x"
     , "underscore": "1.2.x"
     , "coffee-script": "1.2.x"
+    , "now": "0.8.x"
   }
 , "devDependencies": {
     "jasmine-node":  "1.0.x"

@@ -20,3 +20,7 @@ task 'build', 'Build project from src/*.coffee to lib/*.js', ->
   exec 'coffee --compile --output lib/ src/', (err, stdout, stderr) ->
     throw err if err
     console.log stdout + stderr
+  # Also build the server.
+  exec 'coffee --compile tetromino-server.coffee', (err, stdout, stderr) ->
+    throw err if err
+    console.log stdout + stderr

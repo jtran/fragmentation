@@ -7,8 +7,8 @@ html {
 background-color: #000;
 }
 .field {
-height: 442px; width: 202px; margin: 10px auto;
-position: relative;
+margin: 10px 0;
+position: absolute;
 }
 .field_background {
 width: 100%; height: 402px;
@@ -21,6 +21,7 @@ position: absolute;
 border-radius: 3px;
 -webkit-transition: left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out, border-radius 0.5s linear;
 -moz-transition:    left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out, border-radius 0.5s linear;
+color: #888; font-size: 9px; font-family: Helvetica, sans-serif;
 }
 .light {
 background-color: #fff;
@@ -82,7 +83,8 @@ opacity: 0.7;
 require({
   paths: {
     jquery: '/jquery-1.6.2.min',
-    jqueryui: '/jquery-ui-1.8.16.custom.min'
+    jqueryui: '/jquery-ui-1.8.16.custom.min',
+    now: '/nowjs/now'
   },
   priority: ['jquery']
 }, ['main']);

@@ -9,6 +9,7 @@ requirejs.config({
   paths: {
     'require': 'vendor/javascripts/require'
   , 'underscore': 'vendor/javascripts/underscore'
+  , 'tetromino-server': __dirname + '/tetromino-server'
   },
   //Pass the top-level main.js/index.js require
   //function to requirejs so that node modules
@@ -61,18 +62,14 @@ app.listen(port);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
 
 
-requirejs.define('jquery', [], function() {
-  return function() {
-    console.error("You tried to use jQuery on the server side.");
-  };
+requirejs.define('app', function() {
+  return app;
 });
 
-requirejs.define('jqueryui', [], function() {
-  return function() {
-    console.error("You tried to use jQueryUI on the server side.");
-  };
+requirejs.define('jquery', function() {
+  return function() { throw("You tried to use jQuery on the server."); };
 });
 
-//requirejs(['./tetromino-engine'], function(engine) {
-//  console.log(engine);
-//});
+requirejs(['app', 'tetromino-server'], function(app, tetrominoServer) {
+  tetrominoServer.initializeGame(app);
+});
