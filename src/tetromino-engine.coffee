@@ -453,12 +453,17 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
   class TetrominoGame
     constructor: (@server) ->
       @joinedRemoteGame = false
+      @socketCallbacksDone = false
       @localField = null
       @localPlayer = null
       @models = new ModelEventReceiver(@)
       @addLocalPlayer()
       game = @
+      # This gets called when the client connects to the server, and
+      # again each time it reconnects.
       @server.ready =>
+        console.log 'connected'
+        @initSocketCallbacks()
         @setLocalPlayerId(@server.core.clientId)
         @server.receiveMessage = (playerId, msg) -> console.log "#{playerId}: #{msg}"
         @server.addPlayer = _.bind(@models.addPlayer, @models)
@@ -471,6 +476,14 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
           @models.addPlayer(p) for id, p of players
           @server.join(@localField.asJson())
           @joinedRemoteGame = true
+
+    initSocketCallbacks: ->
+      # Only do this once.
+      return if @socketCallbacksDone
+      @socketCallbacksDone = true
+      @server.core.socketio.on 'disconnect', =>
+        console.log 'disconnected'
+        @joinedRemoteGame = false
 
     addLocalPlayer: ->
       throw("You tried to add a local player, but I already have one.") if @localField
