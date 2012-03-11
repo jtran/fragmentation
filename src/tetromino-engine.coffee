@@ -1,4 +1,4 @@
-define ['underscore', 'util', 'decouple', 'now', 'tetromino-player', 'tetromino-event-model-mirror'], (_, util, decouple, nowjs, tetrominoPlayer, modelMirror) ->
+define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decouple, tetrominoPlayer) ->
 
   # Represents a single square.
   class Block
@@ -135,6 +135,7 @@ define ['underscore', 'util', 'decouple', 'now', 'tetromino-player', 'tetromino-
     constructor: (game, options) ->
       @playerId = options.playerId if options.playerId?
       @viewType = options.viewType
+      @useGravity = options.useGravity ? false
       @fieldHeight = 22
       @fieldWidth = 10
       @blocks = []
@@ -356,86 +357,129 @@ define ['underscore', 'util', 'decouple', 'now', 'tetromino-player', 'tetromino-
 
 
     startGravity: ->
+      # No gravity on the server.
+      return unless @useGravity
       @fallTimer = window.setInterval(_.bind(@fall, @), @gravityInterval())
 
 
     stopGravity: ->
+      # No gravity on the server.
+      return unless @useGravity
       window.clearInterval(@fallTimer)
       @fallTimer = null
 
 
+  # If you have a model with a TetrominoPushToServerView, this class
+  # can create another model that mirrors the original, allowing us to
+  # have a local instance of the remote model.
+  class ModelEventReceiver
+    # players is a hash : playerId -> Player
+    constructor: (@game) ->
+      @players = {}
+      @excludePlayerId = null
+
+    addPlayer: (player) ->
+      return if player.id in _.keys(@players, 'id')
+      # Clone since we may modify this.
+      player = _.clone(player)
+      if player.field not instanceof PlayingField
+        player.field = new PlayingField(@game, { playerId: player.id, viewType: 'remote', blocks: player.field.blocks, curFloating: player.field.curFloating, nextFloating: player.field.nextFloating })
+      console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
+      @players[player.id] = player
+
+    removePlayer: (playerId) ->
+      id = playerId.id ? playerId
+      console.log("removePlayer", id)
+      if id == @excludePlayerId
+        console.log "skipping remove", id
+        return
+      player = @players[id]
+      decouple.trigger(@game, 'beforeRemovePlayer', player)
+      delete @players[id]
+      decouple.trigger(@game, 'afterRemovePlayer', player)
+
+    receiveBlockEvent: (playerId, blockId, event, args...) ->
+      return if playerId == @excludePlayerId
+      #console.log 'receiveBlockEvent', playerId, blockId, event, args...
+      player = @players[playerId]
+      throw "couldn't find player #{playerId} for block event #{blockId}" unless player
+      block = player.field.blockFromId(blockId)
+      if not block
+        console.log 'receiveBlockEvent', playerId, blockId, event, args...
+        console.log 'field', player.field.blocks, player.field.curFloating?.blocks, player.field.nextFloating?.blocks
+        throw "couldn't find block #{blockId}"
+      if event == 'move Block'
+        block.setXy(args[0])
+      else
+        decouple.trigger(block, event, args...)
+
+    receiveFieldEvent: (playerId, event, args...) ->
+      return if playerId == @excludePlayerId
+      console.log 'receiveFieldEvent', playerId, event, args...
+      field = @players[playerId].field
+      if event == 'afterLandPiece'
+        console.log 'receive afterLandPiece', (b.id for b in field.curFloating.blocks), playerId
+        for blk in field.curFloating.blocks
+          field.storeBlock(blk, blk.getXy())
+      else if event == 'new FloatingBlock'
+        [opts] = args
+        field.curFloating = field.nextFloating
+        field.nextFloating = new FloatingBlock(field, _.extend(opts, { playerId: playerId }))
+        for blk in field.curFloating.blocks
+          decouple.trigger(blk, 'activate Block')
+      else if event == 'clear'
+        [ys, blks] = args
+        field.clearLinesSequence(ys)
+      else
+        decouple.trigger(field, event, args...)
+
+    # The server calls this when a player has sent a full refresh to
+    # his/her playing field.
+    receiveUpdatePlayingField: (playerId, field) ->
+      player = @players[playerId]
+      unless player
+        console.warn "I got an updateClient for an unknown player id=#{playerId}"
+        return
+      console.log("updatePlayingField #{playerId}", field)
+      player.field.updateFromJson(field) if playerId != @excludePlayerId
+
 
   # A game on the client.
   class TetrominoGame
-    constructor: (@now) ->
+    constructor: (@server) ->
       @joinedRemoteGame = false
       @localField = null
       @localPlayer = null
-      @players = {}
-      @eventModelMirror = new modelMirror.Mirror(@players, FloatingBlock)
+      @models = new ModelEventReceiver(@)
       @addLocalPlayer()
       game = @
-      @now.ready =>
-        @setLocalPlayerId(@now.core.clientId)
-        @now.receiveMessage = (playerId, msg) -> console.log "#{game.players[playerId].name}: #{msg}"
-        @now.addPlayer = _.bind(@addRemotePlayer, @)
-        @now.removePlayer = _.bind(@removePlayer, @)
-        @now.receiveBlockEvent = _.bind(@receiveBlockEvent, @)
-        @now.receiveFieldEvent = _.bind(@receiveFieldEvent, @)
-        @now.updateRemotePlayingField = _.bind(@updateRemotePlayingField, @)
-        @now.getPlayers (players) =>
+      @server.ready =>
+        @setLocalPlayerId(@server.core.clientId)
+        @server.receiveMessage = (playerId, msg) -> console.log "#{playerId}: #{msg}"
+        @server.addPlayer = _.bind(@models.addPlayer, @models)
+        @server.removePlayer = _.bind(@models.removePlayer, @models)
+        @server.receiveBlockEvent = _.bind(@models.receiveBlockEvent, @models)
+        @server.receiveFieldEvent = _.bind(@models.receiveFieldEvent, @models)
+        @server.receiveUpdatePlayingField = _.bind(@models.receiveUpdatePlayingField, @models)
+        @server.getPlayers (players) =>
           console.log 'getPlayers', players
-          @addRemotePlayer(p) for id, p of players
-          @now.join(@localField.asJson())
+          @models.addPlayer(p) for id, p of players
+          @server.join(@localField.asJson())
           @joinedRemoteGame = true
 
     addLocalPlayer: ->
       throw("You tried to add a local player, but I already have one.") if @localField
-      @localField = new PlayingField(@, { viewType: 'local' })
+      @localField = new PlayingField(@, { viewType: 'local', useGravity: true })
       @localPlayer = new tetrominoPlayer.Player(null, @localField)
       @addPlayer(@localPlayer) if @localPlayer.id
       @localPlayer
 
     setLocalPlayerId: (id) ->
       console.log 'setLocalPlayerId', id
-      @removePlayer(@localPlayer.id) if @localPlayer.id
+      @models.removePlayer(@localPlayer.id) if @localPlayer.id
       @localPlayer.id = id
-      @addPlayer(@localPlayer)
-
-    addRemotePlayer: (player) ->
-      return if player.id in _.keys(@players, 'id')
-      player.field = new PlayingField(@, { playerId: player.id, viewType: 'remote', blocks: player.field.blocks, curFloating: player.field.curFloating, nextFloating: player.field.nextFloating })
-      console.log 'addRemotePlayer', (b.id for b in player.field.curFloating.blocks), player.id
-      @addPlayer(player)
-
-    # player must have an id.
-    addPlayer: (player) ->
-      console.log("addPlayer", player.id)
-      @players[player.id] = player
-
-    removePlayer: (playerId) ->
-      id = playerId.id ? playerId
-      console.log("removePlayer", id)
-      player = @players[id]
-      decouple.trigger(@, 'beforeRemovePlayer', player)
-      delete @players[id]
-      decouple.trigger(@, 'afterRemovePlayer', player)
-
-    receiveBlockEvent: (playerId, blockId, event, args...) ->
-      return if playerId == @localPlayer.id
-      @eventModelMirror.receiveBlockEvent(playerId, blockId, event, args...)
-
-    receiveFieldEvent: (playerId, event, args...) ->
-      return if playerId == @localPlayer.id
-      @eventModelMirror.receiveFieldEvent(playerId, event, args...)
-
-    # The server calls this when a player has an update to his/her
-    # playing field.
-    updateRemotePlayingField: (playerId, field) ->
-      player = @players[playerId]
-      return unless player
-      console.log("updateRemotePlayingField #{playerId}", field)
-      player.field.updateFromJson(field) if playerId != @localPlayer.id
+      @models.excludePlayerId = id
+      @models.addPlayer(@localPlayer)
 
     start: ->
       @localField?.startGravity()
@@ -448,4 +492,5 @@ define ['underscore', 'util', 'decouple', 'now', 'tetromino-player', 'tetromino-
     Block: Block
     FloatingBlock: FloatingBlock
     PlayingField: PlayingField
+    ModelEventReceiver: ModelEventReceiver
     TetrominoGame: TetrominoGame

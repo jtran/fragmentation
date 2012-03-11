@@ -9,10 +9,6 @@ define ['underscore', 'decouple', 'now'], (_, decouple, now) ->
         if @game.joinedRemoteGame
           @now.distributeBlockEvent(@blockModel.id, event, @blockModel.getXy())
 
-      decouple.on @blockModel, 'afterClear Block', (caller, event) =>
-        @now.distributeBlockEvent(@blockModel.id, event) if @game.joinedRemoteGame
-        @dispose()
-
     dispose: ->
       # Remove references to prevent memory leak.
       decouple.removeAllForCaller(@blockModel)
@@ -42,7 +38,7 @@ define ['underscore', 'decouple', 'now'], (_, decouple, now) ->
       throw "someone called push()"
       return unless @game.joinedRemoteGame
       console.log "pushing playing field...", @fieldModel.asJson()
-      @now.updatePlayingField(@fieldModel.asJson())
+      @now.distributeUpdatePlayingField(@fieldModel.asJson())
 
 
   # Exports
