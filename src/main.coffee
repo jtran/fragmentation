@@ -42,7 +42,6 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
 
   localField.showNewFloatingBlock()
 
-  $(document).bind 'mousedown', (event) -> localFieldView.rotateTheme()
   $(document).bind 'keydown', (event) ->
     # console.log('keydown', event.which, String.fromCharCode(event.which))
     localField.moveLeft()  if (event.which == 37) # left arrow

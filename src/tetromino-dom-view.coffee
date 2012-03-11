@@ -68,8 +68,7 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
       @borderWidth = 1
       @borderHeight = 1
       @marginLeft = 20
-
-      @themeIndex = options.themeIndex ? 0
+      @themeIndex = null
 
       # Create elements on page.  Wrap in a lambda so that references
       # don't leak to lambdas further down.
@@ -90,8 +89,8 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
         $field.fadeIn('fast')
       )()
 
-      # Use default theme.
-      @setTheme(THEMES[@themeIndex]);
+      # Use theme.
+      @setThemeIndex(options.themeIndex ? 0)
 
       decouple.on @fieldModel, 'new Block', (fieldModel, event, block, piece) =>
         new BlockDomView(@, block, piece)
@@ -125,15 +124,10 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
     getTheme: -> THEMES[@themeIndex]
 
-
-    setTheme: (theme) ->
-      $('.block, .tail', @fieldSelector()).addClass(theme)
-
-
-    rotateTheme: ->
-      $('.block, .tail', @fieldSelector()).removeClass(THEMES[@themeIndex])
-      @themeIndex = (@themeIndex + 1) % THEMES.length
-      @setTheme(THEMES[@themeIndex])
+    setThemeIndex: (themeIndex) ->
+      $('.block, .tail', @fieldSelector()).removeClass(THEMES[@themeIndex]) if @themeIndex?
+      @themeIndex = themeIndex
+      $('.block, .tail', @fieldSelector()).addClass(THEMES[themeIndex])
 
 
     setOrdinal: (ordinal) ->
