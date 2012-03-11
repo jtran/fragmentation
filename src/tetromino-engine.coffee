@@ -17,6 +17,8 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
 
     getXy: -> [@x, @y]
 
+    activate: -> decouple.trigger(@, 'activate Block')
+
 
   class FloatingBlock
     NUM_TYPES_OF_BLOCKS = 7;
@@ -154,8 +156,12 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
 
       # Initialize blocks after new PlayingField event so that
       # listeners can be installed.
-      @curFloating = new FloatingBlock(@, { type: options.curFloating.type, blocks: options.curFloating.blocks, playerId: options.playerId }) if options.curFloating?
-      @nextFloating = new FloatingBlock(@, { type: options.nextFloating.type, blocks: options.nextFloating.blocks, playerId: options.playerId }) if options.nextFloating?
+      if options.curFloating?
+        @curFloating = new FloatingBlock(@, { type: options.curFloating.type, blocks: options.curFloating.blocks, playerId: options.playerId })
+        # Activate immediately.
+        blk.activate() for blk in @curFloating.blocks
+      if options.nextFloating?
+        @nextFloating = new FloatingBlock(@, { type: options.nextFloating.type, blocks: options.nextFloating.blocks, playerId: options.playerId })
       if options.blocks?
         for row in options.blocks
           for b, x in row
@@ -163,7 +169,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
               block = new Block(@, { type: b.pieceType }, b.x, b.y, { id: b.id })
               @storeBlock(block, [b.x, b.y])
               # Activate immediately.
-              decouple.trigger(block, 'activate Block')
+              block.activate()
 
 
     # Returns a hash representation of this object with the intent of
@@ -194,7 +200,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
             block = new Block(@, { type: blk.pieceType }, blk.x, blk.y, { id: blk.id })
             @storeBlock(block, [blk.x, blk.y])
             # Activate immediately.
-            decouple.trigger(block, 'activate Block')
+            block.activate()
           if not blk && @blocks[i][j]
             decouple.trigger(@blocks[i][j], 'afterClear Block')
 
@@ -309,7 +315,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       @curFloating = @nextFloating
       # Move the new current into position.
       for blk in @curFloating.blocks
-        decouple.trigger(blk, 'activate Block')
+        blk.activate()
         blk.setXy([blk.x, blk.y + 2])
       # Spawn a new next.
       @nextFloating = new FloatingBlock(this)
@@ -425,8 +431,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         [opts] = args
         field.curFloating = field.nextFloating
         field.nextFloating = new FloatingBlock(field, _.extend(opts, { playerId: playerId }))
-        for blk in field.curFloating.blocks
-          decouple.trigger(blk, 'activate Block')
+        blk.activate() for blk in field.curFloating.blocks
       else if event == 'clear'
         [ys, blks] = args
         field.clearLinesSequence(ys)
