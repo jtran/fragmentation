@@ -1,7 +1,11 @@
+To install:
+
+    npm install
+
 To run the server:
 
-    cake build && node app.js
+    node app.js
 
 To run tests:
 
-    cake build && cake test
+    cake test

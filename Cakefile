@@ -1,26 +1,37 @@
-task 'test', 'Run all tests', (options) ->
-  jasmine = require 'jasmine-node'
+{print} = require 'util'
+{spawn} = require 'child_process'
 
-  showColors = true
-  isVerbose = false
-  teamcity = null
-  useRequireJs = false
+spawnCoffee = (options, callback = null) ->
+  coffee = spawn 'coffee', options
+  coffee.stderr.on 'data', (data) ->
+    process.stderr.write data.toString()
+  coffee.stdout.on 'data', (data) ->
+    print data.toString()
+  coffee.on 'exit', (code) ->
+    callback?() if code is 0
 
-  jasmine.executeSpecsInFolder __dirname + '/spec', ((runner, log) ->
-    if runner.results().failedCount == 0
-      process.exit 0
-    else
-      process.exit 1
-  ), isVerbose, showColors, teamcity, useRequireJs,
-  /\.(js|coffee)$/, { report: null }
-
+build = (callback) ->
+  spawnCoffee ['--compile', '--output', 'lib', 'src'], ->
+    # Compile the server.
+    spawnCoffee ['--compile', 'tetromino-server.coffee'], ->
+      callback?()
 
 task 'build', 'Build project from src/*.coffee to lib/*.js', ->
-  {exec} = require 'child_process'
-  exec 'coffee --compile --output lib/ src/', (err, stdout, stderr) ->
-    throw err if err
-    console.log stdout + stderr
-  # Also build the server.
-  exec 'coffee --compile tetromino-server.coffee', (err, stdout, stderr) ->
-    throw err if err
-    console.log stdout + stderr
+  build()
+
+task 'test', 'Build and run all tests', (options) ->
+  build ->
+    jasmine = require 'jasmine-node'
+
+    showColors = true
+    isVerbose = false
+    teamcity = null
+    useRequireJs = false
+
+    jasmine.executeSpecsInFolder __dirname + '/spec', ((runner, log) ->
+      if runner.results().failedCount == 0
+        process.exit 0
+      else
+        process.exit 1
+    ), isVerbose, showColors, teamcity, useRequireJs,
+    /\.(js|coffee)$/, { report: null }

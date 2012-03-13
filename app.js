@@ -62,14 +62,27 @@ app.listen(port);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
 
 
+// Must define this as a module so that we have access to it inside
+// the requirejs call below.
 requirejs.define('app', function() {
   return app;
 });
 
+// Our util module currently depends on jQuery, even though we never
+// call those functions on the server.
 requirejs.define('jquery', function() {
   return function() { throw("You tried to use jQuery on the server."); };
 });
 
-requirejs(['app', 'tetromino-server'], function(app, tetrominoServer) {
-  tetrominoServer.initializeGame(app);
+// Compile everything to JavaScript since requirejs can't handle
+// CoffeeScript.  There's a plugin, but it means you have to know
+// whether a module is implemented with JS or Coffee.  Screw that.
+var exec = require('child_process').exec;
+exec('cake build', function(err, stdout, stderr) {
+  if (err) throw(err);
+  console.log(stdout + stderr);
+  requirejs(['app', 'tetromino-server'], function(app, tetrominoServer) {
+    // Start the game server.
+    tetrominoServer.initializeGame(app);
+  });
 });
