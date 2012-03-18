@@ -30,7 +30,7 @@ define ['underscore', 'decouple', 'now'], (_, decouple, now) ->
         if @game.joinedRemoteGame
           @now.distributeFieldEvent(event, ys, blksToRemove)
 
-      decouple.on @fieldModel, 'afterLandPiece', (caller, event) =>
+      decouple.on @fieldModel, 'afterAttachPiece', (caller, event) =>
         if @game.joinedRemoteGame
           @now.distributeFieldEvent(event)
 

@@ -105,28 +105,30 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         blk.setXy(xys2[i]))
       true
 
+    moveLeft:  -> @transform (blk) -> [blk.x - 1, blk.y]
+    moveRight: -> @transform (blk) -> [blk.x + 1, blk.y]
+    moveDown:  -> @transform (blk) -> [blk.x,     blk.y + 1]
+
     rotateClockwise: ->
       return false unless @canRotate
-      xyCenter = @blocks[@centerIndex].getXy()
+      [xCenter, yCenter] = @blocks[@centerIndex].getXy()
       rotateWithShift = (shift) ->
         (blk) ->
-          xy = blk.getXy()
-          dx = xy[0] - xyCenter[0]
-          dy = xy[1] - xyCenter[1]
-          [xyCenter[0] - dy + shift, xyCenter[1] + dx]
+          dx = blk.x - xCenter
+          dy = blk.y - yCenter
+          [xCenter - dy + shift, yCenter + dx]
       @transform(rotateWithShift(0)) ||
         @transform(rotateWithShift(1)) ||
         @transform(rotateWithShift(-1))
 
     rotateCounterclockwise: ->
       return false unless @canRotate
-      xyCenter = @blocks[@centerIndex].getXy()
+      [xCenter, yCenter] = @blocks[@centerIndex].getXy()
       rotateWithShift = (shift) ->
         (blk) ->
-          xy = blk.getXy()
-          dx = xy[0] - xyCenter[0]
-          dy = xy[1] - xyCenter[1]
-          [xyCenter[0] + dy + shift, xyCenter[1] - dx]
+          dx = blk.x - xCenter
+          dy = blk.y - yCenter
+          [xCenter + dy + shift, yCenter - dx]
       @transform(rotateWithShift(0)) ||
         @transform(rotateWithShift(1)) ||
         @transform(rotateWithShift(-1))
@@ -237,28 +239,19 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     isXyTaken: (xy) -> ! @isXyFree(xy)
 
 
-    moveLeft: ->
-      @curFloating.transform((blk) ->
-        xy = blk.getXy()
-        [xy[0] - 1, xy[1]]
-      )
+    rotateClockwise: -> @curFloating.rotateClockwise()
 
-    moveRight: ->
-      @curFloating.transform((blk) ->
-        xy = blk.getXy()
-        [xy[0] + 1, xy[1]]
-      )
+    rotateCounterclockwise: -> @curFloating.rotateCounterclockwise()
+
+    moveLeft: -> @curFloating.moveLeft()
+
+    moveRight: -> @curFloating.moveRight()
+
+    moveDown: -> @curFloating.moveDown()
 
 
-    moveDown: ->
-      @curFloating.transform((blk) ->
-        xy = blk.getXy()
-        [xy[0], xy[1] + 1]
-      )
-
-
-    landFloatingBlock: (flt) ->
-      for blk in flt.blocks
+    attachPiece: (piece) ->
+      for blk in piece.blocks
         @storeBlock(blk, blk.getXy())
       null
 
@@ -305,7 +298,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       true
 
 
-    showNewFloatingBlock: ->
+    useNextPiece: ->
       # The first time this is called, next will be null.
       if ! @nextFloating
         @nextFloating = new FloatingBlock(this)
@@ -331,18 +324,18 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       true
 
 
-    fall: ->
+    moveDownOrAttach: ->
       fell = @moveDown()
       if ! fell
-        decouple.trigger(@, 'beforeLandPiece')
-        @landFloatingBlock(@curFloating)
-        decouple.trigger(@, 'afterLandPiece')
+        decouple.trigger(@, 'beforeAttachPiece')
+        @attachPiece(@curFloating)
+        decouple.trigger(@, 'afterAttachPiece')
         ysToClear = @linesToClear(@curFloating)
         clearedLines = ysToClear.length > 0
         if clearedLines
           # Lines were cleared.  Pause the game timer.
           @stopGravity()
-        @showNewFloatingBlock()
+        @useNextPiece()
         @clearLinesSequence(ysToClear)
         if not clearedLines && @checkForGameOver()
           return false
@@ -353,7 +346,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       decouple.trigger(@, 'beforeDrop')
 
       # Drop.
-      null while @fall()
+      null while @moveDownOrAttach()
 
       decouple.trigger(@, 'afterDrop')
 
@@ -364,7 +357,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     startGravity: ->
       # No gravity on the server.
       return unless @useGravity
-      @fallTimer = window.setInterval(_.bind(@fall, @), @gravityInterval())
+      @fallTimer = window.setInterval(_.bind(@moveDownOrAttach, @), @gravityInterval())
 
 
     stopGravity: ->
@@ -422,8 +415,8 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       return if playerId == @excludePlayerId
       console.log 'receiveFieldEvent', playerId, event, args...
       field = @players[playerId].field
-      if event == 'afterLandPiece'
-        console.log 'receive afterLandPiece', (b.id for b in field.curFloating.blocks), playerId
+      if event == 'afterAttachPiece'
+        console.log 'receive afterAttachPiece', (b.id for b in field.curFloating.blocks), playerId
         for blk in field.curFloating.blocks
           field.storeBlock(blk, blk.getXy())
       else if event == 'new FloatingBlock'
@@ -499,7 +492,9 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       @models.addPlayer(@localPlayer)
 
     start: ->
-      @localField?.startGravity()
+      return unless @localField
+      @localField.useNextPiece()
+      @localField.startGravity()
 
     players: -> @models.players
 
