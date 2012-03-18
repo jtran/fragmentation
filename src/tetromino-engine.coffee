@@ -8,7 +8,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       @id = options.id ? _.uniqueId('b')
       @pieceType = piece.type
       @playerId = field.playerId if field.playerId?
-      decouple.trigger(field, 'new Block', @, piece)
+      decouple.trigger(field, 'new Block', @)
 
     setXy: (xy) ->
       @x = xy[0]
@@ -108,6 +108,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     moveLeft:  -> @transform (blk) -> [blk.x - 1, blk.y]
     moveRight: -> @transform (blk) -> [blk.x + 1, blk.y]
     moveDown:  -> @transform (blk) -> [blk.x,     blk.y + 1]
+    moveUp:    -> @transform (blk) -> [blk.x,     blk.y - 1]
 
     rotateClockwise: ->
       return false unless @canRotate
@@ -226,17 +227,23 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       return null if col < 0 || col >= @blocks[row].length
       @blocks[row][col]
 
-
-    storeBlock: (blk, xy) -> @blocks[xy[1]][xy[0]] = blk
-
+    storeBlock: (blk, xy) ->
+      @blocks[xy[1]][xy[0]] = blk if 0 <= xy[1] <= @fieldHeight
+      blk
 
     isXyFree: (xy) ->
       @blockFromXy(xy) == null &&
         xy[0] >= 0 && xy[0] < @fieldWidth &&
         xy[1] >= 0 && xy[1] < @fieldHeight
 
-
     isXyTaken: (xy) -> ! @isXyFree(xy)
+
+    moveBlock: (xy, xyPrime) ->
+      blk = @blockFromXy(xy)
+      blk?.setXy(xyPrime)
+      @storeBlock(null, xy)
+      @storeBlock(blk, xyPrime) if 0 <= xyPrime[1] < @fieldHeight
+      blk
 
 
     rotateClockwise: -> @curFloating.rotateClockwise()
@@ -269,9 +276,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       for y in [_.last(ys) .. 0]
         shift++ while _.include(ys, y - shift)
         for x in [0 ... @fieldWidth]
-          blk = @blockFromXy([x, y - shift])
-          blk?.setXy([x, y])
-          @storeBlock(blk, [x, y])
+          @moveBlock([x, y - shift], [x, y])
       null
 
 
@@ -287,16 +292,54 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       null
 
 
-    clearLinesSequence: (ys) ->
+    clearLinesSequence: (ys, callback = null) ->
       return false if ys.length == 0
       @clearLines(ys)
       _.delay((=>
         @fillLinesFromAbove(ys)
-        if ! @checkForGameOver()
-          @startGravity()
+        callback?()
       ), 500)
       true
 
+
+    shiftLinesUp: (n) ->
+      return if n <= 0
+      for y in [n ... @fieldHeight]
+        for x in [0 ... @fieldWidth]
+          fieldBlk = @blockFromXy([x, y])
+          yPrime = y - n
+          # If the current piece occupies any coordinate we're moving
+          # through, push the piece up.
+          if fieldBlk
+            while _.any(@curFloating.blocks, (blk) -> blk.x == x && _.include([y..yPrime], blk.y))
+              break if not @curFloating.moveUp()
+          @moveBlock([x, y], [x, yPrime])
+
+    fillBottomLinesWithNoise: (n) ->
+      return if n <= 0
+      n = Math.min(n, @fieldHeight)
+      numGaps = Math.ceil(0.3 * @fieldWidth)
+      newBlocks = _.flatten(
+        for i in [1 .. n]
+          y = @fieldHeight - i
+          xs = [0 ... @fieldWidth]
+          # TODO: Remove current piece block positions.
+          xs.splice(x, 1) for x in xs when @isXyTaken([x, y])
+          xs.splice(util.randInt(xs.length), 1) for g in [1 .. numGaps]
+          for x in xs
+            blk = new Block(@, { type: 'opponent' }, x, y)
+            @storeBlock(blk, [x, y])
+            blk.activate()
+            blk
+      )
+      decouple.trigger(@, 'newNoiseBlocks', n, newBlocks)
+
+    addLinesSequence: (n, createNoise, callback = null) ->
+      @shiftLinesUp(n)
+      _.delay((=>
+        @fillBottomLinesWithNoise(n) if createNoise
+        callback?()
+      ), 500)
 
     useNextPiece: ->
       # The first time this is called, next will be null.
@@ -333,12 +376,17 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         ysToClear = @linesToClear(@curFloating)
         clearedLines = ysToClear.length > 0
         if clearedLines
-          # Lines were cleared.  Pause the game timer.
+          # Lines were cleared.  Pause gravity.
           @stopGravity()
-        @useNextPiece()
-        @clearLinesSequence(ysToClear)
-        if not clearedLines && @checkForGameOver()
-          return false
+          # Transfer control to next piece so player can get a head
+          # start.
+          @useNextPiece()
+          @clearLinesSequence ysToClear, =>
+            if ! @checkForGameOver()
+              @startGravity()
+        else
+          @useNextPiece()
+          return false if @checkForGameOver()
       fell
 
 
@@ -374,7 +422,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     # players is a hash : playerId -> Player
     constructor: (@game) ->
       @players = {}
-      @excludePlayerId = null
+      @localPlayerId = null
 
     addPlayer: (player) ->
       return if player.id in _.keys(@players, 'id')
@@ -388,7 +436,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     removePlayer: (playerId) ->
       id = playerId.id ? playerId
       console.log("removePlayer", id)
-      if id == @excludePlayerId
+      if id == @localPlayerId
         console.log "skipping remove", id
         return
       player = @players[id]
@@ -397,7 +445,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       decouple.trigger(@game, 'afterRemovePlayer', player)
 
     receiveBlockEvent: (playerId, blockId, event, args...) ->
-      return if playerId == @excludePlayerId
+      return if playerId == @localPlayerId
       #console.log 'receiveBlockEvent', playerId, blockId, event, args...
       player = @players[playerId]
       throw "couldn't find player #{playerId} for block event #{blockId}" unless player
@@ -412,7 +460,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         decouple.trigger(block, event, args...)
 
     receiveFieldEvent: (playerId, event, args...) ->
-      return if playerId == @excludePlayerId
+      return if playerId == @localPlayerId
       console.log 'receiveFieldEvent', playerId, event, args...
       field = @players[playerId].field
       if event == 'afterAttachPiece'
@@ -424,9 +472,22 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         field.curFloating = field.nextFloating
         field.nextFloating = new FloatingBlock(field, _.extend(opts, { playerId: playerId }))
         blk.activate() for blk in field.curFloating.blocks
+      else if event == 'newNoiseBlocks'
+        # Someone else received noise, and is telling us about their
+        # new noise blocks.
+        [n, blks] = args
+        field.addLinesSequence n, false, =>
+          for b in blks
+            block = new Block(field, { type: b.pieceType }, b.x, b.y, { id: b.id })
+            field.storeBlock(block, block.getXy())
+            block.activate()
       else if event == 'clear'
         [ys, blks] = args
         field.clearLinesSequence(ys)
+        # Someone else cleared lines, which means they're sending us
+        # noise.
+        linesSent = if ys.length < 4 then ys.length - 1 else ys.length
+        @players[@localPlayerId]?.field.addLinesSequence(linesSent, true)
       else
         decouple.trigger(field, event, args...)
 
@@ -438,7 +499,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         console.warn "I got an updateClient for an unknown player id=#{playerId}"
         return
       console.log("updatePlayingField #{playerId}", field)
-      player.field.updateFromJson(field) if playerId != @excludePlayerId
+      player.field.updateFromJson(field) if playerId != @localPlayerId
 
 
   # A game on the client.
@@ -488,7 +549,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       console.log 'setLocalPlayerId', id
       @models.removePlayer(@localPlayer.id) if @localPlayer.id
       @localPlayer.id = id
-      @models.excludePlayerId = id
+      @models.localPlayerId = id
       @models.addPlayer(@localPlayer)
 
     start: ->

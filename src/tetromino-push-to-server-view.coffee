@@ -17,10 +17,14 @@ define ['underscore', 'decouple', 'now'], (_, decouple, now) ->
   # View of a PlayingField model that pushes updates to the server.
   class PlayingFieldView
     constructor: (@game, @fieldModel, @now) ->
-      decouple.on @fieldModel, 'new Block', (caller, event, block, piece) =>
+      decouple.on @fieldModel, 'new Block', (caller, event, block) =>
         new BlockView(block, @game, @now)
         # We don't distribute this event because the 'new
-        # FloatingBlock' event handles it.
+        # FloatingBlock' or 'newNoiseBlocks' event handles it.
+
+      decouple.on @fieldModel, 'newNoiseBlocks', (caller, event, n, blocks) =>
+        if @game.joinedRemoteGame
+          @now.distributeFieldEvent(event, n, blocks)
 
       decouple.on @fieldModel, 'new FloatingBlock', (caller, event, piece) =>
         if @game.joinedRemoteGame

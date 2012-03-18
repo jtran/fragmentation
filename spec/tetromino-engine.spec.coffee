@@ -21,7 +21,7 @@ requirejs ['tetromino-engine', 'decouple'], (engine, decouple) ->
       field = {}
       piece = {}
       blk = new engine.Block(field, piece, 1, 2)
-      expect(decouple.trigger).toHaveBeenCalledWith(field, 'new Block', blk, piece)
+      expect(decouple.trigger).toHaveBeenCalledWith(field, 'new Block', blk)
 
     it "triggers move block event when setting xy", ->
       blk = new engine.Block({}, {}, 1, 2)
@@ -52,5 +52,19 @@ requirejs ['tetromino-engine', 'decouple'], (engine, decouple) ->
       field.storeBlock(blk, [1, 2])
       expect(field.isXyTaken([1, 2])).toBeTruthy()
       expect(field.isXyFree([1, 2])).toBeFalsy()
+
+    it "pushes current piece up when shifting lines up", ->
+      field = new engine.PlayingField({}, {})
+      # Put blocks at the bottom.
+      fieldBlk = new engine.Block(field, {}, 1, 9)
+      field.storeBlock(fieldBlk, fieldBlk.getXy())
+      # Put piece next to the bottom.
+      pieceBlk = new engine.Block(field, {}, 1, 8)
+      field.curFloating = new engine.FloatingBlock(field, { blocks: [pieceBlk] })
+      field.shiftLinesUp(2)
+      expect(field.blockFromXy([1, 7])).toBe(fieldBlk)
+      expect(field.blockFromXy([1, 8])).toBeNull()
+      expect(field.blockFromXy([1, 9])).toBeNull()
+      expect(field.curFloating.blocks[0].getXy()).toEqual([1, 6])
 
 # TODO: Test piece move, piece transform, and clearing lines.

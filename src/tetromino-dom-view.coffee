@@ -1,10 +1,10 @@
 define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, util, _, decouple) ->
 
   class BlockDomView
-    constructor: (@fieldView, @blockModel, @pieceModel) ->
+    constructor: (@fieldView, @blockModel) ->
       @elm = document.createElement('div')
       @elm.className = 'block next'
-      switch @pieceModel.type
+      switch @blockModel.pieceType
         when 0  # O
           $(@elm).addClass('light')
         when 1  # T
@@ -19,8 +19,10 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
           $(@elm).addClass('dark')
         when 6  # I
           $(@elm).addClass('light')
+        when 'opponent'
+          $(@elm).addClass('light').addClass(@blockModel.pieceType)
         else
-          throw "I don't know how to style a block of this type: " + @pieceModel.type
+          throw "I don't know how to style a block of this type: #{@blockModel.pieceType}"
 
       # Initial position.
       @fieldView.setElementXy(@elm, @blockModel.getXy())
@@ -96,8 +98,8 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
       # Use theme.
       @setThemeIndex(options.themeIndex ? 0)
 
-      decouple.on @fieldModel, 'new Block', (fieldModel, event, block, piece) =>
-        new BlockDomView(@, block, piece)
+      decouple.on @fieldModel, 'new Block', (fieldModel, event, block) =>
+        new BlockDomView(@, block)
 
       decouple.on @fieldModel, 'beforeDrop', (caller, event) => @beforeDrop()
       decouple.on @fieldModel, 'afterDrop',  (caller, event) => @afterDrop()
