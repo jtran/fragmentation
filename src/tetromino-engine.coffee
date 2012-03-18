@@ -501,6 +501,8 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     start: ->
       @localField?.startGravity()
 
+    players: -> @models.players
+
 
 
   # Exports

@@ -134,7 +134,7 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
     setOrdinal: (ordinal) ->
       @ordinal = ordinal
-      $(@fieldSelector).css('left', "#{@ordinal * (@fieldPixelWidth() + @marginLeft) + @marginLeft}px")
+      $(@fieldSelector()).css('left', "#{@ordinal * (@fieldPixelWidth() + @marginLeft) + @marginLeft}px")
 
     setElementXy: (sel, xy) ->
       util.setPosition(sel,

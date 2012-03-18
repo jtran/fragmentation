@@ -34,7 +34,7 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
         fieldViews = (fv for fv in fieldViews when fv != fieldView)
         # Set ordinals of remaining views.
         i = 0
-        for id, p of game.players
+        for id, p of game.players()
           for fv in fieldViewsFromPlayer(p)
             fv.setOrdinal(i)
           i++
