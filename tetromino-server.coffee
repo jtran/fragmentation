@@ -5,7 +5,8 @@ define ['tetromino-engine', 'tetromino-player', 'now', 'underscore'], (engine, t
       console.log 'init Game'
       server = @
       @models = models = new engine.ModelEventReceiver({ comment: 'dummy game' })
-      @everyone = everyone = now.initialize(@app)
+      @everyone = everyone = now.initialize(@app,
+        { socketio: { transports: ['xhr-polling', 'jsonp-polling'], 'polling duration': 10 }})
       now.on 'connect', -> console.log("Connected #{@user.clientId}")
       now.on 'disconnect', ->
         id = @user.clientId
