@@ -41,6 +41,10 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
       decouple.on @blockModel, 'afterClear Block', (caller, event) => @dispose()
 
+      # This event occurs when deleting a block, but it's not from the
+      # player clearing a line.
+      decouple.on @blockModel, 'delete Block', (caller, event) => @dispose()
+
     dispose: ->
       $(@elm).remove()
       # Remove references to prevent memory leak.
@@ -109,9 +113,7 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
     leaveGame: (callback = null) =>
       $(@fieldSelector()).fadeOut 'slow', =>
-        for row in @fieldModel.blocks
-          for blk in row
-            decouple.trigger(blk, 'afterClear Block') if blk
+        decouple.trigger(blk, 'delete Block') for blk in @fieldModel.allBlocks()
         $(@fieldSelector()).remove()
         callback?()
 

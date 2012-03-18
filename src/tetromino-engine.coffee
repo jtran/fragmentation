@@ -202,19 +202,18 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
             # Activate immediately.
             block.activate()
           if not blk && @blocks[i][j]
-            decouple.trigger(@blocks[i][j], 'afterClear Block')
+            decouple.trigger(@blocks[i][j], 'delete Block')
 
       null
 
 
+    allBlocks: ->
+      bs = (@curFloating.blocks ? []).concat(@nextFloating.blocks ? [])
+      bs = bs.concat(row) for row in @blocks
+      b for b in bs when b?
+
     blockFromId: (blockId) ->
-      for blk in @curFloating.blocks
-        return blk if blk?.id == blockId
-      for blk in @nextFloating.blocks
-        return blk if blk?.id == blockId
-      for row in @blocks
-        for blk in row
-          return blk if blk?.id == blockId
+      return blk for blk in @allBlocks() when blk.id == blockId
       null
 
 
