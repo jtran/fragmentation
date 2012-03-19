@@ -1,4 +1,4 @@
-require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-server-view', 'decouple', 'now'], ($, TetrominoEngine, DomView, PushToServerView, decouple, now) ->
+require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-server-view', 'decouple', 'underscore', 'now'], ($, TetrominoEngine, DomView, PushToServerView, decouple, _, now) ->
 
   now ?= window.now
   game = null
@@ -54,7 +54,49 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
   music = $('#music').get(0)
   # music?.play()
 
-  game.start()
+  appendLine = (line, callback = null) ->
+    $line = $('<div></div>')
+    $line.appendTo('#status')
+    k = (chars) ->
+      if chars.length > 0
+        $line.append(chars[0])
+        _.delay (-> k(chars.substr(1))), 50
+      else
+        callback?()
+    if line == ''
+      $line.append('&nbsp;')
+      _.delay (-> k('')), 50
+    else
+      k(line)
+
+  appendMessage = (msg, callback = null) ->
+    k = (lines) ->
+      if lines.length > 0
+        line = lines.shift()
+        appendLine line, -> _.delay((-> k(lines)), 200)
+      else
+        callback?()
+    k(msg.split(/\n/))
+
+  # Set the status.
+  $('#status').html('')
+  appendMessage """
+    Player, defragment this sector...
+    Arrow Keys = move
+    D = rotate left
+    F = rotate right
+    C = hard drop
+
+  """, =>
+    _.delay((=>
+      # Start the game.
+      appendLine 'Execute', =>
+        game.start()
+    ), 2000)
+
+  # Listen for messages.
+  game.receiveMessage = (playerName, msg) ->
+    appendLine "#{playerName}: #{msg}"
 
   # Give us easy access from the console.
   window.game = game

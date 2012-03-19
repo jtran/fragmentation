@@ -506,6 +506,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       @localPlayer = null
       @models = new ModelEventReceiver(@)
       @addLocalPlayer()
+      @localField.useNextPiece()
       game = @
       # This gets called when the client connects to the server, and
       # again each time it reconnects.
@@ -513,7 +514,8 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         console.log 'connected'
         @initSocketCallbacks()
         @setLocalPlayerId(@server.core.clientId)
-        @server.receiveMessage = (playerId, msg) -> console.log "#{playerId}: #{msg}"
+        @server.receiveMessage = (playerName, msg) ->
+          game.receiveMessage?(playerName, msg)
         @server.addPlayer = _.bind(@models.addPlayer, @models)
         @server.removePlayer = _.bind(@models.removePlayer, @models)
         @server.receiveBlockEvent = _.bind(@models.receiveBlockEvent, @models)
@@ -547,10 +549,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       @models.localPlayerId = id
       @models.addPlayer(@localPlayer)
 
-    start: ->
-      return unless @localField
-      @localField.useNextPiece()
-      @localField.startGravity()
+    start: -> @localField?.startGravity()
 
     players: -> @models.players
 

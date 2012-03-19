@@ -25,7 +25,7 @@ define ['tetromino-engine', 'tetromino-player', 'now', 'underscore'], (engine, t
         models.addPlayer(player)
         everyone.now.addPlayer(player)
       everyone.now.distributeMessage = (msg) ->
-        everyone.now.receiveMessage(@user.clientId, msg)
+        everyone.now.receiveMessage(@now.name ? @user.clientId, msg)
       everyone.now.distributeBlockEvent = (blockId, event, args...) ->
         models.receiveBlockEvent(@user.clientId, blockId, event, args...)
         everyone.now.receiveBlockEvent(@user.clientId, blockId, event, args...)
