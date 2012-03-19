@@ -101,8 +101,8 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     transform: (f) ->
       xys2 = (f(blk) for blk in @blocks)
       return false if _(xys2).some(_.bind(@field.isXyTaken, @field))
-      _.each(@blocks, (blk, i) ->
-        blk.setXy(xys2[i]))
+      for blk, i in @blocks
+        blk.setXy(xys2[i])
       true
 
     moveLeft:  -> @transform (blk) -> [blk.x - 1, blk.y]
@@ -140,6 +140,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     constructor: (game, options) ->
       @playerId = options.playerId if options.playerId?
       @viewType = options.viewType
+      # No gravity on the server.
       @useGravity = options.useGravity ? false
       @fieldHeight = 22
       @fieldWidth = 10
@@ -167,12 +168,11 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         @nextFloating = new FloatingBlock(@, { type: options.nextFloating.type, blocks: options.nextFloating.blocks, playerId: options.playerId })
       if options.blocks?
         for row in options.blocks
-          for b, x in row
-            if b
-              block = new Block(@, { type: b.pieceType }, b.x, b.y, { id: b.id })
-              @storeBlock(block, [b.x, b.y])
-              # Activate immediately.
-              block.activate()
+          for b, x in row when b
+            block = new Block(@, { type: b.pieceType }, b.x, b.y, { id: b.id })
+            @storeBlock(block, [b.x, b.y])
+            # Activate immediately.
+            block.activate()
 
 
     # Returns a hash representation of this object with the intent of
@@ -222,9 +222,9 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
 
     blockFromXy: (xy) ->
       row = xy[1]
-      return null if row < 0 || row >= @blocks.length
+      return null unless 0 <= row < @blocks.length
       col = xy[0]
-      return null if col < 0 || col >= @blocks[row].length
+      return null unless 0 <= col < @blocks[row].length
       @blocks[row][col]
 
     storeBlock: (blk, xy) ->
@@ -233,8 +233,8 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
 
     isXyFree: (xy) ->
       @blockFromXy(xy) == null &&
-        xy[0] >= 0 && xy[0] < @fieldWidth &&
-        xy[1] >= 0 && xy[1] < @fieldHeight
+        0 <= xy[0] < @fieldWidth &&
+        0 <= xy[1] < @fieldHeight
 
     isXyTaken: (xy) -> ! @isXyFree(xy)
 
@@ -274,7 +274,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       shift = 1
       ys.sort()
       for y in [_.last(ys) .. 0]
-        shift++ while _.include(ys, y - shift)
+        shift++ while y - shift in ys
         for x in [0 ... @fieldWidth]
           @moveBlock([x, y - shift], [x, y])
       null
@@ -290,7 +290,6 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
           blksToRemove.push(blk)
       decouple.trigger(@, 'clear', ys, blksToRemove)
       null
-
 
     clearLinesSequence: (ys, callback = null) ->
       return false if ys.length == 0
@@ -311,7 +310,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
           # If the current piece occupies any coordinate we're moving
           # through, push the piece up.
           if fieldBlk
-            while _.any(@curFloating.blocks, (blk) -> blk.x == x && _.include([y..yPrime], blk.y))
+            while _.any(@curFloating.blocks, (blk) -> blk.x == x && blk.y in [y..yPrime])
               break if not @curFloating.moveUp()
           @moveBlock([x, y], [x, yPrime])
 
@@ -359,7 +358,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
 
     # Returns true if game is over.
     checkForGameOver: ->
-      return false if _(blk.getXy() for blk in @curFloating.blocks).all(_.bind(@isXyFree, this))
+      return false if _(blk.getXy() for blk in @curFloating.blocks).all(_.bind(@isXyFree, @))
       @stopGravity()
 
       decouple.trigger(@, 'gameOver')
@@ -401,15 +400,11 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
 
     gravityInterval: -> 700
 
-
     startGravity: ->
-      # No gravity on the server.
       return unless @useGravity
       @fallTimer = window.setInterval(_.bind(@moveDownOrAttach, @), @gravityInterval())
 
-
     stopGravity: ->
-      # No gravity on the server.
       return unless @useGravity
       window.clearInterval(@fallTimer)
       @fallTimer = null
