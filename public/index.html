@@ -29,28 +29,36 @@ border-radius: 3px;
 -moz-transition:    left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out, border-radius 0.5s linear;
 color: #888; font-size: 9px; font-family: Helvetica, sans-serif;
 }
-.light {
+.block.light {
+background-color: #2C3F48;
+box-shadow: 0 0 5px #2C3F48;
+}
+.block.dark {
+background-color: #08181C;
+box-shadow: 0 0 2px #08181C;
+}
+.block.light.blue.lit, .block.light.yellow.opponent.lit, .block.light.orange.opponent.lit {
 background-color: #fff;
-}
-.dark {
-background-color: #000;
-}
-.block.light.blue, .block.light.yellow.opponent, .block.light.orange.opponent {
 box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
 }
-.block.dark.blue, .block.dark.yellow.opponent, .block.dark.orange.opponent {
+.block.dark.blue.lit, .block.dark.yellow.opponent.lit, .block.dark.orange.opponent.lit {
+background-color: #000;
 box-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
 }
-.block.light.orange {
+.block.light.orange.lit {
+background-color: #fff;
 box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
 }
-.block.dark.orange {
+.block.dark.orange.lit {
+background-color: #000;
 box-shadow: 0 0 5px #000, 0 0 15px #EA502B;
 }
-.block.light.yellow, .block.light.blue.opponent {
+.block.light.yellow.lit, .block.light.blue.opponent.lit {
+background-color: #fff;
 box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
 }
-.block.dark.yellow, .block.dark.blue.opponent {
+.block.dark.yellow.lit, .block.dark.blue.opponent.lit {
+background-color: #000;
 box-shadow: 0 0 5px #000, 0 0 15px #FF9D02;
 }
 .tail {

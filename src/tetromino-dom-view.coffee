@@ -3,7 +3,7 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
   class BlockDomView
     constructor: (@fieldView, @blockModel) ->
       @elm = document.createElement('div')
-      @elm.className = 'block next'
+      @elm.className = 'block lit next'
       switch @blockModel.pieceType
         when 0  # O
           $(@elm).addClass('light')
@@ -39,7 +39,7 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
       decouple.on @blockModel, 'activate Block', (caller, event) =>
         $(@elm).removeClass('next')
 
-      decouple.on @blockModel, 'beforeClear Block', (caller, event) => @expand()
+      decouple.on @blockModel, 'beforeClear Block', (caller, event) => @flickerOut()
 
       decouple.on @blockModel, 'afterClear Block', (caller, event) => @dispose()
 
@@ -53,12 +53,22 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
       @elm = null
       decouple.removeAllForCaller(@blockModel)
 
-    expand: ->
-      $(@elm).css {
-        'border-radius': '0'
-        'width': @fieldView.blockWidth + 'px'
-        'left': (@blockModel.x * @fieldView.blockWidth + @fieldView.borderWidth) + 'px'
-      }
+    transition: (options = {}) ->
+      options = _.extend { delaySequence: [50, 50, 50] }, options
+      options.step?()
+      seq = options.delaySequence
+      [msecDelay, options.delaySequence] = [_.first(seq), _.rest(seq)] if seq?
+      if msecDelay?
+        _.delay (=> @transition(options)), msecDelay
+      else
+        options.callback?()
+
+    flickerOut: (options = {}) ->
+      userCallback = options.callback
+      options.delaySequence = [20, 20, 20, 20]
+      options.step = => $(@elm).toggleClass('lit')
+      options.callback = => $(@elm).removeClass('lit'); userCallback?()
+      @transition(options)
 
 
   # View a PlayingField model in the DOM.
