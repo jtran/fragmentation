@@ -185,30 +185,9 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         nextFloating: @nextFloating.asJson()
       }
 
-
     # True inverse of asJson.
     @fromJson = (playerId, game, fieldHash) ->
       new PlayingField(game, _.extend(fieldHash, { playerId: playerId, viewType: 'remote' }))
-
-
-    # The (sort of) inverse of asJson.  When we have a PlayingField
-    # that represents a remote game, a remote client calls asJson, and
-    # sends the result to us.  We must then update our representation
-    # of their playing field based on it.
-    updateFromJson: (field) ->
-      console.log 'updateFromJson', field.curFloating
-      for row, i in field.blocks
-        for blk, j in row
-          if blk && not @blocks[i][j]
-            block = new Block(@, { type: blk.pieceType }, blk.x, blk.y, { id: blk.id })
-            @storeBlock(block, [blk.x, blk.y])
-            # Activate immediately.
-            block.activate()
-          if not blk && @blocks[i][j]
-            decouple.trigger(@blocks[i][j], 'delete Block')
-
-      null
-
 
     allBlocks: ->
       bs = (@curFloating.blocks ? []).concat(@nextFloating.blocks ? [])

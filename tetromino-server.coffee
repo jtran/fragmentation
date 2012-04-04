@@ -32,11 +32,6 @@ define ['tetromino-engine', 'tetromino-player', 'now', 'underscore'], (engine, t
       everyone.now.distributeFieldEvent = (event, args...) ->
         models.receiveFieldEvent(@user.clientId, event, args...)
         everyone.now.receiveFieldEvent(@user.clientId, event, args...)
-      everyone.now.distributeUpdatePlayingField = (fieldHash) ->
-        # Client is sending us an update to his/her playing field.
-        id = @user.clientId
-        models.receiveUpdatePlayingField(id, fieldHash)
-        # We do not broadcast the update.
 
 
   # Export singleton.

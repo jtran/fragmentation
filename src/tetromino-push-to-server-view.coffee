@@ -38,12 +38,6 @@ define ['underscore', 'decouple', 'now'], (_, decouple, now) ->
         if @game.joinedRemoteGame
           @now.distributeFieldEvent(event)
 
-    push: ->
-      throw "someone called push()"
-      return unless @game.joinedRemoteGame
-      console.log "pushing playing field...", @fieldModel.asJson()
-      @now.distributeUpdatePlayingField(@fieldModel.asJson())
-
 
   # Exports
   root = exports ? this
