@@ -50,6 +50,22 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
     localField.rotateCounterclockwise() if (letter == 'd')
     localField.drop() if (letter == 'c')
 
+  # Touch interface.
+  xyFromPageXy = (pageX, pageY) ->
+    offset = $(localFieldView.fieldSelector()).offset()
+    x = Math.floor((pageX - offset.left - localFieldView.borderWidth) / localFieldView.blockWidth)
+    y = Math.floor((pageY - offset.top - localFieldView.borderHeight) / localFieldView.blockHeight)
+    [x, y]
+
+  handleTouch = (event) ->
+    event.preventDefault()
+    x = event.originalEvent.touches[0].pageX
+    y = event.originalEvent.touches[0].pageY
+    localField.moveTo(xyFromPageXy(x, y)...)
+
+  $(localFieldView.fieldSelector()).bind 'touchstart', handleTouch
+  $(localFieldView.fieldSelector()).bind 'touchmove', _.throttle(handleTouch, 50)
+
   # Play background music if present.
   music = $('#music').get(0)
   # music?.play()

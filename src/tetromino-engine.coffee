@@ -105,6 +105,16 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     moveDown:  -> @transform (blk) -> [blk.x,     blk.y + 1]
     moveUp:    -> @transform (blk) -> [blk.x,     blk.y - 1]
 
+    moveTo: (x, y) ->
+      curX = => @blocks[@centerIndex].x
+      if (curX() < x)
+        null while @moveRight() && curX() < x
+        return true
+      else if (x < curX())
+        null while @moveLeft() && x < curX()
+        return true
+      false
+
     rotateClockwise: ->
       return false unless @canRotate
       [xCenter, yCenter] = @blocks[@centerIndex].getXy()
@@ -238,6 +248,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
 
     moveDown: -> @curFloating.moveDown()
 
+    moveTo: (x, y) -> @curFloating.moveTo(x, y)
 
     attachPiece: (piece) ->
       for blk in piece.blocks
