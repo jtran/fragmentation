@@ -16,13 +16,6 @@ requirejs ['tetromino-engine', 'decouple'], (engine, decouple) ->
       expect(blk.x).toEqual 1
       expect(blk.y).toEqual 2
 
-    it "triggers new block event", ->
-      spyOn(decouple, 'trigger')
-      field = {}
-      piece = {}
-      blk = new engine.Block(field, piece, 1, 2)
-      expect(decouple.trigger).toHaveBeenCalledWith(field, 'new Block', blk)
-
     it "triggers move block event when setting xy", ->
       blk = new engine.Block({}, {}, 1, 2)
       spyOn(decouple, 'trigger')
@@ -32,11 +25,44 @@ requirejs ['tetromino-engine', 'decouple'], (engine, decouple) ->
 
   describe 'tetromino-engine PlayingField', ->
 
-    it "triggers new playing field event", ->
-      spyOn(decouple, 'trigger')
-      game = {}
-      field = new engine.PlayingField(game, {})
-      expect(decouple.trigger).toHaveBeenCalledWith(game, 'new PlayingField', field)
+    describe 'when instantiating', ->
+
+      it "triggers new playing field event", ->
+        spyOn(decouple, 'trigger')
+        game = {}
+        field = new engine.PlayingField(game, {})
+        expect(decouple.trigger).toHaveBeenCalledWith(game, 'new PlayingField', field)
+
+      it "triggers new block event for each new block and one for new piece", ->
+        blk1 = new engine.Block({}, { type: 0 }, 1, 2)
+        blk2 = new engine.Block({}, { type: 0 }, 2, 3)
+        piece = { blocks: [blk1, blk2], type: 0 }
+        spyOn(decouple, 'trigger')
+        field = new engine.PlayingField({}, { curFloating: piece })
+        expect(decouple.trigger).toHaveBeenCalledWith(field, 'new Block', blk1)
+        expect(decouple.trigger).toHaveBeenCalledWith(field, 'new Block', blk2)
+        expect(decouple.trigger).toHaveBeenCalledWith(field, 'new FloatingBlock', field.curFloating)
+
+    describe 'when committing new piece', ->
+
+      it "stores new piece", ->
+        blk1 = new engine.Block({}, {}, 1, 2)
+        blk2 = new engine.Block({}, {}, 2, 3)
+        piece = { blocks: [blk1, blk2] }
+        field = new engine.PlayingField({}, {})
+        field.commitNewPiece('nextFloating', piece)
+        expect(field.nextFloating).toBe(piece)
+
+      it "triggers new block event for each new block and one for new piece", ->
+        field = new engine.PlayingField({}, {})
+        blk1 = new engine.Block({}, { type: 0 }, 1, 2)
+        blk2 = new engine.Block({}, { type: 0 }, 2, 3)
+        piece = new engine.FloatingBlock(field, { blocks: [blk1, blk2], type: 0 })
+        spyOn(decouple, 'trigger')
+        field.commitNewPiece('nextFloating', piece)
+        expect(decouple.trigger).toHaveBeenCalledWith(field, 'new Block', blk1)
+        expect(decouple.trigger).toHaveBeenCalledWith(field, 'new Block', blk2)
+        expect(decouple.trigger).toHaveBeenCalledWith(field, 'new FloatingBlock', field.nextFloating)
 
     it "stores block at coordinate", ->
       field = new engine.PlayingField({}, {})

@@ -8,7 +8,6 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       @id = options.id ? _.uniqueId('b')
       @pieceType = piece.type
       @playerId = field.playerId if field.playerId?
-      decouple.trigger(field, 'new Block', @)
 
     setXy: (xy) ->
       @x = xy[0]
@@ -85,15 +84,11 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         else
           throw "I don't know how to create a floating block of this type: " + @type
 
-      decouple.trigger(@field, 'new FloatingBlock', @)
-
-
     asJson: ->
       {
         type: @type
         blocks: @blocks
       }
-
 
     # Takes a function that takes single argument the Block to be
     # transformed, which returns the Block's new xy.  Returns true if the
@@ -161,15 +156,16 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       # Initialize blocks after new PlayingField event so that
       # listeners can be installed.
       if options.curFloating?
-        @curFloating = new FloatingBlock(@, { type: options.curFloating.type, blocks: options.curFloating.blocks, playerId: options.playerId })
+        @commitNewPiece('curFloating', new FloatingBlock(@, { type: options.curFloating.type, blocks: options.curFloating.blocks, playerId: options.playerId }))
         # Activate immediately.
         blk.activate() for blk in @curFloating.blocks
       if options.nextFloating?
-        @nextFloating = new FloatingBlock(@, { type: options.nextFloating.type, blocks: options.nextFloating.blocks, playerId: options.playerId })
+        @commitNewPiece('nextFloating', new FloatingBlock(@, { type: options.nextFloating.type, blocks: options.nextFloating.blocks, playerId: options.playerId }))
       if options.blocks?
         for row in options.blocks
           for b, x in row when b
             block = new Block(@, { type: b.pieceType }, b.x, b.y, { id: b.id })
+            decouple.trigger(@, 'new Block', block)
             @storeBlock(block, [b.x, b.y])
             # Activate immediately.
             block.activate()
@@ -188,6 +184,13 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     # True inverse of asJson.
     @fromJson = (playerId, game, fieldHash) ->
       new PlayingField(game, _.extend(fieldHash, { playerId: playerId, viewType: 'remote' }))
+
+    # Stores piece in key and triggers events.
+    commitNewPiece: (key, piece) ->
+      @[key] = piece
+      decouple.trigger(@, 'new Block', blk) for blk in piece.blocks
+      decouple.trigger(@, 'new FloatingBlock', piece)
+      piece
 
     allBlocks: ->
       bs = (@curFloating.blocks ? []).concat(@nextFloating.blocks ? [])
@@ -306,6 +309,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
           xs.splice(util.randInt(xs.length), 1) for g in [1 .. numGaps]
           for x in xs
             blk = new Block(@, { type: 'opponent' }, x, y)
+            decouple.trigger(@, 'new Block', blk)
             @storeBlock(blk, [x, y])
             blk.activate()
             blk
@@ -322,7 +326,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     useNextPiece: ->
       # The first time this is called, next will be null.
       if ! @nextFloating
-        @nextFloating = new FloatingBlock(this)
+        @commitNewPiece('nextFloating', new FloatingBlock(@))
 
       # Make next be current.
       @curFloating = @nextFloating
@@ -331,7 +335,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         blk.activate()
         blk.setXy([blk.x, blk.y + 2])
       # Spawn a new next.
-      @nextFloating = new FloatingBlock(this)
+      @commitNewPiece('nextFloating', new FloatingBlock(@))
       null
 
 
@@ -444,7 +448,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       else if event == 'new FloatingBlock'
         [opts] = args
         field.curFloating = field.nextFloating
-        field.nextFloating = new FloatingBlock(field, _.extend(opts, { playerId: playerId }))
+        field.commitNewPiece('nextFloating', new FloatingBlock(field, _.extend(opts, { playerId: playerId })))
         blk.activate() for blk in field.curFloating.blocks
       else if event == 'newNoiseBlocks'
         # Someone else received noise, and is telling us about their
@@ -453,6 +457,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
         field.addLinesSequence n, false, =>
           for b in blks
             block = new Block(field, { type: b.pieceType }, b.x, b.y, { id: b.id })
+            decouple.trigger(field, 'new Block', block)
             field.storeBlock(block, block.getXy())
             block.activate()
       else if event == 'clear'
