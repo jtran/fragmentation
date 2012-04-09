@@ -51,20 +51,56 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
     localField.drop() if (letter == 'c')
 
   # Touch interface.
-  xyFromPageXy = (pageX, pageY) ->
-    offset = $(localFieldView.fieldSelector()).offset()
-    x = Math.floor((pageX - offset.left - localFieldView.borderWidth) / localFieldView.blockWidth)
-    y = Math.floor((pageY - offset.top - localFieldView.borderHeight) / localFieldView.blockHeight)
-    [x, y]
+  handleSwipeLeft = (distance) ->
+    localField.moveLeft() for i in [0 .. Math.floor(distance / 50)]
 
-  handleTouch = (event) ->
+  handleSwipeRight = (distance) ->
+    localField.moveRight() for i in [0 .. Math.floor(distance / 50)]
+
+  handleSwipeDown = (distance) -> localField.drop()
+
+  handleTap = (pageX, pageY) -> localField.rotateClockwise()
+
+  touchData = null
+
+  $(localFieldView.fieldSelector()).bind 'touchstart', (event) ->
     event.preventDefault()
-    x = event.originalEvent.touches[0].pageX
-    y = event.originalEvent.touches[0].pageY
-    localField.moveTo(xyFromPageXy(x, y)...)
+    touchData = {
+      time0: new Date()
+      pageX0: event.originalEvent.touches[0].pageX
+      pageY0: event.originalEvent.touches[0].pageY
+    }
+    touchData.time1 = touchData.time0
+    touchData.pageX1 = touchData.pageX0
+    touchData.pageY1 = touchData.pageY0
 
-  $(localFieldView.fieldSelector()).bind 'touchstart', handleTouch
-  $(localFieldView.fieldSelector()).bind 'touchmove', _.throttle(handleTouch, 50)
+  $(localFieldView.fieldSelector()).bind 'touchmove', (event) ->
+    return unless touchData
+    event.preventDefault()
+    touchData.time1 = new Date()
+    touchData.pageX1 = event.originalEvent.touches[0].pageX
+    touchData.pageY1 = event.originalEvent.touches[0].pageY
+
+  $(localFieldView.fieldSelector()).bind 'touchend', (event) ->
+    return unless touchData
+    event.preventDefault()
+    deltaX = touchData.pageX1 - touchData.pageX0
+    deltaY = touchData.pageY1 - touchData.pageY0
+    slope = deltaY / deltaX
+    absSlope = Math.abs(slope)
+    xDist = Math.abs(deltaX)
+    yDist = Math.abs(deltaY)
+    duration = Math.abs(touchData.time1.getTime() - touchData.time0.getTime())
+    if xDist > 30 && absSlope < 0.5
+      if deltaX > 0
+        handleSwipeRight(xDist)
+      else
+        handleSwipeLeft(xDist)
+    else if yDist > 30 && absSlope > 2 && deltaY > 0
+      handleSwipeDown(yDist)
+    else if xDist < 10 && yDist < 10 && duration < 750
+      handleTap(touchData.pageX1, touchData.pageY1)
+    touchData = null
 
   # Play background music if present.
   music = $('#music').get(0)
