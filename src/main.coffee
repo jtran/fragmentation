@@ -7,6 +7,9 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
   pushToServerView = null
   fieldViews = []
 
+  # For debugging.
+  logStatus = (msg) -> $('#status').prepend("<div>#{msg}</div>")
+
   decouple.on null, 'new PlayingField', (game, event, field) ->
     console.log("adding DOM view #{fieldViews.length}", event, field)
     options =
@@ -50,56 +53,95 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
     localField.rotateCounterclockwise() if (letter == 'd')
     localField.drop() if (letter == 'c')
 
+  ##############################
   # Touch interface.
-  handleSwipeLeft = (distance) ->
-    localField.moveLeft() for i in [0 .. Math.floor(distance / 50)]
-
-  handleSwipeRight = (distance) ->
-    localField.moveRight() for i in [0 .. Math.floor(distance / 50)]
-
-  handleSwipeDown = (distance) -> localField.drop()
-
-  handleTap = (pageX, pageY) -> localField.rotateClockwise()
 
   touchData = null
 
-  $(localFieldView.fieldSelector()).bind 'touchstart', (event) ->
-    event.preventDefault()
-    touchData = {
-      time0: new Date()
-      pageX0: event.originalEvent.touches[0].pageX
-      pageY0: event.originalEvent.touches[0].pageY
-    }
-    touchData.time1 = touchData.time0
-    touchData.pageX1 = touchData.pageX0
-    touchData.pageY1 = touchData.pageY0
+  currentPieceX = -> localField.curFloating.blocks[localField.curFloating.centerIndex].x
+  currentPieceY = -> localField.curFloating.blocks[localField.curFloating.centerIndex].y
 
-  $(localFieldView.fieldSelector()).bind 'touchmove', (event) ->
-    return unless touchData
-    event.preventDefault()
-    touchData.time1 = new Date()
-    touchData.pageX1 = event.originalEvent.touches[0].pageX
-    touchData.pageY1 = event.originalEvent.touches[0].pageY
+  handleHorizontalSwipe = (e) ->
+    x0 = touchData.pieceInitX
+    x1 = currentPieceX()
+    distDiff = Math.floor(e.totalDeltaX / 20)
+    #logStatus "#{e.distance} #{e.totalDeltaX} #{distDiff} #{x0} #{x1}"
+    localField.moveToX(x0 + distDiff)
 
-  $(localFieldView.fieldSelector()).bind 'touchend', (event) ->
-    return unless touchData
-    event.preventDefault()
-    deltaX = touchData.pageX1 - touchData.pageX0
-    deltaY = touchData.pageY1 - touchData.pageY0
+  handleSwipeDown = (e) ->
+    #logStatus "begin down #{e.distance} #{e.distance}"
+    y0 = touchData.pieceInitY
+    y1 = currentPieceY()
+    distDiff = Math.floor(e.distance / 20)
+    yDiff = (y0 + distDiff) - y1
+    #logStatus "#{e.distance} #{e.distance} #{distDiff} #{y0} #{y1}"
+    while localField.curFloating == touchData.piece && localField.moveDown() && yDiff >= 0
+      yDiff--
+
+  handleTap = (pageX, pageY) -> localField.rotateClockwise()
+
+  dispatchTouchEvent = (allowTap) ->
+    #logStatus "dispatching #{touchData.time1.getTime()}"
+    deltaX = touchData.pageX2 - touchData.pageX0
+    deltaY = touchData.pageY2 - touchData.pageY0
     slope = deltaY / deltaX
     absSlope = Math.abs(slope)
     xDist = Math.abs(deltaX)
     yDist = Math.abs(deltaY)
-    duration = Math.abs(touchData.time1.getTime() - touchData.time0.getTime())
-    if xDist > 30 && absSlope < 0.5
-      if deltaX > 0
-        handleSwipeRight(xDist)
-      else
-        handleSwipeLeft(xDist)
-    else if yDist > 30 && absSlope > 2 && deltaY > 0
-      handleSwipeDown(yDist)
-    else if xDist < 10 && yDist < 10 && duration < 750
-      handleTap(touchData.pageX1, touchData.pageY1)
+    lastDuration = Math.abs(touchData.time2.getTime() - touchData.time1.getTime())
+    duration = Math.abs(touchData.time2.getTime() - touchData.time0.getTime())
+    if xDist > 20 && absSlope < 0.5
+      e = {
+        distance: xDist
+        duration: duration
+        speed: xDist / lastDuration
+        totalDeltaX: touchData.pageX2 - touchData.pageX0
+      }
+      handleHorizontalSwipe(e)
+    else if yDist > 20 && absSlope > 2 && deltaY > 0
+      handleSwipeDown({ distance: yDist, duration: duration, speed: yDist / lastDuration })
+    else if allowTap && ! touchData.hasMoved && xDist < 10 && yDist < 10 && duration < 300
+      handleTap(touchData.pageX2, touchData.pageY2)
+
+  $(localFieldView.fieldSelector()).bind 'touchstart', (event) ->
+    event.preventDefault()
+    # Save initial state when user starts touching.
+    touchData = {
+      time0: new Date()
+      pageX0: event.originalEvent.touches[0].pageX
+      pageY0: event.originalEvent.touches[0].pageY
+      hasMoved: false
+      piece: localField.curFloating
+      pieceInitX: currentPieceX()
+      pieceInitY: currentPieceY()
+    }
+    touchData.time2 = touchData.time1 = touchData.time0
+    touchData.pageX2 = touchData.pageX1 = touchData.pageX0
+    touchData.pageY2 = touchData.pageY1 = touchData.pageY0
+
+  $(localFieldView.fieldSelector()).bind 'touchmove', (event) ->
+    return unless touchData
+    event.preventDefault()
+    # Update state of touch.
+    touchData.hasMoved = true
+    touchData.time1 = touchData.time2
+    touchData.pageX1 = touchData.pageX2
+    touchData.pageY1 = touchData.pageY2
+    touchData.time2 = new Date()
+    touchData.pageX2 = event.originalEvent.touches[0].pageX
+    touchData.pageY2 = event.originalEvent.touches[0].pageY
+    # React to touch movement.
+    dispatchTouchEvent(false)
+
+  $(localFieldView.fieldSelector()).bind 'touchend', (event) ->
+    return unless touchData
+    # This prevents double-tap zoom.
+    event.preventDefault()
+    # React since this may have been the end of a tap.
+    dispatchTouchEvent(true)
+    touchData = null
+
+  $(localFieldView.fieldSelector()).bind 'touchcancel', (event) ->
     touchData = null
 
   # Play background music if present.
