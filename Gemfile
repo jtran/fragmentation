@@ -1,4 +1,6 @@
 source :rubygems
 
-gem 'heroku'
-gem 'foreman'
+group :development do
+  gem 'heroku'
+  gem 'foreman'
+end
