@@ -1,21 +1,8 @@
 GEM
   remote: http://rubygems.org/
   specs:
-    addressable (2.2.6)
     foreman (0.46.0)
       thor (>= 0.13.6)
-    heroku (2.21.3)
-      launchy (>= 0.3.2)
-      netrc (~> 0.7.1)
-      rest-client (~> 1.6.1)
-      rubyzip
-    launchy (2.0.5)
-      addressable (~> 2.2.6)
-    mime-types (1.16)
-    netrc (0.7.1)
-    rest-client (1.6.7)
-      mime-types (>= 1.16)
-    rubyzip (0.9.4)
     thor (0.15.2)
 
 PLATFORMS
@@ -23,4 +10,3 @@ PLATFORMS
 
 DEPENDENCIES
   foreman
-  heroku
