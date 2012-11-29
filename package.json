@@ -4,14 +4,17 @@
   , "private": true
   , "engines": {
       "node": "0.6.x"
+    , "npm": "1.1.x"
     }
   , "dependencies": {
-      "express": "2.5.x"
-    , "jade": ">= 0.0.1"
-    , "requirejs": "1.0.x"
+      "express": "2.5.8"
+    , "jade": "0.20.3"
+    , "requirejs": "1.0.7"
     , "underscore": "1.2.x"
     , "coffee-script": "1.2.x"
     , "now": "0.8.x"
+    , "node-proxy": "0.5.2"
+    , "socket.io": "0.8.7"
   }
 , "devDependencies": {
     "jasmine-node":  "1.0.x"
