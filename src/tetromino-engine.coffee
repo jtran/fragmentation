@@ -494,7 +494,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
 
   # A game on the client.
   class TetrominoGame
-    constructor: (@server) ->
+    constructor: (@serverSocket) ->
       @joinedRemoteGame = false
       @socketCallbacksDone = false
       @localField = null
@@ -505,28 +505,28 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
       game = @
       # This gets called when the client connects to the server, and
       # again each time it reconnects.
-      @server.ready =>
+      @serverSocket.on 'connect', =>
         console.log 'connected'
         @initSocketCallbacks()
-        @setLocalPlayerId(@server.core.clientId)
-        @server.receiveMessage = (playerName, msg) ->
+        @setLocalPlayerId(@serverSocket.id)
+        @serverSocket.on 'receiveMessage', (playerName, msg) ->
           game.receiveMessage?(playerName, msg)
-        @server.addPlayer = _.bind(@models.addPlayer, @models)
-        @server.removePlayer = _.bind(@models.removePlayer, @models)
-        @server.receiveBlockEvent = _.bind(@models.receiveBlockEvent, @models)
-        @server.receiveFieldEvent = _.bind(@models.receiveFieldEvent, @models)
-        @server.receiveUpdatePlayingField = _.bind(@models.receiveUpdatePlayingField, @models)
-        @server.getPlayers (players) =>
+        @serverSocket.on 'addPlayer', _.bind(@models.addPlayer, @models)
+        @serverSocket.on 'removePlayer', _.bind(@models.removePlayer, @models)
+        @serverSocket.on 'receiveBlockEvent', _.bind(@models.receiveBlockEvent, @models)
+        @serverSocket.on 'receiveFieldEvent', _.bind(@models.receiveFieldEvent, @models)
+        @serverSocket.on 'receiveUpdatePlayingField', _.bind(@models.receiveUpdatePlayingField, @models)
+        @serverSocket.emit 'getPlayers', (players) =>
           console.log 'getPlayers', players
           @models.addPlayer(p) for id, p of players
-          @server.join(@localField.asJson())
+          @serverSocket.emit('join', @localField.asJson())
           @joinedRemoteGame = true
 
     initSocketCallbacks: ->
       # Only do this once.
       return if @socketCallbacksDone
       @socketCallbacksDone = true
-      @server.core.socketio.on 'disconnect', =>
+      @serverSocket.on 'disconnect', =>
         console.log 'disconnected'
         @joinedRemoteGame = false
 

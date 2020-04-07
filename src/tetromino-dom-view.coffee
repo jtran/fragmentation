@@ -1,4 +1,5 @@
 define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, util, _, decouple) ->
+  $ ?= window.$
 
   class BlockDomView
     constructor: (@fieldView, @blockModel) ->

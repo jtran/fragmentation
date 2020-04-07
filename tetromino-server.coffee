@@ -1,37 +1,37 @@
-define ['tetromino-engine', 'tetromino-player', 'now', 'underscore'], (engine, tetrominoPlayer, now, _) ->
+define ['tetromino-engine', 'tetromino-player', 'socket.io', 'underscore'], (engine, tetrominoPlayer, socketio, _) ->
 
   class TetrominoServer
     initializeGame: (@app) ->
       console.log 'init Game'
       server = @
       @models = models = new engine.ModelEventReceiver({ comment: 'dummy game' })
-      @everyone = everyone = now.initialize(@app,
-        { socketio: { transports: ['xhr-polling', 'jsonp-polling'], 'polling duration': 10 }})
-      now.on 'connect', -> console.log("Connected #{@user.clientId}")
-      now.on 'disconnect', ->
-        id = @user.clientId
-        console.log("Disconnected #{id}")
-        models.removePlayer(id)
-        everyone.now.removePlayer(id)
-      everyone.now.getPlayers = (callback) ->
-        ps = {}
-        for k, p of models.players
-          ps[k] = p.asJson()
-        callback(ps)
-      everyone.now.join = (fieldHash) ->
-        id = @user.clientId
-        console.log("Joined #{id}", fieldHash)
-        player = new tetrominoPlayer.Player(id, fieldHash)
-        models.addPlayer(player)
-        everyone.now.addPlayer(player)
-      everyone.now.distributeMessage = (msg) ->
-        everyone.now.receiveMessage(@now.name ? @user.clientId, msg)
-      everyone.now.distributeBlockEvent = (blockId, event, args...) ->
-        models.receiveBlockEvent(@user.clientId, blockId, event, args...)
-        everyone.now.receiveBlockEvent(@user.clientId, blockId, event, args...)
-      everyone.now.distributeFieldEvent = (event, args...) ->
-        models.receiveFieldEvent(@user.clientId, event, args...)
-        everyone.now.receiveFieldEvent(@user.clientId, event, args...)
+      io = socketio(@app)
+      io.on 'connection', (socket) ->
+        console.log("Connected #{socket.id}")
+        socket.on 'disconnect', ->
+          id = socket.id
+          console.log("Disconnected #{id}")
+          models.removePlayer(id)
+          socket.broadcast.emit('removePlayer', id)
+        socket.on 'getPlayers', (callback) ->
+          ps = {}
+          for k, p of models.players
+            ps[k] = p.asJson()
+          callback(ps)
+        socket.on 'join', (fieldHash) ->
+          id = socket.id
+          console.log("Joined #{id}", fieldHash)
+          player = new tetrominoPlayer.Player(id, fieldHash)
+          models.addPlayer(player)
+          socket.broadcast.emit('addPlayer', player)
+        socket.on 'distributeMessage', (msg) ->
+          socket.broadcast.emit('receiveMessage', socket.id, msg)
+        socket.on 'distributeBlockEvent', (blockId, event, args...) ->
+          models.receiveBlockEvent(socket.id, blockId, event, args...)
+          socket.broadcast.emit('receiveBlockEvent', socket.id, blockId, event, args...)
+        socket.on 'distributeFieldEvent', (event, args...) ->
+          models.receiveFieldEvent(socket.id, event, args...)
+          socket.broadcast.emit('receiveFieldEvent', socket.id, event, args...)
 
 
   # Export singleton.

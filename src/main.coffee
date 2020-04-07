@@ -1,6 +1,6 @@
-require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-server-view', 'decouple', 'underscore', 'now'], ($, TetrominoEngine, DomView, PushToServerView, decouple, _, now) ->
+require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-server-view', 'decouple', 'underscore', 'socket.io-client'], ($, TetrominoEngine, DomView, PushToServerView, decouple, _, socketio) ->
 
-  now ?= window.now
+  $ ?= window.$
   game = null
   localField = null
   localFieldView = null
@@ -9,6 +9,8 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
 
   # For debugging.
   logStatus = (msg) -> $('#status').prepend("<div>#{msg}</div>")
+
+  socket = socketio()
 
   decouple.on null, 'new PlayingField', (game, event, field) ->
     console.log("adding DOM view #{fieldViews.length}", event, field)
@@ -21,12 +23,12 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
       # Keep a reference to the local view.
       localFieldView = fieldView
       # Create a push-to-server view on the local playing field.
-      pushToServerView = new PushToServerView.PlayingFieldView(game, field, now)
+      pushToServerView = new PushToServerView.PlayingFieldView(game, field, socket)
 
   fieldViewsFromPlayer = (player) ->
     fieldView for fieldView in fieldViews when fieldView.fieldModel == player.field
 
-  game = new TetrominoEngine.TetrominoGame(now)
+  game = new TetrominoEngine.TetrominoGame(socket)
   localField = game.localField
 
   # Re-organize the view when a player leaves the game.
