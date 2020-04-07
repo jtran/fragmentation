@@ -7,11 +7,13 @@
         "npm": ">=1.1"
     },
     "dependencies": {
+        "coffeescript": "1.12.x",
         "express": "2.5.x",
         "jade": "0.20.x",
         "requirejs": "2.3.x",
-        "underscore": "1.2.x",
-        "coffeescript": "1.12.x"
+        "socket.io": "2.3.x",
+        "socket.io-client": "2.3.x",
+        "underscore": "1.2.x"
     },
     "devDependencies": {
         "jasmine-node": "3.0.x"
