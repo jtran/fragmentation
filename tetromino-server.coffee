@@ -1,11 +1,11 @@
 define ['tetromino-engine', 'tetromino-player', 'socket.io', 'underscore'], (engine, tetrominoPlayer, socketio, _) ->
 
   class TetrominoServer
-    initializeGame: (@app) ->
+    initializeGame: (@httpServer) ->
       console.log 'init Game'
       server = @
       @models = models = new engine.ModelEventReceiver({ comment: 'dummy game' })
-      io = socketio(@app)
+      io = socketio(@httpServer)
       io.on 'connection', (socket) ->
         console.log("Connected #{socket.id}")
         socket.on 'disconnect', ->

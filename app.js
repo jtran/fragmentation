@@ -19,53 +19,43 @@ requirejs.config({
 
 var express = require('express');
 
-var app = module.exports = express.createServer();
+let app = module.exports = express();
 
 // Configuration
 
-app.configure(function(){
+(function() {
   var publicDir = __dirname + '/public';
   var viewsDir = __dirname + '/views';
   var libDir = __dirname + '/lib';
   app.set('views', viewsDir);
   app.set('view engine', 'jade');
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
   app.use(app.router);
-  app.use(express.compiler({
-    src: __dirname + '/src',
-    dest: libDir,
-    enable: ['coffeescript']
-  }));
-  app.use(express.compiler({
-    src: viewsDir,
-    dest: publicDir,
-    enable: ['coffeescript']
-  }));
   app.use(express.static(publicDir));
   app.use(express.static(libDir));
   app.use(express.static(__dirname + '/vendor/javascripts'));
-});
+})();
 
-app.configure('development', function(){
+if (app.get('env') === 'development') {
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
-});
+}
 
-app.configure('production', function(){
+if (app.get('env') === 'production') {
   app.use(express.errorHandler()); 
-});
+}
 
 // Routes
 
 var port = process.env.PORT || 3001;
-app.listen(port);
-console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+let http = require('http');
+let httpServer = http.createServer(app);
+httpServer.listen(port);
+console.log("Express server listening on port %d in %s mode", httpServer.address().port, app.settings.env);
 
 
 // Must define this as a module so that we have access to it inside
 // the requirejs call below.
-requirejs.define('app', function() {
-  return app;
+requirejs.define('httpServer', function() {
+  return httpServer;
 });
 
 // Our util module currently depends on jQuery, even though we never
@@ -81,8 +71,8 @@ var exec = require('child_process').exec;
 exec('cake build', function(err, stdout, stderr) {
   if (err) throw(err);
   console.log(stdout + stderr);
-  requirejs(['app', 'tetromino-server'], function(app, tetrominoServer) {
+  requirejs(['httpServer', 'tetromino-server'], function(httpServer, tetrominoServer) {
     // Start the game server.
-    tetrominoServer.initializeGame(app);
+    tetrominoServer.initializeGame(httpServer);
   });
 });
