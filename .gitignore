@@ -1,5 +1,9 @@
-Gemfile
-Gemfile.lock
-node_modules
-.ruby-version
-.ruby-gemset
+# Build output
+/lib
+/tetromino-server.js
+
+# node
+/node_modules
+
+# macOS
+.DS_Store
