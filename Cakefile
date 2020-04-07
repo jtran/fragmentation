@@ -23,15 +23,18 @@ task 'test', 'Build and run all tests', (options) ->
   build ->
     jasmine = require 'jasmine-node'
 
-    showColors = true
-    isVerbose = false
-    teamcity = null
-    useRequireJs = false
-
-    jasmine.executeSpecsInFolder __dirname + '/spec', ((runner, log) ->
-      if runner.results().failedCount == 0
-        process.exit 0
-      else
-        process.exit 1
-    ), isVerbose, showColors, teamcity, useRequireJs,
-    /\.(js|coffee)$/, { report: null }
+    options =
+      specFolders: [__dirname + '/spec']
+      onComplete: (runner, log) ->
+        if runner.results().failedCount == 0
+          process.exit 0
+        else
+          process.exit 1
+      regExpSpec: /\.(js|coffee)$/i
+      showColors: true
+      isVerbose: false
+      junitreport:
+        report: null
+      teamcity: null
+      useRequireJs: __dirname + '/spec/requirejs-setup.js'
+    jasmine.executeSpecsInFolder options
