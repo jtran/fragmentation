@@ -1,22 +1,19 @@
 {
-    "name": "application-name"
-  , "version": "0.0.1"
-  , "private": true
-  , "engines": {
-      "node": "0.8.x"
-    , "npm": "1.1.x"
+    "name": "application-name",
+    "version": "0.0.1",
+    "private": true,
+    "engines": {
+        "node": ">=0.8",
+        "npm": ">=1.1"
+    },
+    "dependencies": {
+        "express": "2.5.x",
+        "jade": "0.20.x",
+        "requirejs": "2.3.x",
+        "underscore": "1.2.x",
+        "coffeescript": "1.12.x"
+    },
+    "devDependencies": {
+        "jasmine-node": "3.0.x"
     }
-  , "dependencies": {
-      "express": "2.5.11"
-    , "jade": "0.20.3"
-    , "requirejs": "1.0.7"
-    , "underscore": "1.2.x"
-    , "coffee-script": "1.3.x"
-    , "now": "0.8.x"
-    , "node-proxy": "0.5.2"
-    , "socket.io": "0.8.7"
-  }
-, "devDependencies": {
-    "jasmine-node":  "1.0.x"
-  }
 }
