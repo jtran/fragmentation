@@ -1,4 +1,5 @@
 define ['jquery'], ($) ->
+  $ ?= window.$
 
   # Return random integer in interval [0...n].
   randInt = (n) ->

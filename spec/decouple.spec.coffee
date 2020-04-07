@@ -1,5 +1,4 @@
 requirejs = require('requirejs')
-requirejs.config { baseUrl: __dirname + '/../lib' }
 
 
 requirejs ['decouple'], (decouple) ->
