@@ -28,10 +28,7 @@ const port = process.env.PORT || 3001;
 app.set('port', port);
 (function() {
   var publicDir = __dirname + '/public';
-  var viewsDir = __dirname + '/views';
   var libDir = __dirname + '/lib';
-  app.set('views', viewsDir);
-  app.set('view engine', 'jade');
   app.use(express.static(publicDir));
   app.use(express.static(libDir));
   app.use(express.static(__dirname + '/vendor/javascripts'));
