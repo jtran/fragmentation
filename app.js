@@ -18,38 +18,35 @@ requirejs.config({
 });
 
 var express = require('express');
+let errorhandler = require('errorhandler');
 
 let app = module.exports = express();
 
 // Configuration
 
+const port = process.env.PORT || 3001;
+app.set('port', port);
 (function() {
   var publicDir = __dirname + '/public';
   var viewsDir = __dirname + '/views';
   var libDir = __dirname + '/lib';
   app.set('views', viewsDir);
   app.set('view engine', 'jade');
-  app.use(app.router);
   app.use(express.static(publicDir));
   app.use(express.static(libDir));
   app.use(express.static(__dirname + '/vendor/javascripts'));
 })();
 
+// Error handling should be last, after all routes.
 if (app.get('env') === 'development') {
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
+  app.use(errorhandler());
 }
 
-if (app.get('env') === 'production') {
-  app.use(express.errorHandler()); 
-}
-
-// Routes
-
-var port = process.env.PORT || 3001;
 let http = require('http');
 let httpServer = http.createServer(app);
-httpServer.listen(port);
-console.log("Express server listening on port %d in %s mode", httpServer.address().port, app.settings.env);
+httpServer.listen(port, function() {
+  console.log("Express server listening on port %d in %s mode", httpServer.address().port, app.get('env'));
+});
 
 
 // Must define this as a module so that we have access to it inside

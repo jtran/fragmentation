@@ -6,9 +6,13 @@
         "node": ">=12.16",
         "npm": ">=6.0"
     },
+    "scripts": {
+        "start": "node app.js"
+    },
     "dependencies": {
         "coffeescript": "1.12.x",
-        "express": "3.21.x",
+        "errorhandler": "1.5.x",
+        "express": "4.17.x",
         "jade": "0.20.x",
         "requirejs": "2.3.x",
         "socket.io": "2.3.x",
