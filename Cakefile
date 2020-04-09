@@ -33,8 +33,5 @@ task 'test', 'Build and run all tests', (options) ->
       regExpSpec: /\.(js|coffee)$/i
       showColors: true
       isVerbose: false
-      junitreport:
-        report: null
-      teamcity: null
       useRequireJs: __dirname + '/spec/requirejs-setup.js'
     jasmine.executeSpecsInFolder options
