@@ -15,7 +15,6 @@
         "express": "4.17.x",
         "requirejs": "2.3.x",
         "socket.io": "2.3.x",
-        "socket.io-client": "2.3.x",
         "underscore": "1.2.x"
     },
     "devDependencies": {
