@@ -1,5 +1,5 @@
-`import './jquery-1.6.2.min.js'`
-`import './underscore.js'`
+#`import './jquery-1.6.2.min.js'`
+#`import './underscore.js'`
 `import util from './util.js'`
 `import decouple from './decouple.js'`
 
