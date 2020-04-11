@@ -416,7 +416,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     addPlayer: (player) ->
       return if player.id in _.keys(@players, 'id')
       # Clone since we may modify this.
-      player = _.clone(player)
+      player = util.cloneObject(player)
       if player.field not instanceof PlayingField
         player.field = new PlayingField(@game, { playerId: player.id, viewType: 'remote', blocks: player.field.blocks, curFloating: player.field.curFloating, nextFloating: player.field.nextFloating })
       console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
