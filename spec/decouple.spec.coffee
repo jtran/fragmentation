@@ -1,8 +1,6 @@
-requirejs = require('requirejs')
+`import decouple from '../lib/decouple.js'`
 
-
-requirejs ['decouple'], (decouple) ->
-
+do ->
   describe 'decouple', ->
 
     it "calls listener when triggered", ->

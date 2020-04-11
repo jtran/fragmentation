@@ -1,8 +1,7 @@
-requirejs = require('requirejs')
+`import decouple from '../lib/decouple.js'`
+`import engine from '../lib/tetromino-engine.js'`
 
-
-requirejs ['tetromino-engine', 'decouple'], (engine, decouple) ->
-
+do ->
   describe 'tetromino-engine Block', ->
 
     it "constructs new block with given x and y", ->
@@ -87,4 +86,4 @@ requirejs ['tetromino-engine', 'decouple'], (engine, decouple) ->
       expect(field.blockFromXy([1, 9])).toBeNull()
       expect(field.curFloating.blocks[0].getXy()).toEqual([1, 6])
 
-# TODO: Test piece move, piece transform, and clearing lines.
+  # TODO: Test piece move, piece transform, and clearing lines.

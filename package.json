@@ -8,7 +8,8 @@
     },
     "scripts": {
         "start": "cake build && node --experimental-modules app.js",
-        "build": "cake build"
+        "build": "cake build",
+        "test": "cake build && cd spec && coffee --bare -c *.spec.coffee && jasmine --require=esm *.spec.js"
     },
     "type": "module",
     "dependencies": {
@@ -20,6 +21,7 @@
         "underscore": "1.2.x"
     },
     "devDependencies": {
-        "jasmine-node": "3.0.x"
+        "esm": "3.2.25",
+        "jasmine": "3.5.0"
     }
 }

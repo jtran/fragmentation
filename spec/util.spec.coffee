@@ -1,8 +1,6 @@
-requirejs = require('requirejs')
+`import util from '../lib/util.js'`
 
-
-requirejs ['util'], (util) ->
-
+do ->
   describe 'util', ->
 
     class Vehicle
