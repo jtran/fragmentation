@@ -149,10 +149,13 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
       @ordinal = ordinal
       $(@fieldSelector()).css('left', "#{@ordinal * (@fieldPixelWidth() + @marginLeft) + @marginLeft}px")
 
+    setPosition: (sel, left, top) ->
+      $(sel).css({'left': left + 'px', 'top': top + 'px'})
+
     setElementXy: (sel, xy) ->
-      util.setPosition(sel,
-                       2 * @borderWidth  + xy[0] * @blockWidth,
-                       2 * @borderHeight + xy[1] * @blockHeight)
+      @setPosition(sel,
+                   2 * @borderWidth  + xy[0] * @blockWidth,
+                   2 * @borderHeight + xy[1] * @blockHeight)
 
 
     beforeDrop: ->

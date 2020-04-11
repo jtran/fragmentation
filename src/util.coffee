@@ -1,5 +1,4 @@
-define ['jquery'], ($) ->
-  $ ?= window.$
+define [], ->
 
   # Clones non-null objects.  Not arrays or other primitives.  Maybe.  It
   # depends on browser version.
@@ -17,12 +16,8 @@ define ['jquery'], ($) ->
   randInt = (n) ->
     Math.floor(Math.random() * (n+1))
 
-  setPosition = (sel, left, top) ->
-    $(sel).css({'left': left + 'px', 'top': top + 'px'})
-
   # Exports
   root = exports ? this
   root.util =
     cloneObject: cloneObject
     randInt: randInt
-    setPosition: setPosition

@@ -52,12 +52,6 @@ requirejs.define('httpServer', function() {
   return httpServer;
 });
 
-// Our util module currently depends on jQuery, even though we never
-// call those functions on the server.
-requirejs.define('jquery', function() {
-  return function() { throw("You tried to use jQuery on the server."); };
-});
-
 // Compile everything to JavaScript since requirejs can't handle
 // CoffeeScript.  There's a plugin, but it means you have to know
 // whether a module is implemented with JS or Coffee.  Screw that.

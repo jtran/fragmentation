@@ -1,6 +1,4 @@
 requirejs = require('requirejs')
-requirejs.define 'jquery', [], ->
-  -> console.error("You tried to use jQuery on the server.")
 
 
 requirejs ['tetromino-engine', 'decouple'], (engine, decouple) ->
