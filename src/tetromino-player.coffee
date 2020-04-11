@@ -1,9 +1,8 @@
-do ->
-  class Player
-    constructor: (@id, @field) ->
+class Player
+  constructor: (@id, @field) ->
 
-    asJson: -> { id: @id, field: @field.asJson() }
+  asJson: -> { id: @id, field: @field.asJson() }
 
 
-  export default
-    Player: Player
+export default
+  Player: Player
