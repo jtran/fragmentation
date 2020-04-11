@@ -1,6 +1,12 @@
-require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-server-view', 'decouple', 'underscore', 'socket.io-client'], ($, TetrominoEngine, DomView, PushToServerView, decouple, _, socketio) ->
+`import $ from './jquery-1.6.2.min.js'`
+`import _ from './underscore.js'`
 
-  $ ?= window.$
+`import TetrominoEngine from './tetromino-engine.js'`
+`import DomView from './tetromino-dom-view.js'`
+`import PushToServerView from './tetromino-push-to-server-view.js'`
+`import decouple from './decouple.js'`
+
+do ->
   game = null
   localField = null
   localFieldView = null
@@ -10,8 +16,7 @@ require ['jquery', 'tetromino-engine', 'tetromino-dom-view', 'tetromino-push-to-
   # For debugging.
   logStatus = (msg) -> $('#status').prepend("<div>#{msg}</div>")
 
-  socket = socketio()
-
+  socket = io()
   decouple.on null, 'new PlayingField', (game, event, field) ->
     console.log("adding DOM view #{fieldViews.length}", event, field)
     options =

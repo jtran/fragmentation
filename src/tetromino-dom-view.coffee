@@ -1,6 +1,8 @@
-define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, util, _, decouple) ->
-  $ ?= window.$
-
+`import './jquery-1.6.2.min.js'`
+`import './underscore.js'`
+`import util from './util.js'`
+`import decouple from './decouple.js'`
+do ->
   class BlockDomView
     constructor: (@fieldView, @blockModel) ->
       @elm = document.createElement('div')
@@ -144,7 +146,6 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
       @themeIndex = themeIndex
       $('.block, .tail', @fieldSelector()).addClass(THEMES[themeIndex])
 
-
     setOrdinal: (ordinal) ->
       @ordinal = ordinal
       $(@fieldSelector()).css('left', "#{@ordinal * (@fieldPixelWidth() + @marginLeft) + @marginLeft}px")
@@ -188,11 +189,6 @@ define ['jquery', 'jqueryui', 'util', 'underscore', 'decouple'], ($, jqueryui, u
 
       @dropState = null
 
-
-
-
-  # Exports
-  root = exports ? this
-  root.TetrominoDomView =
+  export default
     BlockDomView: BlockDomView
     PlayingFieldDomView: PlayingFieldDomView

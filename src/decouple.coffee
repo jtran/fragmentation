@@ -1,6 +1,5 @@
 # De-coupling with events.
-define [], ->
-
+do ->
   class Decouple
     constructor: ->
       @bindings = []
@@ -19,6 +18,4 @@ define [], ->
       null
 
 
-  # Export singleton.
-  root = exports ? this
-  root.decouple = new Decouple()
+  `export default new Decouple()`

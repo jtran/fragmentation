@@ -112,16 +112,9 @@ font-size: 12px;
 
 <audio id="music" src="sea-of-simulation.mp3" preload="preload" />
 
-<script type="text/javascript" src="/require.js"></script>
-<script type="text/javascript">
-require({
-  paths: {
-    jquery: '/jquery-1.6.2.min',
-    jqueryui: '/jquery-ui-1.8.16.custom.min',
-    'socket.io-client': '/socket.io/socket.io.js'
-  },
-  priority: ['jquery']
-}, ['main']);
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="main.js"></script>
+
 </script>
 </body>
 </html>

@@ -1,5 +1,4 @@
-define [], ->
-
+do ->
   # Clones non-null objects.  Not arrays or other primitives.  Maybe.  It
   # depends on browser version.
   #
@@ -17,7 +16,6 @@ define [], ->
     Math.floor(Math.random() * (n+1))
 
   # Exports
-  root = exports ? this
-  root.util =
+  export default
     cloneObject: cloneObject
     randInt: randInt

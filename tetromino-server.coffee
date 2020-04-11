@@ -1,5 +1,8 @@
-define ['tetromino-engine', 'tetromino-player', 'socket.io', 'underscore'], (engine, tetrominoPlayer, socketio, _) ->
-
+`import engine from './lib/tetromino-engine.js'`
+`import tetrominoPlayer from './lib/tetromino-player.js'`
+`import socketio from 'socket.io'`
+`import _ from 'underscore'`
+do ->
   class TetrominoServer
     initializeGame: (@httpServer) ->
       console.log 'init Game'
@@ -32,8 +35,5 @@ define ['tetromino-engine', 'tetromino-player', 'socket.io', 'underscore'], (eng
         socket.on 'distributeFieldEvent', (event, args...) ->
           models.receiveFieldEvent(socket.id, event, args...)
           socket.broadcast.emit('receiveFieldEvent', socket.id, event, args...)
-
-
-  # Export singleton.
-  root = exports ? this
-  root.tetrominoServer = new TetrominoServer()
+  
+  `export default new TetrominoServer()`

@@ -1,5 +1,5 @@
-define ['underscore', 'decouple', 'socket.io-client'], (_, decouple, socketio) ->
-
+`import decouple from './decouple.js'`
+do ->
   class BlockView
     constructor: (@blockModel, @game, @socket) ->
       # Block model objects have no identity when pushed over the
@@ -38,8 +38,5 @@ define ['underscore', 'decouple', 'socket.io-client'], (_, decouple, socketio) -
         if @game.joinedRemoteGame
           @socket.emit('distributeFieldEvent', event)
 
-
-  # Exports
-  root = exports ? this
-  root.TetrominoPushToServerView =
+  export default
     PlayingFieldView: PlayingFieldView

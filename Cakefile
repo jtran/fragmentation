@@ -11,9 +11,9 @@ spawnCoffee = (options, callback = null) ->
     callback?() if code is 0
 
 build = (callback) ->
-  spawnCoffee ['--compile', '--output', 'lib', 'src'], ->
+  spawnCoffee ['--compile', '--bare', '--output', 'lib', 'src'], ->
     # Compile the server.
-    spawnCoffee ['--compile', 'tetromino-server.coffee'], ->
+    spawnCoffee ['--compile', '--bare', 'tetromino-server.coffee'], ->
       callback?()
 
 task 'build', 'Build project from src/*.coffee to lib/*.js', ->

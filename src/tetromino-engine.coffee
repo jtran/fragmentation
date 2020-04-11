@@ -1,5 +1,9 @@
-define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decouple, tetrominoPlayer) ->
+`import _ from './underscore.js'`
+`import util from './util.js'`
+`import tetrominoPlayer from './tetromino-player.js'`
+`import decouple from './decouple.js'`
 
+do ->
   # Represents a single square.
   class Block
 
@@ -549,10 +553,7 @@ define ['underscore', 'util', 'decouple', 'tetromino-player'], (_, util, decoupl
     players: -> @models.players
 
 
-
-  # Exports
-  root = exports ? this
-  root.TetrominoEngine =
+  export default
     Block: Block
     FloatingBlock: FloatingBlock
     PlayingField: PlayingField

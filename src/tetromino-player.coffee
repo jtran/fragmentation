@@ -1,12 +1,9 @@
-define [], ->
-
+do ->
   class Player
     constructor: (@id, @field) ->
 
     asJson: -> { id: @id, field: @field.asJson() }
 
 
-  # Exports
-  root = exports ? this
-  root.TetrominoPlayer =
+  export default
     Player: Player

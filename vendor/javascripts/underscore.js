@@ -12,7 +12,7 @@
   // --------------
 
   // Establish the root object, `window` in the browser, or `global` on the server.
-  var root = this;
+  var root = this || window;
 
   // Save the previous value of the `_` variable.
   var previousUnderscore = root._;
