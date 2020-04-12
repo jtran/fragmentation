@@ -7,7 +7,7 @@ describe 'decouple', ->
     fn = (caller, event) -> called = true
     decouple.on null, 'someEvent', fn
     decouple.trigger {}, 'someEvent'
-    expect(called).toEqual true
+    expect(called).to.equal true
 
   it "calls listener filtered by caller when triggered", ->
     called1 = false
@@ -18,7 +18,7 @@ describe 'decouple', ->
     decouple.on caller, 'someEvent', fn1
     decouple.on {}, 'someEvent', fn2
     decouple.trigger caller, 'someEvent'
-    expect(called1).toEqual true
-    expect(called2).toEqual false
+    expect(called1).to.equal true
+    expect(called2).to.equal false
 
 

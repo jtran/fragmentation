@@ -9,4 +9,4 @@
 .DS_Store
 
 # compiled specs
-/spec/*.js
+/test-build

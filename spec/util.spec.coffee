@@ -15,13 +15,13 @@ describe 'util', ->
     car = new Car()
     car.color = 'blue'
     v = util.cloneObject(car)
-    expect(v.color).toEqual 'blue'
+    expect(v.color).to.equal 'blue'
 
   it "clones object with same prototype chain", ->
     car = new Car()
     v = util.cloneObject(car)
-    expect(v.color).toEqual 'black'
-    expect(v.wheels()).toEqual 4
-    expect(v.capacity()).toEqual 1
+    expect(v.color).to.equal 'black'
+    expect(v.wheels()).to.equal 4
+    expect(v.capacity()).to.equal 1
     # This fails, but we currently don't use super classes.
     # expect(Object.getPrototypeOf(v)).toBe(Car)

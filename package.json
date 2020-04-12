@@ -9,7 +9,7 @@
     "scripts": {
         "start": "cake build && node --experimental-modules app.js",
         "build": "cake build",
-        "test": "cake build && cd spec && coffee --bare -c *.spec.coffee && jasmine --require=esm *.spec.js"
+        "test": "cake build && node --experimental-modules node_modules/.bin/mocha test-build/*.spec.js"
     },
     "type": "module",
     "dependencies": {
@@ -21,7 +21,9 @@
         "underscore": "1.2.x"
     },
     "devDependencies": {
-        "esm": "3.2.25",
-        "jasmine": "3.5.0"
+        "chai": "4.2.0",
+        "mocha": "7.1.1",
+        "sinon": "9.0.2",
+        "sinon-chai": "3.5.0"
     }
 }

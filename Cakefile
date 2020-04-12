@@ -14,24 +14,9 @@ build = (callback) ->
   spawnCoffee ['--compile', '--bare', '--output', 'lib', 'src'], ->
     # Compile the server.
     spawnCoffee ['--compile', '--bare', 'tetromino-server.coffee'], ->
-      callback?()
+      # compile the tests.
+      spawnCoffee ['--compile', '--bare', '--output', 'test-build', 'spec'], ->
+        callback?()
 
 task 'build', 'Build project from src/*.coffee to lib/*.js', ->
   build()
-
-task 'test', 'Build and run all tests', (options) ->
-  build ->
-    jasmine = require 'jasmine-node'
-
-    options =
-      specFolders: [__dirname + '/spec']
-      onComplete: (runner, log) ->
-        if runner.results().failedCount == 0
-          process.exit 0
-        else
-          process.exit 1
-      regExpSpec: /\.(js|coffee)$/i
-      showColors: true
-      isVerbose: false
-      useRequireJs: __dirname + '/spec/requirejs-setup.js'
-    jasmine.executeSpecsInFolder options
