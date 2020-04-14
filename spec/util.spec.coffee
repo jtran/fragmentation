@@ -1,30 +1,27 @@
-requirejs = require('requirejs')
+`import util from '../lib/util.js'`
 
+describe 'util', ->
 
-requirejs ['util'], (util) ->
+  class Vehicle
+    capacity: -> 1
 
-  describe 'util', ->
+  class Car extends Vehicle
+    constructor: ->
+      @color = 'black'
 
-    class Vehicle
-      capacity: -> 1
+    wheels: -> 4
 
-    class Car extends Vehicle
-      constructor: ->
-        @color = 'black'
+  it "clones object's own properties", ->
+    car = new Car()
+    car.color = 'blue'
+    v = util.cloneObject(car)
+    expect(v.color).to.equal 'blue'
 
-      wheels: -> 4
-
-    it "clones object's own properties", ->
-      car = new Car()
-      car.color = 'blue'
-      v = util.cloneObject(car)
-      expect(v.color).toEqual 'blue'
-
-    it "clones object with same prototype chain", ->
-      car = new Car()
-      v = util.cloneObject(car)
-      expect(v.color).toEqual 'black'
-      expect(v.wheels()).toEqual 4
-      expect(v.capacity()).toEqual 1
-      # This fails, but we currently don't use super classes.
-      # expect(Object.getPrototypeOf(v)).toBe(Car)
+  it "clones object with same prototype chain", ->
+    car = new Car()
+    v = util.cloneObject(car)
+    expect(v.color).to.equal 'black'
+    expect(v.wheels()).to.equal 4
+    expect(v.capacity()).to.equal 1
+    # This fails, but we currently don't use super classes.
+    # expect(Object.getPrototypeOf(v)).toBe(Car)
