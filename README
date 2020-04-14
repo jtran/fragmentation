@@ -4,8 +4,8 @@ To install:
 
 To run the server:
 
-    node app.js
+    npm start
 
 To run tests:
 
-    cake test
+    npm test
