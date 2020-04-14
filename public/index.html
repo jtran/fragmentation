@@ -1,122 +1,122 @@
 <!doctype html>
 <html lang="en">
 <head>
-<title>Fragmentation</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style type="text/css">
+  <title>Fragmentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style type="text/css">
 html {
-background-color: #000;
+  background-color: #000;
 }
 #background {
-height: 462px;
-margin-bottom: 10px;
+  height: 462px;
+  margin-bottom: 10px;
 }
 .field {
-margin: 10px 0;
-position: absolute;
--webkit-transition: left 1.0s ease-out;
--moz-transition:    left 1.0s ease-out;
+  margin: 10px 0;
+  position: absolute;
+  -webkit-transition: left 1.0s ease-out;
+  -moz-transition:    left 1.0s ease-out;
 }
 .field_background {
-width: 100%; height: 402px;
-position: relative; top: 40px;
-background-color: #0E2F38;
+  width: 100%; height: 402px;
+  position: relative; top: 40px;
+  background-color: #0E2F38;
 }
 .block {
-height: 18px; width: 18px;
-position: absolute;
-border-radius: 3px;
--webkit-transition: left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out, border-radius 0.5s linear;
--moz-transition:    left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out, border-radius 0.5s linear;
-color: #888; font-size: 9px; font-family: Helvetica, sans-serif;
+  height: 18px; width: 18px;
+  position: absolute;
+  border-radius: 3px;
+  -webkit-transition: left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out, border-radius 0.5s linear;
+  -moz-transition:    left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out, border-radius 0.5s linear;
+  color: #888; font-size: 9px; font-family: Helvetica, sans-serif;
 }
 .block.light {
-background-color: #2C3F48;
--webkit-box-shadow: 0 0 5px #2C3F48;
-box-shadow: 0 0 5px #2C3F48;
+  background-color: #2C3F48;
+  -webkit-box-shadow: 0 0 5px #2C3F48;
+  box-shadow: 0 0 5px #2C3F48;
 }
 .block.dark {
-background-color: #08181C;
--webkit-box-shadow: 0 0 2px #08181C;
-box-shadow: 0 0 2px #08181C;
+  background-color: #08181C;
+  -webkit-box-shadow: 0 0 2px #08181C;
+  box-shadow: 0 0 2px #08181C;
 }
 .block.light.blue.lit, .block.light.yellow.opponent.lit, .block.light.orange.opponent.lit {
-background-color: #fff;
--webkit-box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
-box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
+  background-color: #fff;
+  -webkit-box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
+  box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
 }
 .block.dark.blue.lit, .block.dark.yellow.opponent.lit, .block.dark.orange.opponent.lit {
-background-color: #000;
--webkit-box-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
-box-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
+  background-color: #000;
+  -webkit-box-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
+  box-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
 }
 .block.light.orange.lit {
-background-color: #fff;
--webkit-box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
-box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
+  background-color: #fff;
+  -webkit-box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
+  box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
 }
 .block.dark.orange.lit {
-background-color: #000;
--webkit-box-shadow: 0 0 5px #000, 0 0 15px #EA502B;
-box-shadow: 0 0 5px #000, 0 0 15px #EA502B;
+  background-color: #000;
+  -webkit-box-shadow: 0 0 5px #000, 0 0 15px #EA502B;
+  box-shadow: 0 0 5px #000, 0 0 15px #EA502B;
 }
 .block.light.yellow.lit, .block.light.blue.opponent.lit {
-background-color: #fff;
--webkit-box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
-box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
+  background-color: #fff;
+  -webkit-box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
+  box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
 }
 .block.dark.yellow.lit, .block.dark.blue.opponent.lit {
-background-color: #000;
--webkit-box-shadow: 0 0 5px #000, 0 0 15px #FF9D02;
-box-shadow: 0 0 5px #000, 0 0 15px #FF9D02;
+  background-color: #000;
+  -webkit-box-shadow: 0 0 5px #000, 0 0 15px #FF9D02;
+  box-shadow: 0 0 5px #000, 0 0 15px #FF9D02;
 }
 .tail {
-position: absolute;
-opacity: 0.9;
-background-color: #fff;
-border-top-left-radius: 8px;
-border-top-right-radius: 8px;
-border-bottom-left-radius: 3px;
-border-bottom-right-radius: 3px;
+  position: absolute;
+  opacity: 0.9;
+  background-color: #fff;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
 }
 .tail.blue {
--webkit-box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
-box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
+  -webkit-box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
+  box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
 }
 .tail.orange {
--webkit-box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
-box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
+  -webkit-box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
+  box-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
 }
 .tail.yellow {
--webkit-box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
-box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
+  -webkit-box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
+  box-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
 }
 .next {
-opacity: 0.7;
+  opacity: 0.7;
 }
 #status {
-height: 20px; margin: 10px;
-color: #bbb;
-font-family: courier new, monospace;
-font-size: 12px;
+  height: 20px; margin: 10px;
+  color: #bbb;
+  font-family: courier new, monospace;
+  font-size: 12px;
 }
-</style>
+  </style>
 </head>
 <body>
 
 
-<div id="background">
-</div>
+  <div id="background">
+  </div>
 
-<div id="status">Loading...</div>
+  <div id="status">Loading...</div>
 
-<audio id="music" src="sea-of-simulation.mp3" preload="preload" />
+  <audio id="music" src="sea-of-simulation.mp3" preload="preload" />
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="jquery-1.6.2.min.js"></script>
-<script src="jquery-ui-1.8.16.custom.min.js"></script>
-<script src="underscore-1.2.4.js"></script>
-<script type="module" src="main.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="jquery-1.6.2.min.js"></script>
+  <script src="jquery-ui-1.8.16.custom.min.js"></script>
+  <script src="underscore-1.2.4.js"></script>
+  <script type="module" src="main.js"></script>
 
 </body>
 </html>
