@@ -417,7 +417,7 @@ class ModelEventReceiver
     @localPlayerId = null
 
   addPlayer: (player) ->
-    return if player.id in _.keys(@players, 'id')
+    return if @players[player.id]?
     # Clone since we may modify this.
     player = util.cloneObject(player)
     if player.field not instanceof PlayingField
