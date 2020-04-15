@@ -98,7 +98,7 @@ class FloatingBlock
   # transformation was possible.
   transform: (f) ->
     xys2 = (f(blk) for blk in @blocks)
-    return false if _(xys2).some(_.bind(@field.isXyTaken, @field))
+    return false if _(xys2).some(@field.isXyTaken.bind(@field))
     for blk, i in @blocks
       blk.setXy(xys2[i])
     true
@@ -355,7 +355,7 @@ class PlayingField
 
   # Returns true if game is over.
   checkForGameOver: ->
-    return false if _(blk.getXy() for blk in @curFloating.blocks).all(_.bind(@isXyFree, @))
+    return false if _(blk.getXy() for blk in @curFloating.blocks).all(@isXyFree.bind(@))
     @stopGravity()
 
     decouple.trigger(@, 'gameOver')
@@ -399,7 +399,7 @@ class PlayingField
 
   startGravity: ->
     return unless @useGravity
-    @fallTimer = window.setInterval(_.bind(@moveDownOrAttach, @), @gravityInterval())
+    @fallTimer = window.setInterval(@moveDownOrAttach.bind(@), @gravityInterval())
 
   stopGravity: ->
     return unless @useGravity
@@ -514,11 +514,11 @@ class TetrominoGame
       @setLocalPlayerId(@serverSocket.id)
       @serverSocket.on 'receiveMessage', (playerName, msg) ->
         game.receiveMessage?(playerName, msg)
-      @serverSocket.on 'addPlayer', _.bind(@models.addPlayer, @models)
-      @serverSocket.on 'removePlayer', _.bind(@models.removePlayer, @models)
-      @serverSocket.on 'receiveBlockEvent', _.bind(@models.receiveBlockEvent, @models)
-      @serverSocket.on 'receiveFieldEvent', _.bind(@models.receiveFieldEvent, @models)
-      @serverSocket.on 'receiveUpdatePlayingField', _.bind(@models.receiveUpdatePlayingField, @models)
+      @serverSocket.on 'addPlayer', @models.addPlayer.bind(@models)
+      @serverSocket.on 'removePlayer', @models.removePlayer.bind(@models)
+      @serverSocket.on 'receiveBlockEvent', @models.receiveBlockEvent.bind(@models)
+      @serverSocket.on 'receiveFieldEvent', @models.receiveFieldEvent.bind(@models)
+      @serverSocket.on 'receiveUpdatePlayingField', @models.receiveUpdatePlayingField.bind(@models)
       @serverSocket.emit 'getPlayers', (players) =>
         console.log 'getPlayers', players
         @models.addPlayer(p) for id, p of players
