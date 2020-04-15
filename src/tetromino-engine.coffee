@@ -262,7 +262,7 @@ class PlayingField
   # Returns array of y's of lines that need to be cleared.
   linesToClear: (flt) ->
     linesToCheck = _(blk.getXy()[1] for blk in flt.blocks).uniq()
-    y for y in linesToCheck when _(@blocks[y]).all(_.identity)
+    y for y in linesToCheck when @blocks[y].every(_.identity)
 
 
   fillLinesFromAbove: (ys) ->
@@ -355,7 +355,7 @@ class PlayingField
 
   # Returns true if game is over.
   checkForGameOver: ->
-    return false if _(blk.getXy() for blk in @curFloating.blocks).all(@isXyFree.bind(@))
+    return false if (blk.getXy() for blk in @curFloating.blocks).every(@isXyFree.bind(@))
     @stopGravity()
 
     decouple.trigger(@, 'gameOver')
