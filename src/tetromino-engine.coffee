@@ -306,7 +306,7 @@ class PlayingField
         # If the current piece occupies any coordinate we're moving
         # through, push the piece up.
         if fieldBlk
-          while _.any(@curFloating.blocks, (blk) -> blk.x == x && blk.y in [y..yPrime])
+          while @curFloating.blocks.some((blk) -> blk.x == x && blk.y in [y..yPrime])
             break if not @curFloating.moveUp()
         @moveBlock([x, y], [x, yPrime])
 
