@@ -196,7 +196,7 @@ class PlayingField
 
   # True inverse of asJson.
   @fromJson = (playerId, game, fieldHash) ->
-    new PlayingField(game, _.extend(fieldHash, { playerId: playerId, viewType: 'remote' }))
+    new PlayingField(game, Object.assign(fieldHash, { playerId: playerId, viewType: 'remote' }))
 
   # Stores piece in key and triggers events.
   commitNewPiece: (key, piece) ->
@@ -462,7 +462,7 @@ class ModelEventReceiver
     else if event == 'new FloatingBlock'
       [opts] = args
       field.curFloating = field.nextFloating
-      field.commitNewPiece('nextFloating', new FloatingBlock(field, _.extend(opts, { playerId: playerId })))
+      field.commitNewPiece('nextFloating', new FloatingBlock(field, Object.assign(opts, { playerId: playerId })))
       blk.activate() for blk in field.curFloating.blocks
     else if event == 'newNoiseBlocks'
       # Someone else received noise, and is telling us about their

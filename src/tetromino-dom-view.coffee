@@ -57,7 +57,7 @@ class BlockDomView
     decouple.removeAllForCaller(@blockModel)
 
   transition: (options = {}) ->
-    options = _.extend { delaySequence: [50, 50, 50] }, options
+    options = Object.assign({ delaySequence: [50, 50, 50] }, options)
     options.step?()
     seq = options.delaySequence
     [msecDelay, options.delaySequence] = [_.first(seq), _.rest(seq)] if seq?
