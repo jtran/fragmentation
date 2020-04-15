@@ -60,7 +60,7 @@ class BlockDomView
     options = Object.assign({ delaySequence: [50, 50, 50] }, options)
     options.step?()
     seq = options.delaySequence
-    [msecDelay, options.delaySequence] = [_.first(seq), _.rest(seq)] if seq?
+    [msecDelay, options.delaySequence...] = seq if seq?
     if msecDelay?
       _.delay (=> @transition(options)), msecDelay
     else
