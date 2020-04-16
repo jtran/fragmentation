@@ -7,7 +7,7 @@
         "npm": "6.x"
     },
     "scripts": {
-        "start": "cake build && node app.js",
+        "start": "cake build && coffee -p app.coffee | node --input-type=module",
         "build": "cake build",
         "test": "cake build && mocha test-build/*.spec.js"
     },
