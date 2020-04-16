@@ -10,6 +10,7 @@ describe 'util', ->
 
   class Car extends Vehicle
     constructor: ->
+      super()
       @color = 'black'
 
     wheels: -> 4
@@ -26,5 +27,4 @@ describe 'util', ->
     expect(v.color).to.equal 'black'
     expect(v.wheels()).to.equal 4
     expect(v.capacity()).to.equal 1
-    # This fails, but we currently don't use super classes.
-    # expect(Object.getPrototypeOf(v)).toBe(Car)
+    expect(Object.getPrototypeOf(v)).to.equal Car.prototype
