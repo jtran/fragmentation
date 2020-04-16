@@ -1,7 +1,7 @@
-`import _ from './underscore.js'`
-`import util from './util.js'`
-`import tetrominoPlayer from './tetromino-player.js'`
-`import decouple from './decouple.js'`
+import _ from './underscore.js'
+import util from './util.js'
+import { Player }  from './tetromino-player.js'
+import decouple from './decouple.js'
 
 # Represents a single square.
 class Block
@@ -536,7 +536,7 @@ class TetrominoGame
   addLocalPlayer: ->
     throw("You tried to add a local player, but I already have one.") if @localField
     @localField = new PlayingField(@, { viewType: 'local', useGravity: true })
-    @localPlayer = new tetrominoPlayer.Player(null, @localField)
+    @localPlayer = new Player(null, @localField)
     @addPlayer(@localPlayer) if @localPlayer.id
     @localPlayer
 

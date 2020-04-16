@@ -17,4 +17,4 @@ class Decouple
     null
 
 
-`export default new Decouple()`
+export default new Decouple()

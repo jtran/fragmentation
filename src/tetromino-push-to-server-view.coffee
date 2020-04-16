@@ -1,4 +1,4 @@
-`import decouple from './decouple.js'`
+import decouple from './decouple.js'
 
 class BlockView
   constructor: (@blockModel, @game, @socket) ->

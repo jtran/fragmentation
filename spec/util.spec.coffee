@@ -1,4 +1,4 @@
-`import util from '../lib/util.js'`
+import util from '../lib/util.js'
 
 describe 'util', ->
 

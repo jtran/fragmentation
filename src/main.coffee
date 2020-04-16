@@ -1,10 +1,10 @@
 #`import $ from './jquery-1.6.2.min.js'`
 #`import _ from './underscore.js'`
 
-`import TetrominoEngine from './tetromino-engine.js'`
-`import DomView from './tetromino-dom-view.js'`
-`import PushToServerView from './tetromino-push-to-server-view.js'`
-`import decouple from './decouple.js'`
+import TetrominoEngine from './tetromino-engine.js'
+import DomView from './tetromino-dom-view.js'
+import PushToServerView from './tetromino-push-to-server-view.js'
+import decouple from './decouple.js'
 
 game = null
 localField = null
