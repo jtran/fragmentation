@@ -3,13 +3,13 @@
     "version": "0.0.1",
     "private": true,
     "engines": {
-        "node": "12.x",
+        "node": "13.x",
         "npm": "6.x"
     },
     "scripts": {
-        "start": "cake build && node --experimental-modules app.js",
+        "start": "cake build && node app.js",
         "build": "cake build",
-        "test": "cake build && node --experimental-modules node_modules/.bin/mocha test-build/*.spec.js"
+        "test": "cake build && mocha test-build/*.spec.js"
     },
     "type": "module",
     "dependencies": {

@@ -7,7 +7,7 @@ Play by sharing a link.
 
 ### Installation
 
-Requires node v12.
+Requires node v13.
 
     npm install
 
