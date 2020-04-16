@@ -1,9 +1,9 @@
 #import './jquery-1.6.2.min.js'
 #import './underscore.js'
-import util from './util.js'
+
 import decouple from './decouple.js'
 
-class BlockDomView
+export class BlockDomView
   constructor: (@fieldView, @blockModel) ->
     @elm = document.createElement('div')
     @elm.className = 'block lit next'
@@ -75,7 +75,7 @@ class BlockDomView
 
 
 # View a PlayingField model in the DOM.
-class PlayingFieldDomView
+export class PlayingFieldDomView
 
   THEMES = ['blue', 'orange', 'yellow']
 
@@ -189,6 +189,4 @@ class PlayingFieldDomView
 
     @dropState = null
 
-export default
-  BlockDomView: BlockDomView
-  PlayingFieldDomView: PlayingFieldDomView
+export default { BlockDomView, PlayingFieldDomView }

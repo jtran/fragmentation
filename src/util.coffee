@@ -3,7 +3,7 @@
 #
 # TODO: Fix super classes.  Maybe this will just work when we upgrade to
 # CoffeeScript v2.
-cloneObject = (obj) ->
+export cloneObject = (obj) ->
   proto = Object.getPrototypeOf(obj)
   clone = Object.create(proto)
   for k, v of obj
@@ -11,10 +11,7 @@ cloneObject = (obj) ->
   clone
 
 # Return random integer in interval [0...n].
-randInt = (n) ->
+export randInt = (n) ->
   Math.floor(Math.random() * (n+1))
 
-# Exports
-export default
-  cloneObject: cloneObject
-  randInt: randInt
+export default {cloneObject, randInt}

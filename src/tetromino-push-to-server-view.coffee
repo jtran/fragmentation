@@ -1,6 +1,6 @@
 import decouple from './decouple.js'
 
-class BlockView
+export class BlockView
   constructor: (@blockModel, @game, @socket) ->
     # Block model objects have no identity when pushed over the
     # wire.  So instead, we push a blockId to identify a block which
@@ -15,7 +15,7 @@ class BlockView
 
 
 # View of a PlayingField model that pushes updates to the server.
-class PlayingFieldView
+export class PlayingFieldView
   constructor: (@game, @fieldModel, @socket) ->
     decouple.on @fieldModel, 'new Block', (caller, event, block) =>
       new BlockView(block, @game, @socket)
@@ -38,5 +38,4 @@ class PlayingFieldView
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', event)
 
-export default
-  PlayingFieldView: PlayingFieldView
+export default { BlockView, PlayingFieldView }

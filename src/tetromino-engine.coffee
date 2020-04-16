@@ -4,7 +4,7 @@ import { Player }  from './tetromino-player.js'
 import decouple from './decouple.js'
 
 # Represents a single square.
-class Block
+export class Block
 
   # Need the piece to style it.  After that it's discarded.
   constructor: (field, piece, @x, @y, options = {}) ->
@@ -22,7 +22,7 @@ class Block
   activate: -> decouple.trigger(@, 'activate Block')
 
 
-class FloatingBlock
+export class FloatingBlock
   NUM_TYPES_OF_BLOCKS = 7;
 
   constructor: (@field, options = {}) ->
@@ -144,7 +144,7 @@ class FloatingBlock
 
 
 
-class PlayingField
+export class PlayingField
   constructor: (game, options) ->
     @playerId = options.playerId if options.playerId?
     @viewType = options.viewType
@@ -410,7 +410,7 @@ class PlayingField
 # If you have a model with a TetrominoPushToServerView, this class
 # can create another model that mirrors the original, allowing us to
 # have a local instance of the remote model.
-class ModelEventReceiver
+export class ModelEventReceiver
   # players is a hash : playerId -> Player
   constructor: (@game) ->
     @players = {}
@@ -496,7 +496,7 @@ class ModelEventReceiver
 
 
 # A game on the client.
-class TetrominoGame
+export class TetrominoGame
   constructor: (@serverSocket) ->
     @joinedRemoteGame = false
     @socketCallbacksDone = false
@@ -552,9 +552,9 @@ class TetrominoGame
   players: -> @models.players
 
 
-export default
-  Block: Block
-  FloatingBlock: FloatingBlock
-  PlayingField: PlayingField
-  ModelEventReceiver: ModelEventReceiver
-  TetrominoGame: TetrominoGame
+export default {
+  Block, FloatingBlock, 
+  PlayingField, 
+  ModelEventReceiver, 
+  TetrominoGame
+}

@@ -1,9 +1,9 @@
 #`import $ from './jquery-1.6.2.min.js'`
 #`import _ from './underscore.js'`
 
-import TetrominoEngine from './tetromino-engine.js'
-import DomView from './tetromino-dom-view.js'
-import PushToServerView from './tetromino-push-to-server-view.js'
+import { TetrominoGame } from './tetromino-engine.js'
+import { PlayingFieldDomView } from './tetromino-dom-view.js'
+import { PlayingFieldView } from './tetromino-push-to-server-view.js'
 import decouple from './decouple.js'
 
 game = null
@@ -21,18 +21,18 @@ decouple.on null, 'new PlayingField', (game, event, field) ->
   options =
     ordinal: fieldViews.length
     themeIndex: if field.viewType == 'local' then 0 else 2
-  fieldView = new DomView.PlayingFieldDomView(field, options)
+  fieldView = new PlayingFieldDomView(field, options)
   fieldViews.push(fieldView)
   if field.viewType == 'local'
     # Keep a reference to the local view.
     localFieldView = fieldView
     # Create a push-to-server view on the local playing field.
-    pushToServerView = new PushToServerView.PlayingFieldView(game, field, socket)
+    pushToServerView = new PlayingFieldView(game, field, socket)
 
 fieldViewsFromPlayer = (player) ->
   fieldView for fieldView in fieldViews when fieldView.fieldModel == player.field
 
-game = new TetrominoEngine.TetrominoGame(socket)
+game = new TetrominoGame(socket)
 localField = game.localField
 
 # Re-organize the view when a player leaves the game.
