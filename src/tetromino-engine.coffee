@@ -12,9 +12,7 @@ export class Block
     @pieceType = piece.type
     @playerId = field.playerId if field.playerId?
 
-  setXy: (xy) ->
-    @x = xy[0]
-    @y = xy[1]
+  setXy: ([@x, @y]) ->
     decouple.trigger(@, 'move Block')
 
   getXy: -> [@x, @y]
@@ -215,21 +213,19 @@ export class PlayingField
     null
 
 
-  blockFromXy: (xy) ->
-    row = xy[1]
+  blockFromXy: ([col, row]) ->
     return null unless 0 <= row < @blocks.length
-    col = xy[0]
     return null unless 0 <= col < @blocks[row].length
     @blocks[row][col]
 
-  storeBlock: (blk, xy) ->
-    @blocks[xy[1]][xy[0]] = blk if 0 <= xy[1] <= @fieldHeight
+  storeBlock: (blk, [col, row]) ->
+    @blocks[row][col] = blk if 0 <= row <= @fieldHeight
     blk
 
-  isXyFree: (xy) =>
-    @blockFromXy(xy) == null &&
-      0 <= xy[0] < @fieldWidth &&
-      0 <= xy[1] < @fieldHeight
+  isXyFree: ([col, row]) =>
+    @blockFromXy([col, row]) == null &&
+      0 <= col < @fieldWidth &&
+      0 <= row < @fieldHeight
 
   isXyTaken: (xy) => ! @isXyFree(xy)
 
