@@ -215,19 +215,20 @@ export class PlayingField
     null
 
 
-  blockFromXy: ([col, row]) ->
-    return null unless 0 <= row < @blocks.length
-    return null unless 0 <= col < @blocks[row].length
-    @blocks[row][col]
+  blockFromXy: ([x, y]) ->
+    return null unless 0 <= y < @blocks.length
+    return null unless 0 <= x < @blocks[y].length
+    @blocks[y][x]
 
-  storeBlock: (blk, [col, row]) ->
-    @blocks[row][col] = blk if 0 <= row <= @fieldHeight
+  storeBlock: (blk, [x, y]) ->
+    @blocks[y][x] = blk if 0 <= y <= @fieldHeight
     blk
 
-  isXyFree: ([col, row]) =>
-    @blockFromXy([col, row]) == null &&
-      0 <= col < @fieldWidth &&
-      0 <= row < @fieldHeight
+  isXyFree: (xy) =>
+    [x, y] = xy
+    @blockFromXy(xy) == null &&
+      0 <= x < @fieldWidth &&
+      0 <= y < @fieldHeight
 
   isXyTaken: (xy) => ! @isXyFree(xy)
 
