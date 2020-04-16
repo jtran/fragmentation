@@ -98,7 +98,7 @@ export class FloatingBlock
   # transformation was possible.
   transform: (f) ->
     xys2 = (f(blk) for blk in @blocks)
-    return false if _(xys2).some(@field.isXyTaken.bind(@field))
+    return false if _(xys2).some(@field.isXyTaken)
     for blk, i in @blocks
       blk.setXy(xys2[i])
     true
@@ -226,12 +226,12 @@ export class PlayingField
     @blocks[xy[1]][xy[0]] = blk if 0 <= xy[1] <= @fieldHeight
     blk
 
-  isXyFree: (xy) ->
+  isXyFree: (xy) =>
     @blockFromXy(xy) == null &&
       0 <= xy[0] < @fieldWidth &&
       0 <= xy[1] < @fieldHeight
 
-  isXyTaken: (xy) -> ! @isXyFree(xy)
+  isXyTaken: (xy) => ! @isXyFree(xy)
 
   moveBlock: (xy, xyPrime) ->
     blk = @blockFromXy(xy)
@@ -355,7 +355,7 @@ export class PlayingField
 
   # Returns true if game is over.
   checkForGameOver: ->
-    return false if (blk.getXy() for blk in @curFloating.blocks).every(@isXyFree.bind(@))
+    return false if (blk.getXy() for blk in @curFloating.blocks).every(@isXyFree)
     @stopGravity()
 
     decouple.trigger(@, 'gameOver')
@@ -363,7 +363,7 @@ export class PlayingField
     true
 
 
-  moveDownOrAttach: ->
+  moveDownOrAttach: =>
     fell = @moveDown()
     if ! fell
       decouple.trigger(@, 'beforeAttachPiece')
@@ -399,7 +399,7 @@ export class PlayingField
 
   startGravity: ->
     return unless @useGravity
-    @fallTimer = window.setInterval(@moveDownOrAttach.bind(@), @gravityInterval())
+    @fallTimer = window.setInterval(@moveDownOrAttach, @gravityInterval())
 
   stopGravity: ->
     return unless @useGravity
@@ -416,7 +416,7 @@ export class ModelEventReceiver
     @players = {}
     @localPlayerId = null
 
-  addPlayer: (player) ->
+  addPlayer: (player) =>
     return if @players[player.id]?
     # Clone since we may modify this.
     player = util.cloneObject(player)
@@ -425,7 +425,7 @@ export class ModelEventReceiver
     console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
     @players[player.id] = player
 
-  removePlayer: (playerId) ->
+  removePlayer: (playerId) =>
     id = playerId.id ? playerId
     console.log("removePlayer", id)
     if id == @localPlayerId
@@ -436,7 +436,7 @@ export class ModelEventReceiver
     delete @players[id]
     decouple.trigger(@game, 'afterRemovePlayer', player)
 
-  receiveBlockEvent: (playerId, blockId, event, args...) ->
+  receiveBlockEvent: (playerId, blockId, event, args...) =>
     return if playerId == @localPlayerId
     #console.log 'receiveBlockEvent', playerId, blockId, event, args...
     player = @players[playerId]
@@ -451,7 +451,7 @@ export class ModelEventReceiver
     else
       decouple.trigger(block, event, args...)
 
-  receiveFieldEvent: (playerId, event, args...) ->
+  receiveFieldEvent: (playerId, event, args...) =>
     return if playerId == @localPlayerId
     console.log 'receiveFieldEvent', playerId, event, args...
     field = @players[playerId].field
@@ -486,7 +486,7 @@ export class ModelEventReceiver
 
   # The server calls this when a player has sent a full refresh to
   # his/her playing field.
-  receiveUpdatePlayingField: (playerId, field) ->
+  receiveUpdatePlayingField: (playerId, field) =>
     player = @players[playerId]
     unless player
       console.warn "I got an updateClient for an unknown player id=#{playerId}"
@@ -514,11 +514,11 @@ export class TetrominoGame
       @setLocalPlayerId(@serverSocket.id)
       @serverSocket.on 'receiveMessage', (playerName, msg) ->
         game.receiveMessage?(playerName, msg)
-      @serverSocket.on 'addPlayer', @models.addPlayer.bind(@models)
-      @serverSocket.on 'removePlayer', @models.removePlayer.bind(@models)
-      @serverSocket.on 'receiveBlockEvent', @models.receiveBlockEvent.bind(@models)
-      @serverSocket.on 'receiveFieldEvent', @models.receiveFieldEvent.bind(@models)
-      @serverSocket.on 'receiveUpdatePlayingField', @models.receiveUpdatePlayingField.bind(@models)
+      @serverSocket.on 'addPlayer', @models.addPlayer
+      @serverSocket.on 'removePlayer', @models.removePlayer
+      @serverSocket.on 'receiveBlockEvent', @models.receiveBlockEvent
+      @serverSocket.on 'receiveFieldEvent', @models.receiveFieldEvent
+      @serverSocket.on 'receiveUpdatePlayingField', @models.receiveUpdatePlayingField
       @serverSocket.emit 'getPlayers', (players) =>
         console.log 'getPlayers', players
         @models.addPlayer(p) for id, p of players
