@@ -156,6 +156,8 @@ export class PlayingField
     @nextFloating = null
     @fallTimer = null
 
+    @isStopped = false
+
     # Initialize blocks matrix.
     for i in [0 ... @fieldHeight]
       row = []
@@ -236,20 +238,32 @@ export class PlayingField
     @storeBlock(blk, xyPrime) if 0 <= xyPrime[1] < @fieldHeight
     blk
 
+  rotateClockwise: ->
+    return false if @isStopped
+    @curFloating.rotateClockwise()
 
-  rotateClockwise: -> @curFloating.rotateClockwise()
+  rotateCounterclockwise: ->
+    return false if @isStopped
+    @curFloating.rotateCounterclockwise()
 
-  rotateCounterclockwise: -> @curFloating.rotateCounterclockwise()
+  moveLeft: ->
+    return false if @isStopped
+    @curFloating.moveLeft()
 
-  moveLeft: -> @curFloating.moveLeft()
+  moveRight: ->
+    return false if @isStopped
+    @curFloating.moveRight()
 
-  moveRight: -> @curFloating.moveRight()
+  moveDown: ->
+    return false if @isStopped
+    @curFloating.moveDown()
 
-  moveDown: -> @curFloating.moveDown()
-
-  moveToX: (x) -> @curFloating.moveToX(x)
+  moveToX: (x) ->
+    return false if @isStopped
+    @curFloating.moveToX(x)
 
   attachPiece: (piece) ->
+    return false if @isStopped
     for blk in piece.blocks
       @storeBlock(blk, blk.getXy())
     null
@@ -351,15 +365,19 @@ export class PlayingField
 
   # Returns true if game is over.
   checkForGameOver: ->
-    return false if (blk.getXy() for blk in @curFloating.blocks).every(@isXyFree)
+    if (blk.getXy() for blk in @curFloating.blocks).every(@isXyFree)
+      return false
+
     @stopGravity()
 
     decouple.trigger(@, 'gameOver')
 
+    @isStopped = true
     true
 
 
   moveDownOrAttach: =>
+    return false if @isStopped
     fell = @moveDown()
     if ! fell
       decouple.trigger(@, 'beforeAttachPiece')
@@ -383,6 +401,8 @@ export class PlayingField
 
 
   drop: ->
+    return false if @isStopped
+
     decouple.trigger(@, 'beforeDrop')
 
     # Drop.
@@ -549,8 +569,8 @@ export class TetrominoGame
 
 
 export default {
-  Block, FloatingBlock, 
-  PlayingField, 
-  ModelEventReceiver, 
+  Block, FloatingBlock,
+  PlayingField,
+  ModelEventReceiver,
   TetrominoGame
 }
