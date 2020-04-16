@@ -1,7 +1,7 @@
-`import engine from './lib/tetromino-engine.js'`
-`import tetrominoPlayer from './lib/tetromino-player.js'`
-`import socketio from 'socket.io'`
-`import _ from 'underscore'`
+import engine from './lib/tetromino-engine.js'
+import { Player } from './lib/tetromino-player.js'
+import socketio from 'socket.io'
+import _ from 'underscore'
 
 class TetrominoServer
   initializeGame: (@httpServer) ->
@@ -24,7 +24,7 @@ class TetrominoServer
       socket.on 'join', (fieldHash) ->
         id = socket.id
         console.log("Joined #{id}", fieldHash)
-        player = new tetrominoPlayer.Player(id, fieldHash)
+        player = new Player(id, fieldHash)
         models.addPlayer(player)
         socket.broadcast.emit('addPlayer', player)
       socket.on 'distributeMessage', (msg) ->
@@ -36,4 +36,4 @@ class TetrominoServer
         models.receiveFieldEvent(socket.id, event, args...)
         socket.broadcast.emit('receiveFieldEvent', socket.id, event, args...)
 
-`export default new TetrominoServer()`
+export default new TetrominoServer()

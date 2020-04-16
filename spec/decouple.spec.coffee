@@ -1,4 +1,4 @@
-`import decouple from '../lib/decouple.js'`
+import decouple from '../lib/decouple.js'
 
 describe 'decouple', ->
 

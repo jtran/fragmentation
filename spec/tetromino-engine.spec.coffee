@@ -1,5 +1,5 @@
-`import decouple from '../lib/decouple.js'`
-`import engine from '../lib/tetromino-engine.js'`
+import decouple from '../lib/decouple.js'
+import engine from '../lib/tetromino-engine.js'
 
 describe 'tetromino-engine Block', ->
 
