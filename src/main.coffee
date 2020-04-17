@@ -60,6 +60,7 @@ $(document).bind 'keydown', (event) ->
     when 'f'                     then localField.rotateClockwise(); true
     when 'd'                     then localField.rotateCounterclockwise(); true
     when ' ' ### spacebar    ### then localField.drop(); true
+    when 'm'                     then toggleMusic(); true
   event.preventDefault() if handled
 
 ##############################
@@ -153,9 +154,31 @@ $(localFieldView.fieldSelector()).bind 'touchend', (event) ->
 $(localFieldView.fieldSelector()).bind 'touchcancel', (event) ->
   touchData = null
 
-# Play background music if present.
+##############################
+# Beginning of game sequence.
+
 music = $('#music').get(0)
-# music?.play()
+
+playMusic = ->
+  return unless music?
+  music.play() if music.paused
+
+toggleMusic = ->
+  return unless music?
+  if music.paused
+    music.play()
+  else
+    music.pause()
+
+# Play background music if present and autoplay is set.
+do ->
+  return unless music?
+  # Load settings.
+  musicVolumeStr = window.localStorage.musicVolume ? ''
+  if musicVolumeStr.length > 0
+    music.volume = parseFloat(musicVolumeStr)
+  if window.localStorage.autoplayMusic in ['1', 'true']
+    playMusic()
 
 appendLine = (line, callback = null) ->
   $line = $('<div></div>')
