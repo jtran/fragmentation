@@ -12,9 +12,7 @@ export class Block
     @pieceType = piece.type
     @playerId = field.playerId if field.playerId?
 
-  setXy: (xy) ->
-    @x = xy[0]
-    @y = xy[1]
+  setXy: ([@x, @y]) ->
     decouple.trigger(@, 'move Block')
 
   getXy: -> [@x, @y]
@@ -98,7 +96,7 @@ export class FloatingBlock
   # transformation was possible.
   transform: (f) ->
     xys2 = (f(blk) for blk in @blocks)
-    return false if _(xys2).some(@field.isXyTaken.bind(@field))
+    return false if _(xys2).some(@field.isXyTaken)
     for blk, i in @blocks
       blk.setXy(xys2[i])
     true
@@ -158,6 +156,8 @@ export class PlayingField
     @nextFloating = null
     @fallTimer = null
 
+    @isStopped = false
+
     # Initialize blocks matrix.
     for i in [0 ... @fieldHeight]
       row = []
@@ -215,23 +215,22 @@ export class PlayingField
     null
 
 
-  blockFromXy: (xy) ->
-    row = xy[1]
-    return null unless 0 <= row < @blocks.length
-    col = xy[0]
-    return null unless 0 <= col < @blocks[row].length
-    @blocks[row][col]
+  blockFromXy: ([x, y]) ->
+    return null unless 0 <= y < @blocks.length
+    return null unless 0 <= x < @blocks[y].length
+    @blocks[y][x]
 
-  storeBlock: (blk, xy) ->
-    @blocks[xy[1]][xy[0]] = blk if 0 <= xy[1] <= @fieldHeight
+  storeBlock: (blk, [x, y]) ->
+    @blocks[y][x] = blk if 0 <= y <= @fieldHeight
     blk
 
-  isXyFree: (xy) ->
+  isXyFree: (xy) =>
+    [x, y] = xy
     @blockFromXy(xy) == null &&
-      0 <= xy[0] < @fieldWidth &&
-      0 <= xy[1] < @fieldHeight
+      0 <= x < @fieldWidth &&
+      0 <= y < @fieldHeight
 
-  isXyTaken: (xy) -> ! @isXyFree(xy)
+  isXyTaken: (xy) => ! @isXyFree(xy)
 
   moveBlock: (xy, xyPrime) ->
     blk = @blockFromXy(xy)
@@ -240,20 +239,32 @@ export class PlayingField
     @storeBlock(blk, xyPrime) if 0 <= xyPrime[1] < @fieldHeight
     blk
 
+  rotateClockwise: ->
+    return false if @isStopped
+    @curFloating.rotateClockwise()
 
-  rotateClockwise: -> @curFloating.rotateClockwise()
+  rotateCounterclockwise: ->
+    return false if @isStopped
+    @curFloating.rotateCounterclockwise()
 
-  rotateCounterclockwise: -> @curFloating.rotateCounterclockwise()
+  moveLeft: ->
+    return false if @isStopped
+    @curFloating.moveLeft()
 
-  moveLeft: -> @curFloating.moveLeft()
+  moveRight: ->
+    return false if @isStopped
+    @curFloating.moveRight()
 
-  moveRight: -> @curFloating.moveRight()
+  moveDown: ->
+    return false if @isStopped
+    @curFloating.moveDown()
 
-  moveDown: -> @curFloating.moveDown()
-
-  moveToX: (x) -> @curFloating.moveToX(x)
+  moveToX: (x) ->
+    return false if @isStopped
+    @curFloating.moveToX(x)
 
   attachPiece: (piece) ->
+    return false if @isStopped
     for blk in piece.blocks
       @storeBlock(blk, blk.getXy())
     null
@@ -355,15 +366,19 @@ export class PlayingField
 
   # Returns true if game is over.
   checkForGameOver: ->
-    return false if (blk.getXy() for blk in @curFloating.blocks).every(@isXyFree.bind(@))
+    if (blk.getXy() for blk in @curFloating.blocks).every(@isXyFree)
+      return false
+
     @stopGravity()
 
     decouple.trigger(@, 'gameOver')
 
+    @isStopped = true
     true
 
 
-  moveDownOrAttach: ->
+  moveDownOrAttach: =>
+    return false if @isStopped
     fell = @moveDown()
     if ! fell
       decouple.trigger(@, 'beforeAttachPiece')
@@ -387,6 +402,8 @@ export class PlayingField
 
 
   drop: ->
+    return false if @isStopped
+
     decouple.trigger(@, 'beforeDrop')
 
     # Drop.
@@ -399,7 +416,7 @@ export class PlayingField
 
   startGravity: ->
     return unless @useGravity
-    @fallTimer = window.setInterval(@moveDownOrAttach.bind(@), @gravityInterval())
+    @fallTimer = window.setInterval(@moveDownOrAttach, @gravityInterval())
 
   stopGravity: ->
     return unless @useGravity
@@ -416,7 +433,7 @@ export class ModelEventReceiver
     @players = {}
     @localPlayerId = null
 
-  addPlayer: (player) ->
+  addPlayer: (player) =>
     return if @players[player.id]?
     # Clone since we may modify this.
     player = util.cloneObject(player)
@@ -425,7 +442,7 @@ export class ModelEventReceiver
     console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
     @players[player.id] = player
 
-  removePlayer: (playerId) ->
+  removePlayer: (playerId) =>
     id = playerId.id ? playerId
     console.log("removePlayer", id)
     if id == @localPlayerId
@@ -436,7 +453,7 @@ export class ModelEventReceiver
     delete @players[id]
     decouple.trigger(@game, 'afterRemovePlayer', player)
 
-  receiveBlockEvent: (playerId, blockId, event, args...) ->
+  receiveBlockEvent: (playerId, blockId, event, args...) =>
     return if playerId == @localPlayerId
     #console.log 'receiveBlockEvent', playerId, blockId, event, args...
     player = @players[playerId]
@@ -451,7 +468,7 @@ export class ModelEventReceiver
     else
       decouple.trigger(block, event, args...)
 
-  receiveFieldEvent: (playerId, event, args...) ->
+  receiveFieldEvent: (playerId, event, args...) =>
     return if playerId == @localPlayerId
     console.log 'receiveFieldEvent', playerId, event, args...
     field = @players[playerId].field
@@ -486,7 +503,7 @@ export class ModelEventReceiver
 
   # The server calls this when a player has sent a full refresh to
   # his/her playing field.
-  receiveUpdatePlayingField: (playerId, field) ->
+  receiveUpdatePlayingField: (playerId, field) =>
     player = @players[playerId]
     unless player
       console.warn "I got an updateClient for an unknown player id=#{playerId}"
@@ -514,11 +531,11 @@ export class TetrominoGame
       @setLocalPlayerId(@serverSocket.id)
       @serverSocket.on 'receiveMessage', (playerName, msg) ->
         game.receiveMessage?(playerName, msg)
-      @serverSocket.on 'addPlayer', @models.addPlayer.bind(@models)
-      @serverSocket.on 'removePlayer', @models.removePlayer.bind(@models)
-      @serverSocket.on 'receiveBlockEvent', @models.receiveBlockEvent.bind(@models)
-      @serverSocket.on 'receiveFieldEvent', @models.receiveFieldEvent.bind(@models)
-      @serverSocket.on 'receiveUpdatePlayingField', @models.receiveUpdatePlayingField.bind(@models)
+      @serverSocket.on 'addPlayer', @models.addPlayer
+      @serverSocket.on 'removePlayer', @models.removePlayer
+      @serverSocket.on 'receiveBlockEvent', @models.receiveBlockEvent
+      @serverSocket.on 'receiveFieldEvent', @models.receiveFieldEvent
+      @serverSocket.on 'receiveUpdatePlayingField', @models.receiveUpdatePlayingField
       @serverSocket.emit 'getPlayers', (players) =>
         console.log 'getPlayers', players
         @models.addPlayer(p) for id, p of players
@@ -553,8 +570,8 @@ export class TetrominoGame
 
 
 export default {
-  Block, FloatingBlock, 
-  PlayingField, 
-  ModelEventReceiver, 
+  Block, FloatingBlock,
+  PlayingField,
+  ModelEventReceiver,
   TetrominoGame
 }
