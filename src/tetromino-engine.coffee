@@ -449,6 +449,9 @@ export class ModelEventReceiver
       console.log "skipping remove", id
       return
     player = @players[id]
+    unless player?
+      console.log "don't know about player #{id}; skipping remove"
+      return
     decouple.trigger(@game, 'beforeRemovePlayer', player)
     delete @players[id]
     decouple.trigger(@game, 'afterRemovePlayer', player)
