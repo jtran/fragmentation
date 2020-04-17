@@ -21,7 +21,7 @@ export class Block
 
 
 export class FloatingBlock
-  NUM_TYPES_OF_BLOCKS = 7;
+  NUM_TYPES_OF_BLOCKS = 7
 
   constructor: (@field, options = {}) ->
     @type = options.type ? util.randInt(NUM_TYPES_OF_BLOCKS - 1)
