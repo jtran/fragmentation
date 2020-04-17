@@ -48,6 +48,9 @@ decouple.on game, 'afterRemovePlayer', (caller, event, player) =>
           fv.setOrdinal(i)
         i++
 
+decouple.on localField, 'gameOver', (caller, event) =>
+  music?.pause()
+
 $(document).bind 'keydown', (event) ->
   # console.log('keydown', event.which, String.fromCharCode(event.which))
   handled = switch event.which

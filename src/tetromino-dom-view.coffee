@@ -121,10 +121,6 @@ export class PlayingFieldDomView
       decouple.trigger(blk, 'beforeClear Block') for blk in blocks
       _.delay((-> decouple.trigger(blk, 'afterClear Block') for blk in blocks), 500)
 
-    decouple.on @fieldModel, 'gameOver', (caller, event) =>
-      music = $('#music').get(0)
-      music?.pause()
-
 
   leaveGame: (callback = null) =>
     $(@fieldSelector()).fadeOut 'slow', =>
