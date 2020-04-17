@@ -50,15 +50,17 @@ decouple.on game, 'afterRemovePlayer', (caller, event, player) =>
 
 $(document).bind 'keydown', (event) ->
   # console.log('keydown', event.which, String.fromCharCode(event.which))
-  localField.moveLeft()               if (event.which == 37) # left arrow
-  localField.moveRight()              if (event.which == 39) # right arrow
-  localField.moveDownOrAttach()       if (event.which == 40) # down arrow
-  localField.rotateClockwise()        if (event.which == 38) # up arrow
-  localField.drop()                   if (event.which == 191) # slash
-  letter = String.fromCharCode(event.which).toLowerCase()
-  localField.rotateClockwise()        if (letter == 'f')
-  localField.rotateCounterclockwise() if (letter == 'd')
-  localField.drop()                   if (letter == ' ')
+  handled = switch event.which
+    when 37  ### left arrow  ### then localField.moveLeft(); true
+    when 39  ### right arrow ### then localField.moveRight(); true
+    when 40  ### down arrow  ### then localField.moveDownOrAttach(); true
+    when 38  ### up arrow    ### then localField.rotateClockwise(); true
+    when 191 ### slash       ### then localField.drop(); true
+  handled or= switch String.fromCharCode(event.which).toLowerCase()
+    when 'f'                     then localField.rotateClockwise(); true
+    when 'd'                     then localField.rotateCounterclockwise(); true
+    when ' ' ### spacebar    ### then localField.drop(); true
+  event.preventDefault() if handled
 
 ##############################
 # Touch interface.
