@@ -53,11 +53,12 @@ $(document).bind 'keydown', (event) ->
   localField.moveLeft()               if (event.which == 37) # left arrow
   localField.moveRight()              if (event.which == 39) # right arrow
   localField.moveDownOrAttach()       if (event.which == 40) # down arrow
+  localField.rotateClockwise()        if (event.which == 38) # up arrow
   localField.drop()                   if (event.which == 191) # slash
   letter = String.fromCharCode(event.which).toLowerCase()
   localField.rotateClockwise()        if (letter == 'f')
   localField.rotateCounterclockwise() if (letter == 'd')
-  localField.drop()                   if (letter == 'c')
+  localField.drop()                   if (letter == ' ')
 
 ##############################
 # Touch interface.
@@ -185,7 +186,7 @@ appendMessage """
   Arrow Keys = move
   D = rotate left
   F = rotate right
-  C = hard drop
+  Spacebar = hard drop
 
 """, =>
   _.delay((=>
