@@ -81,6 +81,10 @@ html {
   border-bottom-left-radius: 3px;
   border-bottom-right-radius: 3px;
 }
+.tail.moving {
+  /* https://easings.net/en#easeOutExpo */
+  transition: top 0.5s cubic-bezier(0.19, 1, 0.22, 1), height 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
 .tail.blue {
   -webkit-box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
   box-shadow: 0 0 5px #fff, 0 0 15px #0AD8FF;
@@ -114,14 +118,6 @@ html {
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="jquery-1.6.2.min.js"></script>
-  <script type="module">
-    var easeInExpo = function(p) {
-      return Math.pow(p, 6);
-    };
-    $.easing.easeOutExpo = function(p) {
-      return 1 - easeInExpo(1 - p);
-    };
-  </script>
   <script src="underscore-1.2.4.js"></script>
   <script type="module" src="main.js"></script>
 

@@ -176,13 +176,16 @@ export class PlayingFieldDomView
     maxX = _(xy[0] for xy in xys2           ).max()
     minY = _(xy[1] for xy in @dropState.xys ).min()
     maxY = _(xy[1] for xy in xys2           ).min()
-    $(@tailSelector()).width(@blockWidth * (maxX - minX + 1) - 2 * @borderWidth).height(@blockHeight * (maxY - minY + 1) - 2 * @borderHeight)
+    $tail = $(@tailSelector())
+    $tail.removeClass('moving')
+    $tail.width(@blockWidth * (maxX - minX + 1) - 2 * @borderWidth).height(@blockHeight * (maxY - minY + 1) - 2 * @borderHeight)
 
     # Show tail and hide after delay.
-    $(@tailSelector()).show()
+    $tail.show()
     _.delay((=>
       $e = $(@tailSelector())
-      $e.animate({'height': 0, 'top': $e.position().top + $e.height()}, 500, 'easeOutExpo')
+      $e.addClass('moving')
+      $e.css(height: '0px', top: $e.position().top + $e.height())
     ), 500)
 
     @dropState = null
