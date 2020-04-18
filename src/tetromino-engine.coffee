@@ -569,7 +569,9 @@ export class TetrominoGame
 
   start: -> @localField?.startGravity()
 
-  players: -> @models.players
+  playersMap: -> @models.players
+
+  players: -> _.values(@models.players)
 
 
 export default {

@@ -5,6 +5,7 @@ import { TetrominoGame } from './tetromino-engine.js'
 import { PlayingFieldDomView } from './tetromino-dom-view.js'
 import { PlayingFieldView } from './tetromino-push-to-server-view.js'
 import decouple from './decouple.js'
+import util from './util.js'
 
 game = null
 localField = null
@@ -39,13 +40,12 @@ localField = game.localField
 decouple.on game, 'afterRemovePlayer', (caller, event, player) =>
   for fieldView in fieldViewsFromPlayer(player)
     fieldView.leaveGame? =>
-      # Remove from list.
-      fieldViews = (fv for fv in fieldViews when fv != fieldView)
+      # Remove from the field views collection.
+      fieldViews = util.without(fieldViews, fieldView)
       # Set ordinals of remaining views.
       i = 0
-      for id, p of game.players()
-        for fv in fieldViewsFromPlayer(p)
-          fv.setOrdinal(i)
+      for fv in _.sortBy fieldViews, (fv) -> fv.getOrdinal()
+        fv.setOrdinal(i)
         i++
 
 decouple.on localField, 'gameOver', (caller, event) =>

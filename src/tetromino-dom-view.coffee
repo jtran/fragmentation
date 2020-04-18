@@ -142,6 +142,8 @@ export class PlayingFieldDomView
     @themeIndex = themeIndex
     $('.block, .tail', @fieldSelector()).addClass(THEMES[themeIndex])
 
+  getOrdinal: -> @ordinal
+
   setOrdinal: (ordinal) ->
     @ordinal = ordinal
     $(@fieldSelector()).css('left', "#{@ordinal * (@fieldPixelWidth() + @marginLeft) + @marginLeft}px")

@@ -1,3 +1,5 @@
+import _ from './underscore.js'
+
 # Clones non-null objects.  Not arrays or other primitives.  Maybe.  It
 # depends on browser version.
 #
@@ -14,4 +16,11 @@ export cloneObject = (obj) ->
 export randInt = (n) ->
   Math.floor(Math.random() * (n+1))
 
-export default {cloneObject, randInt}
+export without = (arr, item) ->
+  x for x in arr when not _.isEqual(x, item)
+
+export default {
+  cloneObject,
+  randInt,
+  without,
+}
