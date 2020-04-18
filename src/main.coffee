@@ -123,8 +123,8 @@ getEventData = (event) ->
     return event.originalEvent.touches[0]
 
 startHandler = (event) ->
-  eventData = getEventData(event)
   event.preventDefault()
+  eventData = getEventData(event)
   # Save initial state when user starts touching.
   touchData = {
     time0: new Date()
@@ -140,8 +140,8 @@ startHandler = (event) ->
 
 moveHandler = (event) ->
   return unless touchData
-  eventData = getEventData(event)
   event.preventDefault()
+  eventData = getEventData(event)
   # Update state of touch.
   touchData.time1 = touchData.time2
   touchData.pageX1 = touchData.pageX2
@@ -150,18 +150,18 @@ moveHandler = (event) ->
   touchData.pageX2 = eventData.pageX
   touchData.pageY2 = eventData.pageY
   # React to touch movement.
-  dispatchTouchEvent(false)
-
+  if (event.originalEvent.pointerType != 'mouse')
+    dispatchTouchEvent(false)
 
 endHandler = (event) ->
   return unless touchData
   # This prevents double-tap zoom.
-  eventData = getEventData(event)
   event.preventDefault()
+  eventData = getEventData(event)
   # React since this may have been the end of a tap.
-  dispatchTouchEvent(true)
+  if (event.originalEvent.pointerType != 'mouse')
+    dispatchTouchEvent(true)
   touchData = null
-
 
 cancelHandler = (event) ->
   touchData = null
@@ -178,7 +178,6 @@ $(localFieldView.fieldSelector()).bind 'touchstart', ignore
 $(localFieldView.fieldSelector()).bind 'touchend', ignore
 $(localFieldView.fieldSelector()).bind 'touchmove', ignore
 $(localFieldView.fieldSelector()).bind 'touchcancel', ignore
-
 
 ##############################
 # Beginning of game sequence.
