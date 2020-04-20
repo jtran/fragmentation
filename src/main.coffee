@@ -113,17 +113,23 @@ dispatchTouchEvent = (allowTap) ->
     handleHorizontalSwipe(e)
   else if yDist > 20 && absSlope > 2 && deltaY > 0
     handleSwipeDown({ distance: yDist, duration: duration, speed: yDist / lastDuration })
-  else if allowTap && ! touchData.hasMoved && xDist < 10 && yDist < 10 && duration < 300
+  else if allowTap && xDist < 10 && yDist < 10 && duration < 300
     handleTap(touchData.pageX2, touchData.pageY2)
 
-$(localFieldView.fieldSelector()).bind 'touchstart', (event) ->
+getEventData = (event) ->
+  if event.type.includes('pointer')
+    return event.originalEvent
+  else
+    return event.originalEvent.touches[0]
+
+startHandler = (event) ->
   event.preventDefault()
+  eventData = getEventData(event)
   # Save initial state when user starts touching.
   touchData = {
     time0: new Date()
-    pageX0: event.originalEvent.touches[0].pageX
-    pageY0: event.originalEvent.touches[0].pageY
-    hasMoved: false
+    pageX0: eventData.pageX
+    pageY0: eventData.pageY
     piece: localField.curFloating
     pieceInitX: currentPieceX()
     pieceInitY: currentPieceY()
@@ -132,30 +138,46 @@ $(localFieldView.fieldSelector()).bind 'touchstart', (event) ->
   touchData.pageX2 = touchData.pageX1 = touchData.pageX0
   touchData.pageY2 = touchData.pageY1 = touchData.pageY0
 
-$(localFieldView.fieldSelector()).bind 'touchmove', (event) ->
+moveHandler = (event) ->
   return unless touchData
   event.preventDefault()
+  eventData = getEventData(event)
   # Update state of touch.
-  touchData.hasMoved = true
   touchData.time1 = touchData.time2
   touchData.pageX1 = touchData.pageX2
   touchData.pageY1 = touchData.pageY2
   touchData.time2 = new Date()
-  touchData.pageX2 = event.originalEvent.touches[0].pageX
-  touchData.pageY2 = event.originalEvent.touches[0].pageY
+  touchData.pageX2 = eventData.pageX
+  touchData.pageY2 = eventData.pageY
   # React to touch movement.
-  dispatchTouchEvent(false)
+  if (event.originalEvent.pointerType != 'mouse')
+    dispatchTouchEvent(false)
 
-$(localFieldView.fieldSelector()).bind 'touchend', (event) ->
+endHandler = (event) ->
   return unless touchData
   # This prevents double-tap zoom.
   event.preventDefault()
+  eventData = getEventData(event)
   # React since this may have been the end of a tap.
-  dispatchTouchEvent(true)
+  if (event.originalEvent.pointerType != 'mouse')
+    dispatchTouchEvent(true)
   touchData = null
 
-$(localFieldView.fieldSelector()).bind 'touchcancel', (event) ->
+cancelHandler = (event) ->
   touchData = null
+
+$(localFieldView.fieldSelector()).bind 'pointerdown', startHandler
+$(localFieldView.fieldSelector()).bind 'pointerup', endHandler
+$(localFieldView.fieldSelector()).bind 'pointermove', moveHandler
+$(localFieldView.fieldSelector()).bind 'pointerout', cancelHandler
+
+ignore = (evt) ->
+  evt.preventDefault()
+  false
+$(localFieldView.fieldSelector()).bind 'touchstart', ignore
+$(localFieldView.fieldSelector()).bind 'touchend', ignore
+$(localFieldView.fieldSelector()).bind 'touchmove', ignore
+$(localFieldView.fieldSelector()).bind 'touchcancel', ignore
 
 ##############################
 # Beginning of game sequence.
