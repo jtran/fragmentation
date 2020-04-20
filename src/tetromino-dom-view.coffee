@@ -2,6 +2,7 @@
 #import './underscore.js'
 
 import decouple from './decouple.js'
+import { PlayingField } from './tetromino-engine.js'
 
 export class BlockDomView
   constructor: (@fieldView, @blockModel) ->
@@ -92,9 +93,12 @@ export class PlayingFieldDomView
     # Create elements on page.  Wrap in a lambda so that references
     # don't leak to lambdas further down.
     (=>
+      pausedStyle = 'display: ' + if @fieldModel.isPaused() then 'block' else 'none'
       $field = $("""
         <div id="field_#{@domId}" class="field" style="display: none">
-          <div class="field_background"></div>
+          <div class="field_background">
+            <div id="paused_#{@domId}" class="paused" style="#{pausedStyle}">PAUSED</div>
+          </div>
           <div id="tail_#{@domId}" class="tail"></div>
         </div>
       """)
@@ -121,6 +125,12 @@ export class PlayingFieldDomView
       decouple.trigger(blk, 'beforeClear Block') for blk in blocks
       _.delay((-> decouple.trigger(blk, 'afterClear Block') for blk in blocks), 500)
 
+    decouple.on @fieldModel, 'stateChange', (caller, event, newState) =>
+      if newState == PlayingField.STATE_PAUSED
+        $(@pausedSelector()).show()
+      else
+        $(@pausedSelector()).hide()
+
 
   leaveGame: (callback = null) =>
     $(@fieldSelector()).fadeOut 'slow', =>
@@ -133,14 +143,15 @@ export class PlayingFieldDomView
   fieldPixelHeight: -> @blockHeight * @fieldModel.fieldHeight + 2 * @borderHeight
 
   fieldSelector: -> "#field_#{@domId}"
+  pausedSelector: -> "#paused_#{@domId}"
   tailSelector:  -> "#tail_#{@domId}"
 
   getTheme: -> THEMES[@themeIndex]
 
   setThemeIndex: (themeIndex) ->
-    $('.block, .tail', @fieldSelector()).removeClass(THEMES[@themeIndex]) if @themeIndex?
+    $('.block, .paused, .tail', @fieldSelector()).removeClass(THEMES[@themeIndex]) if @themeIndex?
     @themeIndex = themeIndex
-    $('.block, .tail', @fieldSelector()).addClass(THEMES[themeIndex])
+    $('.block, .paused, .tail', @fieldSelector()).addClass(THEMES[themeIndex])
 
   getOrdinal: -> @ordinal
 

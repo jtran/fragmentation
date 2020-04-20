@@ -1,7 +1,7 @@
 #`import $ from './jquery-1.6.2.min.js'`
 #`import _ from './underscore.js'`
 
-import { TetrominoGame } from './tetromino-engine.js'
+import { PlayingField, TetrominoGame } from './tetromino-engine.js'
 import { PlayingFieldDomView } from './tetromino-dom-view.js'
 import { PlayingFieldView as PushToServerView } from './tetromino-push-to-server-view.js'
 import decouple from './decouple.js'
@@ -48,8 +48,9 @@ decouple.on game, 'afterRemovePlayer', (caller, event, player) =>
         fv.setOrdinal(i)
         i++
 
-decouple.on localField, 'gameOver', (caller, event) =>
-  music?.pause()
+decouple.on localField, 'stateChange', (caller, event, newState) =>
+  switch newState
+    when PlayingField.STATE_GAMEOVER then music?.pause()
 
 $(document).bind 'keydown', (event) ->
   # console.log('keydown', event.which, String.fromCharCode(event.which))
@@ -59,6 +60,7 @@ $(document).bind 'keydown', (event) ->
     when 40  ### down arrow  ### then localField.moveDownOrAttach(); true
     when 38  ### up arrow    ### then localField.rotateClockwise(); true
     when 191 ### slash       ### then localField.drop(); true
+    when 27  ### escape      ### then localField.togglePause(); true
   handled or= switch String.fromCharCode(event.which).toLowerCase()
     when 'f'                     then localField.rotateClockwise(); true
     when 'd'                     then localField.rotateCounterclockwise(); true

@@ -143,6 +143,10 @@ export class FloatingBlock
 
 
 export class PlayingField
+  @STATE_PLAYING = STATE_PLAYING = 0
+  @STATE_PAUSED = STATE_PAUSED = 1
+  @STATE_GAMEOVER = STATE_GAMEOVER = 2
+
   constructor: (game, options) ->
     @playerId = options.playerId if options.playerId?
     @viewType = options.viewType
@@ -156,7 +160,7 @@ export class PlayingField
     @nextFloating = null
     @fallTimer = null
 
-    @isStopped = false
+    @state = options.state ? STATE_PLAYING
 
     # Initialize blocks matrix.
     for i in [0 ... @fieldHeight]
@@ -189,6 +193,7 @@ export class PlayingField
   # references.  Borrowed from as_json in Rails.
   asJson: ->
     {
+      state: @state
       blocks: @blocks
       curFloating: @curFloating.asJson()
       nextFloating: @nextFloating.asJson()
@@ -239,32 +244,34 @@ export class PlayingField
     @storeBlock(blk, xyPrime) if 0 <= xyPrime[1] < @fieldHeight
     blk
 
+  acceptingMoveInput: -> @state == STATE_PLAYING
+
   rotateClockwise: ->
-    return false if @isStopped
+    return false unless @acceptingMoveInput()
     @curFloating.rotateClockwise()
 
   rotateCounterclockwise: ->
-    return false if @isStopped
+    return false unless @acceptingMoveInput()
     @curFloating.rotateCounterclockwise()
 
   moveLeft: ->
-    return false if @isStopped
+    return false unless @acceptingMoveInput()
     @curFloating.moveLeft()
 
   moveRight: ->
-    return false if @isStopped
+    return false unless @acceptingMoveInput()
     @curFloating.moveRight()
 
   moveDown: ->
-    return false if @isStopped
+    return false unless @acceptingMoveInput()
     @curFloating.moveDown()
 
   moveToX: (x) ->
-    return false if @isStopped
+    return false unless @acceptingMoveInput()
     @curFloating.moveToX(x)
 
   attachPiece: (piece) ->
-    return false if @isStopped
+    return false unless @acceptingMoveInput()
     for blk in piece.blocks
       @storeBlock(blk, blk.getXy())
     null
@@ -275,7 +282,6 @@ export class PlayingField
     linesToCheck = _(blk.getXy()[1] for blk in flt.blocks).uniq()
     y for y in linesToCheck when @blocks[y].every(_.identity)
 
-
   fillLinesFromAbove: (ys) ->
     return if _.isEmpty(ys)
     shift = 1
@@ -285,7 +291,6 @@ export class PlayingField
       for x in [0 ... @fieldWidth]
         @moveBlock([x, y - shift], [x, y])
     null
-
 
   clearLines: (ys) ->
     blksToRemove = []
@@ -306,7 +311,6 @@ export class PlayingField
       callback?()
     ), 500)
     true
-
 
   shiftLinesUp: (n) ->
     return if n <= 0
@@ -363,7 +367,6 @@ export class PlayingField
     @commitNewPiece('nextFloating', new FloatingBlock(@))
     null
 
-
   # Returns true if game is over.
   checkForGameOver: ->
     if (blk.getXy() for blk in @curFloating.blocks).every(@isXyFree)
@@ -371,14 +374,13 @@ export class PlayingField
 
     @stopGravity()
 
-    decouple.trigger(@, 'gameOver')
+    @state = STATE_GAMEOVER
+    decouple.trigger(@, 'stateChange', @state)
 
-    @isStopped = true
     true
 
-
   moveDownOrAttach: =>
-    return false if @isStopped
+    return false unless @acceptingMoveInput()
     fell = @moveDown()
     if ! fell
       decouple.trigger(@, 'beforeAttachPiece')
@@ -400,9 +402,8 @@ export class PlayingField
         return false if @checkForGameOver()
     fell
 
-
   drop: ->
-    return false if @isStopped
+    return false unless @acceptingMoveInput()
 
     decouple.trigger(@, 'beforeDrop')
 
@@ -411,6 +412,30 @@ export class PlayingField
 
     decouple.trigger(@, 'afterDrop')
 
+  isPaused: -> @state == STATE_PAUSED
+
+  pause: ->
+    return false unless @state == STATE_PLAYING
+    # This isn't perfect.  A user can essentially stop gravity by continually
+    # pausing and resuming, but we don't really care.
+    @stopGravity()
+    @state = STATE_PAUSED
+    decouple.trigger(@, 'stateChange', @state)
+    true
+
+  resume: ->
+    return false unless @state == STATE_PAUSED
+    @startGravity()
+    @state = STATE_PLAYING
+    decouple.trigger(@, 'stateChange', @state)
+    true
+
+  togglePause: ->
+    switch @state
+      when STATE_GAMEOVER then false
+      when STATE_PLAYING then @pause()
+      when STATE_PAUSED then @resume()
+      else throw new Error("Tried to toggle pause while in an unknown game state")
 
   gravityInterval: -> 700
 
@@ -438,7 +463,14 @@ export class ModelEventReceiver
     # Clone since we may modify this.
     player = util.cloneObject(player)
     if player.field not instanceof PlayingField
-      player.field = new PlayingField(@game, { playerId: player.id, viewType: 'remote', blocks: player.field.blocks, curFloating: player.field.curFloating, nextFloating: player.field.nextFloating })
+      player.field = new PlayingField(@game, {
+        playerId: player.id
+        viewType: 'remote'
+        blocks: player.field.blocks
+        curFloating: player.field.curFloating
+        nextFloating: player.field.nextFloating
+        state: player.field.state
+      })
     console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
     @players[player.id] = player
 
@@ -475,7 +507,10 @@ export class ModelEventReceiver
     return if playerId == @localPlayerId
     console.log 'receiveFieldEvent', playerId, event, args...
     field = @players[playerId].field
-    if event == 'afterAttachPiece'
+    if event == 'stateChange'
+      field.state = args[0]
+      decouple.trigger(field, event, args...)
+    else if event == 'afterAttachPiece'
       console.log 'receive afterAttachPiece', (b.id for b in field.curFloating.blocks), playerId
       for blk in field.curFloating.blocks
         field.storeBlock(blk, blk.getXy())
