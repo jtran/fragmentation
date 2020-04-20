@@ -3,7 +3,7 @@
 
 import { TetrominoGame } from './tetromino-engine.js'
 import { PlayingFieldDomView } from './tetromino-dom-view.js'
-import { PlayingFieldView } from './tetromino-push-to-server-view.js'
+import { PlayingFieldView as PushToServerView } from './tetromino-push-to-server-view.js'
 import decouple from './decouple.js'
 import util from './util.js'
 
@@ -28,7 +28,7 @@ decouple.on null, 'new PlayingField', (game, event, field) ->
     # Keep a reference to the local view.
     localFieldView = fieldView
     # Create a push-to-server view on the local playing field.
-    pushToServerView = new PlayingFieldView(game, field, socket)
+    pushToServerView = new PushToServerView(game, field, socket)
 
 fieldViewsFromPlayer = (player) ->
   fieldView for fieldView in fieldViews when fieldView.fieldModel == player.field
