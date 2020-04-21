@@ -7,8 +7,10 @@
         "npm": "6.x"
     },
     "scripts": {
-        "start": "npm run build && coffee -p app.coffee | node --input-type=module",
-        "build": "coffee -cb --output lib src && coffee -cb tetromino-server.coffee && coffee -cb --output test-build spec",
+        "app": "coffee -p app.coffee | node --input-type=module",
+        "start": "npm run build && npm run app",
+        "build": "coffee -cbo lib src && coffee -cb tetromino-server.coffee && coffee -cbo test-build spec",
+        "dev": "coffee -wcbo lib src && coffee -cb tetromino-server.coffee && npm run app",
         "test": "npm run build && mocha test-build/*.spec.js"
     },
     "type": "module",

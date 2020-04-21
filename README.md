@@ -17,7 +17,11 @@ Run the server.
 
     npm start
 
-This also builds the project from src/*.coffee to lib/*.js using CoffeeScript compiler.
+This also builds the project from src/*.coffee to lib/*.js using the CoffeeScript2 compiler.
+
+    npm run dev
+
+will automatically recompile files in src/ that have changed.
 
 ### Testing
 
