@@ -17,6 +17,8 @@ Run the server.
 
     npm start
 
+This also builds the project from src/*.coffee to lib/*.js using CoffeeScript compiler.
+
 ### Testing
 
 Run the tests.

@@ -7,9 +7,9 @@
         "npm": "6.x"
     },
     "scripts": {
-        "start": "cake build && coffee -p app.coffee | node --input-type=module",
-        "build": "cake build",
-        "test": "cake build && mocha test-build/*.spec.js"
+        "start": "npm run build && coffee -p app.coffee | node --input-type=module",
+        "build": "coffee -cb --output lib src && coffee -cb tetromino-server.coffee && coffee -cb --output test-build spec",
+        "test": "npm run build && mocha test-build/*.spec.js"
     },
     "type": "module",
     "dependencies": {
