@@ -93,11 +93,11 @@ export class PlayingFieldDomView
     # Create elements on page.  Wrap in a lambda so that references
     # don't leak to lambdas further down.
     (=>
-      pausedStyle = 'display: ' + if @fieldModel.isPaused() then 'block' else 'none'
+      pausedExtraClasses = if @fieldModel.isPaused() then ' visible' else ''
       $field = $("""
         <div id="field_#{@domId}" class="field" style="display: none">
           <div class="field_background">
-            <div id="paused_#{@domId}" class="paused" style="#{pausedStyle}">PAUSED</div>
+            <div id="paused_#{@domId}" class="paused#{pausedExtraClasses}">PAUSED</div>
           </div>
           <div id="tail_#{@domId}" class="tail"></div>
         </div>
@@ -127,9 +127,9 @@ export class PlayingFieldDomView
 
     decouple.on @fieldModel, 'stateChange', (caller, event, newState) =>
       if newState == PlayingField.STATE_PAUSED
-        $(@pausedSelector()).show()
+        $(@pausedSelector()).addClass('visible')
       else
-        $(@pausedSelector()).hide()
+        $(@pausedSelector()).removeClass('visible')
 
 
   leaveGame: (callback = null) =>

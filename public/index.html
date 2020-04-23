@@ -107,6 +107,21 @@ html {
   font-weight: bold;
   text-align: center;
   color: #fff;
+  transition: transform, filter, opacity, visibility;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in;
+  /* initially hidden */
+  transform: scale(2);
+  filter: blur(10px);
+  opacity: 0;
+  visibility: hidden;
+}
+.paused.visible {
+  transition-timing-function: ease-out;
+  transform: scale(1);
+  filter: blur(0px);
+  opacity: 1;
+  visibility: visible;
 }
 .paused.blue {
   -webkit-text-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
