@@ -150,8 +150,8 @@ export class PlayingField
   constructor: (game, options) ->
     @playerId = options.playerId if options.playerId?
     @viewType = options.viewType
-    # No gravity on the server.
-    @useGravity = options.useGravity ? false
+    # No gravity on the server.  It gets enabled locally by the game.
+    @useGravity = false
     @fieldHeight = 22
     @fieldWidth = 10
     @blocks = []
@@ -412,6 +412,7 @@ export class PlayingField
 
     decouple.trigger(@, 'afterDrop')
 
+  isPlaying: -> @state == STATE_PLAYING
   isPaused: -> @state == STATE_PAUSED
 
   pause: ->
@@ -441,12 +442,21 @@ export class PlayingField
 
   startGravity: ->
     return unless @useGravity
+    return if @fallTimer?
     @fallTimer = window.setInterval(@moveDownOrAttach, @gravityInterval())
 
   stopGravity: ->
-    return unless @useGravity
+    return unless @useGravity && @fallTimer?
     window.clearInterval(@fallTimer)
     @fallTimer = null
+
+  setUseGravity: (@useGravity) ->
+    return @useGravity unless @isPlaying()
+    if @useGravity
+      @startGravity()
+    else
+      @stopGravity()
+    @useGravity
 
 
 # If you have a model with a TetrominoPushToServerView, this class
@@ -590,7 +600,7 @@ export class TetrominoGame
 
   addLocalPlayer: ->
     throw("You tried to add a local player, but I already have one.") if @localField
-    @localField = new PlayingField(@, { viewType: 'local', useGravity: true })
+    @localField = new PlayingField(@, viewType: 'local')
     @localPlayer = new Player(null, @localField)
     @addPlayer(@localPlayer) if @localPlayer.id
     @localPlayer
@@ -602,7 +612,7 @@ export class TetrominoGame
     @models.localPlayerId = id
     @models.addPlayer(@localPlayer)
 
-  start: -> @localField?.startGravity()
+  start: -> @localField?.setUseGravity(true)
 
   playersMap: -> @models.players
 
