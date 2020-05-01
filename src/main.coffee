@@ -16,6 +16,14 @@ fieldViews = []
 # For debugging.
 logStatus = (msg) -> $('#status').prepend("<div>#{msg}</div>")
 
+# Generate a UUIDv4.
+#
+# TODO: Move this to util.  The issue is that WebCrypto isn't implemented in
+# node.  Node's crypto module has a different interface.
+genUuid = () ->
+  ([1e7]+-1e3+-4e3+-8e3+-1e11).replace /[018]/g, (c) ->
+    (c ^ window.crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+
 socket = io()
 decouple.on null, 'new PlayingField', (game, event, field) ->
   console.log("adding DOM view #{fieldViews.length}", event, field)
@@ -33,7 +41,7 @@ decouple.on null, 'new PlayingField', (game, event, field) ->
 fieldViewsFromPlayer = (player) ->
   fieldView for fieldView in fieldViews when fieldView.fieldModel == player.field
 
-game = new TetrominoGame(socket)
+game = new TetrominoGame(socket, genUuid())
 localField = game.localField
 
 # Re-organize the view when a player leaves the game.

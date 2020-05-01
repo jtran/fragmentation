@@ -1,5 +1,5 @@
 export class Player
-  constructor: (@id, @field) ->
+  constructor: (@id, @socketId, @field) ->
 
   asJson: -> { id: @id, field: @field.asJson() }
 

@@ -7,7 +7,7 @@ export class BlockView
     # persists for the life of a game.
     decouple.on @blockModel, 'move Block', (caller, event) =>
       if @game.joinedRemoteGame
-        @socket.emit('distributeBlockEvent', @blockModel.id, event, @blockModel.getXy())
+        @socket.emit('distributeBlockEvent', @game.localPlayer.id, @blockModel.id, event, @blockModel.getXy())
 
   dispose: ->
     # Remove references to prevent memory leak.
@@ -19,7 +19,7 @@ export class PlayingFieldView
   constructor: (@game, @fieldModel, @socket) ->
     decouple.on @fieldModel, 'stateChange', (caller, event, newState) =>
       if @game.joinedRemoteGame
-        @socket.emit('distributeFieldEvent', event, newState)
+        @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, newState)
 
     decouple.on @fieldModel, 'new Block', (caller, event, block) =>
       new BlockView(block, @game, @socket)
@@ -28,18 +28,18 @@ export class PlayingFieldView
 
     decouple.on @fieldModel, 'newNoiseBlocks', (caller, event, n, blocks) =>
       if @game.joinedRemoteGame
-        @socket.emit('distributeFieldEvent', event, n, blocks)
+        @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, n, blocks)
 
     decouple.on @fieldModel, 'new FloatingBlock', (caller, event, piece) =>
       if @game.joinedRemoteGame
-        @socket.emit('distributeFieldEvent', event, piece.asJson())
+        @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, piece.asJson())
 
     decouple.on @fieldModel, 'clear',          (caller, event, ys, blksToRemove) =>
       if @game.joinedRemoteGame
-        @socket.emit('distributeFieldEvent', event, ys, blksToRemove)
+        @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, ys, blksToRemove)
 
     decouple.on @fieldModel, 'afterAttachPiece', (caller, event) =>
       if @game.joinedRemoteGame
-        @socket.emit('distributeFieldEvent', event)
+        @socket.emit('distributeFieldEvent', @game.localPlayer.id, event)
 
 export default { BlockView, PlayingFieldView }

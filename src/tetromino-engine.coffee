@@ -464,38 +464,47 @@ export class PlayingField
 # have a local instance of the remote model.
 export class ModelEventReceiver
   # players is a hash : playerId -> Player
-  constructor: (@game) ->
+  constructor: (@game, @localPlayerId = null) ->
     @players = {}
-    @localPlayerId = null
 
+  # player : Player | playerHash (returned from Player::asJson())
   addPlayer: (player) =>
-    return if @players[player.id]?
-    # Clone since we may modify this.
-    player = util.cloneObject(player)
-    if player.field not instanceof PlayingField
-      player.field = new PlayingField(@game, {
+    existingPlayer = @players[player.id]
+    if existingPlayer?
+      # Existing player got a new socket ID.
+      existingPlayer.socketId = player.socketId if player.socketId?
+      return
+    # Shallow-clone the player since we may modify it, and ensure it's a Player
+    # instance.
+    field = player.field
+    if field not instanceof PlayingField
+      field = new PlayingField(@game,
         playerId: player.id
         viewType: 'remote'
-        blocks: player.field.blocks
-        curFloating: player.field.curFloating
-        nextFloating: player.field.nextFloating
-        state: player.field.state
-      })
+        blocks: field.blocks
+        curFloating: field.curFloating
+        nextFloating: field.nextFloating
+        state: field.state
+      )
+    player = new Player(player.id, player.socketId, field)
     console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
     @players[player.id] = player
 
-  removePlayer: (playerId) =>
-    id = playerId.id ? playerId
-    console.log("removePlayer", id)
-    if id == @localPlayerId
-      console.log "skipping remove", id
-      return
-    player = @players[id]
+  # playerId may be null.
+  removePlayer: (playerId, socketId) =>
+    console.log("removePlayer", playerId, socketId)
+    player = @players[playerId] if playerId?
+    if not player? and socketId?
+      # TODO: Make this a constant time lookup, not linear.
+      player = _.find(_.values(@players), (p) -> p.socketId == socketId)
     unless player?
-      console.log "don't know about player #{id}; skipping remove"
+      console.log "skipping remove; player not found", playerId, socketId
+      return
+    if player.id == @localPlayerId
+      console.log "skipping remove of local player", player.id
       return
     decouple.trigger(@game, 'beforeRemovePlayer', player)
-    delete @players[id]
+    delete @players[player.id]
     decouple.trigger(@game, 'afterRemovePlayer', player)
 
   receiveBlockEvent: (playerId, blockId, event, args...) =>
@@ -562,13 +571,13 @@ export class ModelEventReceiver
 
 # A game on the client.
 export class TetrominoGame
-  constructor: (@serverSocket) ->
+  constructor: (@serverSocket, localPlayerId) ->
     @joinedRemoteGame = false
     @socketCallbacksDone = false
     @localField = null
     @localPlayer = null
-    @models = new ModelEventReceiver(@)
-    @addLocalPlayer()
+    @models = new ModelEventReceiver(@, localPlayerId)
+    @addLocalPlayer(localPlayerId)
     @localField.useNextPiece()
     game = @
     # This gets called when the client connects to the server, and
@@ -576,7 +585,8 @@ export class TetrominoGame
     @serverSocket.on 'connect', =>
       console.log 'connected'
       @initSocketCallbacks()
-      @setLocalPlayerId(@serverSocket.id)
+      @localPlayer.socketId = @serverSocket.id
+      @models.addPlayer(@localPlayer)
       @serverSocket.on 'receiveMessage', (playerName, msg) ->
         game.receiveMessage?(playerName, msg)
       @serverSocket.on 'addPlayer', @models.addPlayer
@@ -587,7 +597,7 @@ export class TetrominoGame
       @serverSocket.emit 'getPlayers', (players) =>
         console.log 'getPlayers', players
         @models.addPlayer(p) for id, p of players
-        @serverSocket.emit('join', @localField.asJson())
+        @serverSocket.emit('join', @localPlayer.asJson())
         @joinedRemoteGame = true
 
   initSocketCallbacks: ->
@@ -597,20 +607,13 @@ export class TetrominoGame
     @serverSocket.on 'disconnect', =>
       console.log 'disconnected'
       @joinedRemoteGame = false
+      @localPlayer.socketId = null
 
-  addLocalPlayer: ->
+  addLocalPlayer: (localPlayerId) ->
     throw("You tried to add a local player, but I already have one.") if @localField
     @localField = new PlayingField(@, viewType: 'local')
-    @localPlayer = new Player(null, @localField)
-    @addPlayer(@localPlayer) if @localPlayer.id
+    @localPlayer = new Player(localPlayerId, null, @localField)
     @localPlayer
-
-  setLocalPlayerId: (id) ->
-    console.log 'setLocalPlayerId', id
-    @models.removePlayer(@localPlayer.id) if @localPlayer.id
-    @localPlayer.id = id
-    @models.localPlayerId = id
-    @models.addPlayer(@localPlayer)
 
   start: -> @localField?.setUseGravity(true)
 
