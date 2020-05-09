@@ -141,8 +141,7 @@ export class FloatingBlock
       @transform(rotateWithShift(-1))
 
 
-
-export class PlayingField
+export class OPlayingField
   @STATE_PLAYING = STATE_PLAYING = 0
   @STATE_PAUSED = STATE_PAUSED = 1
   @STATE_GAMEOVER = STATE_GAMEOVER = 2
@@ -408,7 +407,7 @@ export class PlayingField
     decouple.trigger(@, 'beforeDrop')
 
     # Drop.
-    null while @moveDownOrAttach()
+    null while @advanceGravity()
 
     decouple.trigger(@, 'afterDrop')
 
@@ -443,7 +442,9 @@ export class PlayingField
   startGravity: ->
     return unless @useGravity
     return if @fallTimer?
-    @fallTimer = window.setInterval(@moveDownOrAttach, @gravityInterval())
+    @fallTimer = window.setInterval(@advanceGravity, @gravityInterval())
+
+  advanceGravity: => @moveDownOrAttach()
 
   stopGravity: ->
     return unless @useGravity && @fallTimer?
@@ -457,6 +458,53 @@ export class PlayingField
     else
       @stopGravity()
     @useGravity
+
+  handle: (what) =>
+    switch what
+      when 'left' then @moveLeft()
+      when 'right' then @moveRight()
+      when 'down' then @moveDownOrAttach()
+      when 'up' then @rotateClockwise()
+      when '/' then @drop()
+      when 'esc' then @pause()
+      when 'space' then @drop()
+    true
+
+#export class PlayingField extends OPlayingField
+export class PlayingField extends OPlayingField
+  handle: (what) =>
+    switch what
+      when 'left' then @moveLeft()
+      when 'right' then @moveRight()
+      when 'down' then @moveDown()
+      when 'up' then @moveUp()
+      when '/' then @drop()
+      when 'esc' then @pause()
+      when 'space' then @rotateClockwise()
+    true
+  constructor: (game, options) ->
+    super(game, options)
+    @nextStep = ->
+
+  moveDown: =>
+    @nextStep = @moveDown
+    super() 
+
+  moveUp: =>
+    return false unless @acceptingMoveInput()
+    @nextStep = @curFloating.moveUp.bind(@curFloating)
+    @curFloating.moveUp()
+
+  moveLeft: =>
+    @nextStep = @moveLeft
+    super()
+  
+  moveRight: =>
+    @nextStep = @moveRight
+    super()
+
+  advanceGravity: => @nextStep() # @moveDownOrAttach()
+
 
 
 # If you have a model with a TetrominoPushToServerView, this class

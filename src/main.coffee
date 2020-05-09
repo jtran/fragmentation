@@ -55,16 +55,16 @@ decouple.on localField, 'stateChange', (caller, event, newState) =>
 $(document).bind 'keydown', (event) ->
   # console.log('keydown', event.which, String.fromCharCode(event.which))
   handled = switch event.which
-    when 37  ### left arrow  ### then localField.moveLeft(); true
-    when 39  ### right arrow ### then localField.moveRight(); true
-    when 40  ### down arrow  ### then localField.moveDownOrAttach(); true
-    when 38  ### up arrow    ### then localField.rotateClockwise(); true
-    when 191 ### slash       ### then localField.drop(); true
-    when 27  ### escape      ### then localField.togglePause(); true
+    when 37  ### left arrow  ### then localField.handle 'left'
+    when 39  ### right arrow ### then localField.handle 'right'
+    when 40  ### down arrow  ### then localField.handle 'down'
+    when 38  ### up arrow    ### then localField.handle 'up'
+    when 191 ### slash       ### then localField.handle '/'
+    when 27  ### escape      ### then localField.handle 'esc'
   handled or= switch String.fromCharCode(event.which).toLowerCase()
     when 'f'                     then localField.rotateClockwise(); true
     when 'd'                     then localField.rotateCounterclockwise(); true
-    when ' ' ### spacebar    ### then localField.drop(); true
+    when ' ' ### spacebar    ### then localField.handle 'space'
     when 'm'                     then toggleMusic(); true
   event.preventDefault() if handled
 
