@@ -1,7 +1,8 @@
 #`import $ from './jquery-1.6.2.min.js'`
 #`import _ from './underscore.js'`
 
-import { PlayingField, TetrominoGame } from './tetromino-engine.js'
+import { Game } from './game.js'
+import { PlayingField } from './tetromino-engine.js'
 import { PlayingFieldDomView } from './tetromino-dom-view.js'
 import { PlayingFieldView as PushToServerView } from './tetromino-push-to-server-view.js'
 import decouple from './decouple.js'
@@ -41,7 +42,7 @@ decouple.on null, 'new PlayingField', (game, event, field) ->
 fieldViewsFromPlayer = (player) ->
   fieldView for fieldView in fieldViews when fieldView.fieldModel == player.field
 
-game = new TetrominoGame(socket, genUuid())
+game = new Game(socket, genUuid())
 localField = game.localField
 
 # Re-organize the view when a player leaves the game.
