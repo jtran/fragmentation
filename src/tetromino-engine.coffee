@@ -24,7 +24,7 @@ export class FloatingBlock
   NUM_TYPES_OF_BLOCKS = 7
 
   constructor: (@field, options = {}) ->
-    @type = options.type ? util.randInt(NUM_TYPES_OF_BLOCKS - 1)
+    @type = options.type ? 6 #util.randInt(NUM_TYPES_OF_BLOCKS - 1)
     @canRotate = true
     @blocks = []
     if options.blocks?
@@ -162,6 +162,8 @@ export class PlayingField
 
     @state = options.state ? STATE_PLAYING
 
+    useDebugFill = @viewType == 'local'
+
     # Initialize blocks matrix.
     for i in [0 ... @fieldHeight]
       row = []
@@ -169,6 +171,14 @@ export class PlayingField
       @blocks.push(row)
 
     decouple.trigger(game, 'new PlayingField', @)
+
+    if useDebugFill
+      for i in [0 ... @fieldHeight] when i > @fieldHeight - 5
+        for j in [0 ... @fieldWidth] when j != 0
+          blk = new Block(@, { type: 'opponent' }, j, i)
+          decouple.trigger(@, 'new Block', blk)
+          @storeBlock(blk, blk.getXy())
+          blk.activate()
 
     # Initialize blocks after new PlayingField event so that
     # listeners can be installed.
