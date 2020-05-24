@@ -83,7 +83,7 @@ export class FloatingBlock
           @blocks.push(new Block(@field, @, mid + 2, 0))
         @centerIndex = 1
       else
-        throw "I don't know how to create a floating block of this type: " + @type
+        throw new Error("I don't know how to create a floating block of this type: " + @type)
 
   asJson: ->
     {
@@ -511,12 +511,13 @@ export class ModelEventReceiver
     return if playerId == @localPlayerId
     #console.log 'receiveBlockEvent', playerId, blockId, event, args...
     player = @players[playerId]
-    throw "couldn't find player #{playerId} for block event #{blockId}" unless player
+    unless player
+      throw new Error("couldn't find player #{playerId} for block event #{blockId}")
     block = player.field.blockFromId(blockId)
     if not block
       console.log 'receiveBlockEvent', playerId, blockId, event, args...
       console.log 'field', player.field.blocks, player.field.curFloating?.blocks, player.field.nextFloating?.blocks
-      throw "couldn't find block #{blockId}"
+      throw new Error("couldn't find block #{blockId}")
     if event == 'move Block'
       block.setXy(args[0])
     else

@@ -11,7 +11,7 @@ class Decouple
     @bindings = (b for b in @bindings when b.caller != caller)
 
   trigger: (caller, event, args...) ->
-    throw "You tried to trigger #{event} with undefined caller" if typeof caller == 'undefined'
+    throw new Error("You tried to trigger #{event} with undefined caller") if typeof caller == 'undefined'
     for b in @bindings when b.event == event and (not b.caller or b.caller == caller)
       b.callback(caller, event, args...)
     null

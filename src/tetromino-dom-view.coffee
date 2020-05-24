@@ -26,7 +26,7 @@ export class BlockDomView
       when 'opponent'
         $(@elm).addClass('light').addClass(@blockModel.pieceType)
       else
-        throw "I don't know how to style a block of this type: #{@blockModel.pieceType}"
+        throw new Error("I don't know how to style a block of this type: #{@blockModel.pieceType}")
 
     # Initial position.
     @fieldView.setElementXy(@elm, @blockModel.getXy())

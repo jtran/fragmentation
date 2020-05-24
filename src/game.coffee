@@ -43,7 +43,7 @@ export class Game
       @localPlayer.socketId = null
 
   addLocalPlayer: (localPlayerId) ->
-    throw("You tried to add a local player, but I already have one.") if @localField
+    throw new Error("You tried to add a local player, but I already have one.") if @localField
     @localField = new PlayingField(@, viewType: 'local')
     @localPlayer = new Player(localPlayerId, null, @localField)
     @localPlayer
