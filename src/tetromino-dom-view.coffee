@@ -89,7 +89,12 @@ export class PlayingFieldDomView
     @borderHeight = 1
     @marginLeft = 20
     @themeIndex = null
+    @params = new URLSearchParams(window.location.search);
+    decouple.modify null, 'new PlayingField', ([game, event, field]) ->
+      # field.DEBUG = true
+      [game, event, field]
 
+    @fieldModel.DEBUG = @params.get('debug')
     # Create elements on page.  Wrap in a lambda so that references
     # don't leak to lambdas further down.
     (=>
