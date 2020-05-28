@@ -147,7 +147,7 @@ export class PlayingField
   @STATE_PAUSED = STATE_PAUSED = 1
   @STATE_GAMEOVER = STATE_GAMEOVER = 2
 
-  constructor: (game, options) ->
+  constructor: (game, options, @DEBUG = false) ->
     @playerId = options.playerId if options.playerId?
     @viewType = options.viewType
     # No gravity on the server.  It gets enabled locally by the game.
@@ -169,6 +169,15 @@ export class PlayingField
       @blocks.push(row)
 
     decouple.trigger(game, 'new PlayingField', @)
+
+    useDebugFill = @viewType == 'local' and @DEBUG
+    if useDebugFill
+      for i in [0 ... @fieldHeight] when i > @fieldHeight - 5
+        for j in [0 ... @fieldWidth] when j != 0
+          blk = new Block(@, { type: 'opponent' }, j, i)
+          decouple.trigger(@, 'new Block', blk)
+          @storeBlock(blk, blk.getXy())
+          blk.activate()
 
     # Initialize blocks after new PlayingField event so that
     # listeners can be installed.
@@ -353,9 +362,10 @@ export class PlayingField
     ), 500)
 
   useNextPiece: ->
+    opts = {type: 6} if @DEBUG # debug mode always long
     # The first time this is called, next will be null.
     if ! @nextFloating
-      @commitNewPiece('nextFloating', new FloatingBlock(@))
+      @commitNewPiece('nextFloating', new FloatingBlock(@, opts))
 
     # Make next be current.
     @curFloating = @nextFloating
@@ -364,7 +374,7 @@ export class PlayingField
       blk.activate()
       blk.setXy([blk.x, blk.y + 2])
     # Spawn a new next.
-    @commitNewPiece('nextFloating', new FloatingBlock(@))
+    @commitNewPiece('nextFloating', new FloatingBlock(@, opts))
     null
 
   # Returns true if game is over.
