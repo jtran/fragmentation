@@ -25,6 +25,4 @@ class Decouple
     null
 
 
-
-
 export default new Decouple()
