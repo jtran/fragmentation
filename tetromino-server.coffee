@@ -8,7 +8,7 @@ class TetrominoServer
     console.log 'init Game'
     server = @
     @models = models = new engine.ModelEventReceiver({ comment: 'dummy game' })
-    io = socketio(@httpServer)
+    io = socketio(@httpServer, cookie: false)
     io.on 'connection', (socket) ->
       console.log("Connected #{socket.id}")
       # This is so we know the playerId when it disconnects without warning.
