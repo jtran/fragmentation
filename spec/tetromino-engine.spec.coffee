@@ -37,6 +37,9 @@ describe 'tetromino-engine PlayingField', ->
       piece = { blocks: [blk1, blk2], type: 0 }
       spyOn(decouple, 'trigger')
       field = new engine.PlayingField({}, { curFloating: piece })
+      # The playing field activates its blocks.
+      blk1.activate()
+      blk2.activate()
       expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk1)
       expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk2)
       expect(decouple.trigger).to.have.been.calledWith(field, 'new FloatingBlock', field.curFloating)

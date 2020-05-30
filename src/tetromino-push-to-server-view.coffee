@@ -17,14 +17,22 @@ export class BlockView
 # View of a PlayingField model that pushes updates to the server.
 export class PlayingFieldView
   constructor: (@game, @fieldModel, @socket) ->
+    if @fieldModel.curFloating?
+      new BlockView(blk, @game, @socket) for blk in @fieldModel.curFloating.blocks
+    if @fieldModel.nextFloating?
+      new BlockView(blk, @game, @socket) for blk in @fieldModel.nextFloating.blocks
+    for row in @fieldModel.blocks
+      for blk in row when blk?
+        new BlockView(blk, @game, @socket)
+
     decouple.on @fieldModel, 'stateChange', (caller, event, newState) =>
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, newState)
 
     decouple.on @fieldModel, 'new Block', (caller, event, block) =>
       new BlockView(block, @game, @socket)
-      # We don't distribute this event because the 'new
-      # FloatingBlock' or 'newNoiseBlocks' event handles it.
+      # We don't distribute this event because the 'new FloatingBlock' or
+      # 'newNoiseBlocks' event handles it.
 
     decouple.on @fieldModel, 'newNoiseBlocks', (caller, event, n, blocks) =>
       if @game.joinedRemoteGame

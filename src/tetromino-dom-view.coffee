@@ -7,7 +7,8 @@ import { PlayingField } from './tetromino-engine.js'
 export class BlockDomView
   constructor: (@fieldView, @blockModel) ->
     @elm = document.createElement('div')
-    @elm.className = 'block lit next'
+    @elm.className = 'block lit'
+    $(@elm).addClass('next') if not @blockModel.isActivated
     switch @blockModel.pieceType
       when 0  # O
         $(@elm).addClass('light')
@@ -40,8 +41,11 @@ export class BlockDomView
     decouple.on @blockModel, 'move Block', (caller, event) =>
       @fieldView.setElementXy(@elm, @blockModel.getXy())
 
-    decouple.on @blockModel, 'activate Block', (caller, event) =>
-      $(@elm).removeClass('next')
+    decouple.on @blockModel, 'isActivatedChange', (caller, event, isActivated) =>
+      if isActivated
+        $(@elm).removeClass('next')
+      else
+        $(@elm).addClass('next')
 
     decouple.on @blockModel, 'beforeClear Block', (caller, event) => @flickerOut()
 
@@ -89,12 +93,7 @@ export class PlayingFieldDomView
     @borderHeight = 1
     @marginLeft = 20
     @themeIndex = null
-    @params = new URLSearchParams(window.location.search);
-    decouple.modify null, 'new PlayingField', ([game, event, field]) ->
-      # field.DEBUG = true
-      [game, event, field]
 
-    @fieldModel.DEBUG = @params.get('debug')
     # Create elements on page.  Wrap in a lambda so that references
     # don't leak to lambdas further down.
     (=>
@@ -119,6 +118,14 @@ export class PlayingFieldDomView
 
     # Use theme.
     @setThemeIndex(options.themeIndex ? 0)
+
+    if @fieldModel.curFloating?
+      new BlockDomView(@, blk) for blk in @fieldModel.curFloating.blocks
+    if @fieldModel.nextFloating?
+      new BlockDomView(@, blk) for blk in @fieldModel.nextFloating.blocks
+    for row in @fieldModel.blocks
+      for blk in row when blk?
+        new BlockDomView(@, blk)
 
     decouple.on @fieldModel, 'new Block', (fieldModel, event, block) =>
       new BlockDomView(@, block)

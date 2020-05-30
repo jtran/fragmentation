@@ -11,13 +11,17 @@ export class Block
     @id = options.id ? _.uniqueId('b')
     @pieceType = piece.type
     @playerId = field.playerId if field.playerId?
+    @isActivated = false
 
   setXy: ([@x, @y]) ->
     decouple.trigger(@, 'move Block')
 
   getXy: -> [@x, @y]
 
-  activate: -> decouple.trigger(@, 'activate Block')
+  activate: ->
+    @isActivated = true
+    decouple.trigger(@, 'isActivatedChange', @isActivated)
+    @isActivated
 
 
 export class FloatingBlock
@@ -499,6 +503,7 @@ export class ModelEventReceiver
     player = new Player(player.id, player.socketId, field)
     console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
     @players[player.id] = player
+    decouple.trigger(@game, 'addPlayer', player)
 
   # playerId may be null.
   removePlayer: (playerId, socketId) =>

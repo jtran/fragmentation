@@ -8,6 +8,7 @@ import { PlayingFieldView as PushToServerView } from './tetromino-push-to-server
 import decouple from './decouple.js'
 import util from './util.js'
 
+socket = null
 game = null
 localField = null
 localFieldView = null
@@ -25,8 +26,12 @@ genUuid = () ->
   ([1e7]+-1e3+-4e3+-8e3+-1e11).replace /[018]/g, (c) ->
     (c ^ window.crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
 
-socket = io()
-decouple.on null, 'new PlayingField', (game, event, field) ->
+handleAddPlayer = (game, event, player) ->
+  # This gets called after connecting to the server, but we don't wait for that
+  # for the local player.  We run this proactively so that we have a view of our
+  # local player before connecting completes.
+  field = player.field
+  return if field == localField && localFieldView?
   console.log("adding DOM view #{fieldViews.length}", event, field)
   options =
     ordinal: fieldViews.length
@@ -39,11 +44,21 @@ decouple.on null, 'new PlayingField', (game, event, field) ->
     # Create a push-to-server view on the local playing field.
     pushToServerView = new PushToServerView(game, field, socket)
 
-fieldViewsFromPlayer = (player) ->
-  fieldView for fieldView in fieldViews when fieldView.fieldModel == player.field
+# Setup debug mode.
+urlParams = new URLSearchParams(window.location.search)
+decouple.on null, 'newPlayingFieldBeforeInit', (game, event, field) =>
+  field.DEBUG = urlParams.get('debug')
 
+socket = io()
 game = new Game(socket, genUuid())
 localField = game.localField
+# Handle the local player to create a view of the local field.
+handleAddPlayer(game, 'addPlayer', game.localPlayer)
+# Listen for other players.
+decouple.on game, 'addPlayer', handleAddPlayer
+
+fieldViewsFromPlayer = (player) ->
+  fieldView for fieldView in fieldViews when fieldView.fieldModel == player.field
 
 # Re-organize the view when a player leaves the game.
 decouple.on game, 'afterRemovePlayer', (caller, event, player) =>
