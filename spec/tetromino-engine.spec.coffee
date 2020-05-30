@@ -3,6 +3,9 @@ import engine from '../lib/tetromino-engine.js'
 
 describe 'tetromino-engine Block', ->
 
+  afterEach ->
+    decouple.trigger.restore?()
+
   it "constructs new block with given x and y", ->
     blk = new engine.Block({}, {}, 1, 2)
     expect(blk.x).to.equal 1
@@ -17,6 +20,9 @@ describe 'tetromino-engine Block', ->
 
 describe 'tetromino-engine PlayingField', ->
 
+  afterEach ->
+    decouple.trigger.restore?()
+
   describe 'when instantiating', ->
 
     it "triggers new playing field event", ->
@@ -24,7 +30,6 @@ describe 'tetromino-engine PlayingField', ->
       game = {}
       field = new engine.PlayingField(game, {})
       expect(decouple.trigger).to.have.been.calledWith(game, 'new PlayingField', field)
-      decouple.trigger.restore()
 
     it "triggers new block event for each new block and one for new piece", ->
       blk1 = new engine.Block({}, { type: 0 }, 1, 2)
@@ -35,7 +40,6 @@ describe 'tetromino-engine PlayingField', ->
       expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk1)
       expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk2)
       expect(decouple.trigger).to.have.been.calledWith(field, 'new FloatingBlock', field.curFloating)
-      decouple.trigger.restore()
 
   describe 'when committing new piece', ->
 
@@ -57,7 +61,6 @@ describe 'tetromino-engine PlayingField', ->
       expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk1)
       expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk2)
       expect(decouple.trigger).to.have.been.calledWith(field, 'new FloatingBlock', field.nextFloating)
-      decouple.trigger.restore()
 
   it "stores block at coordinate", ->
     field = new engine.PlayingField({}, {})
