@@ -2,6 +2,9 @@ import decouple from '../lib/decouple.js'
 
 describe 'decouple', ->
 
+  afterEach ->
+    decouple.reset()
+
   it "calls listener when triggered", ->
     called = false
     fn = (caller, event) -> called = true
@@ -21,4 +24,12 @@ describe 'decouple', ->
     expect(called1).to.equal true
     expect(called2).to.equal false
 
-
+  it "removes bindings for target", ->
+    observer = {}
+    fn = (caller, event) -> true
+    obj = {}
+    decouple.on obj, 'someEvent', observer, fn
+    binding = decouple.bindings[0]
+    expect(binding.target).to.equal(observer)
+    decouple.removeAllForTarget(observer)
+    expect(decouple.bindings).not.to.include(binding)

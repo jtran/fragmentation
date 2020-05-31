@@ -38,28 +38,28 @@ export class BlockDomView
     # Show it.
     $(@elm).appendTo(@fieldView.fieldSelector())
 
-    decouple.on @blockModel, 'move Block', (caller, event) =>
+    decouple.on @blockModel, 'move Block', @, (caller, event) =>
       @fieldView.setElementXy(@elm, @blockModel.getXy())
 
-    decouple.on @blockModel, 'isActivatedChange', (caller, event, isActivated) =>
+    decouple.on @blockModel, 'isActivatedChange', @, (caller, event, isActivated) =>
       if isActivated
         $(@elm).removeClass('next')
       else
         $(@elm).addClass('next')
 
-    decouple.on @blockModel, 'beforeClear Block', (caller, event) => @flickerOut()
+    decouple.on @blockModel, 'beforeClear Block', @, (caller, event) => @flickerOut()
 
-    decouple.on @blockModel, 'afterClear Block', (caller, event) => @dispose()
+    decouple.on @blockModel, 'afterClear Block', @, (caller, event) => @dispose()
 
     # This event occurs when removing a block, but it's not from the player
     # clearing a line.
-    decouple.on @blockModel, 'removeBlock', (caller, event) => @dispose()
+    decouple.on @blockModel, 'removeBlock', @, (caller, event) => @dispose()
 
   dispose: ->
     $(@elm).remove()
     # Remove references to prevent memory leak.
     @elm = null
-    decouple.removeAllForCaller(@blockModel)
+    decouple.removeAllForTarget(@)
 
   transition: (options = {}) ->
     options = Object.assign({ delaySequence: [50, 50, 50] }, options)

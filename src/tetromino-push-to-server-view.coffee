@@ -5,13 +5,13 @@ export class BlockView
     # Block model objects have no identity when pushed over the
     # wire.  So instead, we push a blockId to identify a block which
     # persists for the life of a game.
-    decouple.on @blockModel, 'move Block', (caller, event) =>
+    decouple.on @blockModel, 'move Block', @, (caller, event) =>
       if @game.joinedRemoteGame
         @socket.emit('distributeBlockEvent', @game.localPlayer.id, @blockModel.id, event, @blockModel.getXy())
 
   dispose: ->
     # Remove references to prevent memory leak.
-    decouple.removeAllForCaller(@blockModel)
+    decouple.removeAllForTarget(@)
 
 
 # View of a PlayingField model that pushes updates to the server.
