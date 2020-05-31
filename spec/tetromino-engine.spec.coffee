@@ -16,7 +16,13 @@ describe 'tetromino-engine Block', ->
     spyOn(decouple, 'trigger')
     blk.setXy([3, 4])
     expect(decouple.trigger).to.have.been.calledWith(blk, 'move Block')
-    decouple.trigger.restore()
+
+  it "updates isActivated and triggers activate event", ->
+    blk = new engine.Block({}, {}, 1, 2)
+    spyOn(decouple, 'trigger')
+    blk.activate()
+    expect(blk.isActivated).to.equal(true)
+    expect(decouple.trigger).to.have.been.calledWith(blk, 'isActivatedChange', true)
 
 describe 'tetromino-engine PlayingField', ->
 
@@ -29,20 +35,21 @@ describe 'tetromino-engine PlayingField', ->
       spyOn(decouple, 'trigger')
       game = {}
       field = new engine.PlayingField(game, {})
-      expect(decouple.trigger).to.have.been.calledWith(game, 'new PlayingField', field)
+      expect(decouple.trigger).to.have.been.calledWith(game, 'newPlayingFieldBeforeInit', field)
 
-    it "triggers new block event for each new block and one for new piece", ->
+    it "copies pieces and their blocks", ->
       blk1 = new engine.Block({}, { type: 0 }, 1, 2)
       blk2 = new engine.Block({}, { type: 0 }, 2, 3)
       piece = { blocks: [blk1, blk2], type: 0 }
-      spyOn(decouple, 'trigger')
-      field = new engine.PlayingField({}, { curFloating: piece })
-      # The playing field activates its blocks.
+      blk3 = new engine.Block({}, { type: 1 }, 4, 5)
+      blk4 = new engine.Block({}, { type: 1 }, 6, 7)
+      nextPiece = { blocks: [blk3, blk4], type: 1 }
+      field = new engine.PlayingField({}, { curFloating: piece, nextFloating: nextPiece })
+      # The playing field activates its current blocks.
       blk1.activate()
       blk2.activate()
-      expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk1)
-      expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk2)
-      expect(decouple.trigger).to.have.been.calledWith(field, 'new FloatingBlock', field.curFloating)
+      expect(field).to.have.deep.nested.property('curFloating.blocks', [blk1, blk2])
+      expect(field).to.have.deep.nested.property('nextFloating.blocks', [blk3, blk4])
 
   describe 'when committing new piece', ->
 
@@ -54,16 +61,16 @@ describe 'tetromino-engine PlayingField', ->
       field.commitNewPiece('nextFloating', piece)
       expect(field.nextFloating).to.equal(piece)
 
-    it "triggers new block event for each new block and one for new piece", ->
+    it "triggers add event for each new block and one for the piece", ->
       field = new engine.PlayingField({}, {})
       blk1 = new engine.Block({}, { type: 0 }, 1, 2)
       blk2 = new engine.Block({}, { type: 0 }, 2, 3)
       piece = new engine.FloatingBlock(field, { blocks: [blk1, blk2], type: 0 })
       spyOn(decouple, 'trigger')
       field.commitNewPiece('nextFloating', piece)
-      expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk1)
-      expect(decouple.trigger).to.have.been.calledWith(field, 'new Block', blk2)
-      expect(decouple.trigger).to.have.been.calledWith(field, 'new FloatingBlock', field.nextFloating)
+      expect(decouple.trigger).to.have.been.calledWith(field, 'addBlock', blk1)
+      expect(decouple.trigger).to.have.been.calledWith(field, 'addBlock', blk2)
+      expect(decouple.trigger).to.have.been.calledWith(field, 'addPiece', field.nextFloating)
 
   it "stores block at coordinate", ->
     field = new engine.PlayingField({}, {})

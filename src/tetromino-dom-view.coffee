@@ -127,7 +127,7 @@ export class PlayingFieldDomView
       for blk in row when blk?
         new BlockDomView(@, blk)
 
-    decouple.on @fieldModel, 'new Block', (fieldModel, event, block) =>
+    decouple.on @fieldModel, 'addBlock', (fieldModel, event, block) =>
       new BlockDomView(@, block)
 
     decouple.on @fieldModel, 'beforeDrop', (caller, event) => @beforeDrop()
