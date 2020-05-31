@@ -358,7 +358,7 @@ export class PlayingField
           blk.activate()
           blk
     )
-    decouple.trigger(@, 'newNoiseBlocks', n, newBlocks)
+    decouple.trigger(@, 'addNoiseBlocks', n, newBlocks)
 
   addLinesSequence: (n, createNoise, callback = null) ->
     @shiftLinesUp(n)
@@ -556,7 +556,7 @@ export class ModelEventReceiver
       field.curFloating = field.nextFloating
       field.commitNewPiece('nextFloating', new FloatingBlock(field, Object.assign(opts, { playerId: playerId })))
       blk.activate() for blk in field.curFloating.blocks
-    else if event == 'newNoiseBlocks'
+    else if event == 'addNoiseBlocks'
       # Someone else received noise, and is telling us about their
       # new noise blocks.
       [n, blks] = args

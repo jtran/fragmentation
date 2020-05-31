@@ -32,9 +32,9 @@ export class PlayingFieldView
     decouple.on @fieldModel, 'addBlock', (caller, event, block) =>
       new BlockView(block, @game, @socket)
       # We don't distribute this event because the 'addPiece' or
-      # 'newNoiseBlocks' event handles it.
+      # 'addNoiseBlocks' event handles it.
 
-    decouple.on @fieldModel, 'newNoiseBlocks', (caller, event, n, blocks) =>
+    decouple.on @fieldModel, 'addNoiseBlocks', (caller, event, n, blocks) =>
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, n, blocks)
 
