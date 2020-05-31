@@ -51,9 +51,9 @@ export class BlockDomView
 
     decouple.on @blockModel, 'afterClear Block', (caller, event) => @dispose()
 
-    # This event occurs when deleting a block, but it's not from the
-    # player clearing a line.
-    decouple.on @blockModel, 'delete Block', (caller, event) => @dispose()
+    # This event occurs when removing a block, but it's not from the player
+    # clearing a line.
+    decouple.on @blockModel, 'removeBlock', (caller, event) => @dispose()
 
   dispose: ->
     $(@elm).remove()
@@ -146,7 +146,7 @@ export class PlayingFieldDomView
 
   leaveGame: (callback = null) =>
     $(@fieldSelector()).fadeOut 'slow', =>
-      decouple.trigger(blk, 'delete Block') for blk in @fieldModel.allBlocks()
+      decouple.trigger(blk, 'removeBlock') for blk in @fieldModel.allBlocks()
       $(@fieldSelector()).remove()
       callback?()
 
