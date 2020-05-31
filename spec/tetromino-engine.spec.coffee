@@ -65,7 +65,7 @@ describe 'tetromino-engine PlayingField', ->
       field = new engine.PlayingField({}, {})
       blk1 = new engine.Block({}, { type: 0 }, 1, 2)
       blk2 = new engine.Block({}, { type: 0 }, 2, 3)
-      piece = new engine.FloatingBlock(field, { blocks: [blk1, blk2], type: 0 })
+      piece = new engine.FloatingPiece(field, { blocks: [blk1, blk2], type: 0 })
       spyOn(decouple, 'trigger')
       field.commitNewPiece('nextFloating', piece)
       expect(decouple.trigger).to.have.been.calledWith(field, 'addBlock', blk1)
@@ -94,7 +94,7 @@ describe 'tetromino-engine PlayingField', ->
     field.storeBlock(fieldBlk, fieldBlk.getXy())
     # Put piece next to the bottom.
     pieceBlk = new engine.Block(field, {}, 1, 8)
-    field.curFloating = new engine.FloatingBlock(field, { blocks: [pieceBlk] })
+    field.curFloating = new engine.FloatingPiece(field, { blocks: [pieceBlk] })
     field.shiftLinesUp(2)
     expect(field.blockFromXy([1, 7])).to.equal(fieldBlk)
     expect(field.blockFromXy([1, 8])).to.equal(null)

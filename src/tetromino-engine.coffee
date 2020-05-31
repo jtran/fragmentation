@@ -24,7 +24,7 @@ export class Block
     @isActivated
 
 
-export class FloatingBlock
+export class FloatingPiece
   NUM_TYPES_OF_BLOCKS = 7
 
   constructor: (@field, options = {}) ->
@@ -183,7 +183,7 @@ export class PlayingField
           blk.activate()
 
     copyPiece = (piece) =>
-      new FloatingBlock @,
+      new FloatingPiece @,
         type: piece.type
         blocks: piece.blocks
         playerId: options.playerId
@@ -371,7 +371,7 @@ export class PlayingField
     opts = {type: 6} if @DEBUG # debug mode always long
     # The first time this is called, next will be null.
     if ! @nextFloating
-      @commitNewPiece('nextFloating', new FloatingBlock(@, opts))
+      @commitNewPiece('nextFloating', new FloatingPiece(@, opts))
 
     # Make next be current.
     @curFloating = @nextFloating
@@ -380,7 +380,7 @@ export class PlayingField
       blk.activate()
       blk.setXy([blk.x, blk.y + 2])
     # Spawn a new next.
-    @commitNewPiece('nextFloating', new FloatingBlock(@, opts))
+    @commitNewPiece('nextFloating', new FloatingPiece(@, opts))
     null
 
   # Returns true if game is over.
@@ -554,7 +554,7 @@ export class ModelEventReceiver
     else if event == 'addPiece'
       [opts] = args
       field.curFloating = field.nextFloating
-      field.commitNewPiece('nextFloating', new FloatingBlock(field, Object.assign(opts, { playerId: playerId })))
+      field.commitNewPiece('nextFloating', new FloatingPiece(field, Object.assign(opts, { playerId: playerId })))
       blk.activate() for blk in field.curFloating.blocks
     else if event == 'addNoiseBlocks'
       # Someone else received noise, and is telling us about their
@@ -588,7 +588,8 @@ export class ModelEventReceiver
 
 
 export default {
-  Block, FloatingBlock,
+  Block,
+  FloatingPiece,
   PlayingField,
   ModelEventReceiver,
 }
