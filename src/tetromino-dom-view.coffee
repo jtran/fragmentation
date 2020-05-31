@@ -51,12 +51,15 @@ export class BlockDomView
 
     decouple.on @blockModel, 'afterClear Block', @, (caller, event) => @dispose()
 
-    # This event occurs when removing a block, but it's not from the player
-    # clearing a line.
-    decouple.on @blockModel, 'removeBlock', @, (caller, event) => @dispose()
+    # This gets triggered when a parent element is about to be removed from the
+    # DOM, and we should stop listening to the model.  We shouldn't bother
+    # removing from the DOM.
+    decouple.on @blockModel, 'abandonView', @, (caller, event, fieldView) =>
+      if @fieldView == fieldView
+        @dispose(false)
 
-  dispose: ->
-    $(@elm).remove()
+  dispose: (removeElement = true) ->
+    $(@elm).remove() if removeElement && @elm?
     # Remove references to prevent memory leak.
     @elm = null
     decouple.removeAllForTarget(@)
@@ -127,17 +130,18 @@ export class PlayingFieldDomView
       for blk in row when blk?
         new BlockDomView(@, blk)
 
-    decouple.on @fieldModel, 'addBlock', (fieldModel, event, block) =>
+    decouple.on @fieldModel, 'addBlock', @, (fieldModel, event, block) =>
       new BlockDomView(@, block)
 
-    decouple.on @fieldModel, 'beforeDrop', (caller, event) => @beforeDrop()
-    decouple.on @fieldModel, 'afterDrop',  (caller, event) => @afterDrop()
+    decouple.on @fieldModel, 'beforeDrop', @, (caller, event) => @beforeDrop()
+    decouple.on @fieldModel, 'afterDrop',  @, (caller, event) => @afterDrop()
 
-    decouple.on @fieldModel, 'clear', (caller, event, ys, blocks) =>
+    decouple.on @fieldModel, 'clear', @, (caller, event, ys, blocks) =>
+      # TODO: The view shouldn't be triggering events on the model.
       decouple.trigger(blk, 'beforeClear Block') for blk in blocks
       _.delay((-> decouple.trigger(blk, 'afterClear Block') for blk in blocks), 500)
 
-    decouple.on @fieldModel, 'stateChange', (caller, event, newState) =>
+    decouple.on @fieldModel, 'stateChange', @, (caller, event, newState) =>
       if newState == PlayingField.STATE_PAUSED
         $(@pausedSelector()).addClass('visible')
       else
@@ -146,8 +150,10 @@ export class PlayingFieldDomView
 
   leaveGame: (callback = null) =>
     $(@fieldSelector()).fadeOut 'slow', =>
-      decouple.trigger(blk, 'removeBlock') for blk in @fieldModel.allBlocks()
+      # TODO: The view shouldn't be triggering events on the model.
+      decouple.trigger(blk, 'abandonView', @) for blk in @fieldModel.allBlocks()
       $(@fieldSelector()).remove()
+      decouple.removeAllForTarget(@)
       callback?()
 
 

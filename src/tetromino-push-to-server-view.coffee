@@ -9,6 +9,8 @@ export class BlockView
       if @game.joinedRemoteGame
         @socket.emit('distributeBlockEvent', @game.localPlayer.id, @blockModel.id, event, @blockModel.getXy())
 
+    decouple.on @blockModel, 'afterClear Block', @, (caller, event) => @dispose()
+
   dispose: ->
     # Remove references to prevent memory leak.
     decouple.removeAllForTarget(@)
@@ -49,5 +51,11 @@ export class PlayingFieldView
     decouple.on @fieldModel, 'afterAttachPiece', (caller, event) =>
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', @game.localPlayer.id, event)
+
+  # Note: This currently never gets called because we only ever instantiate one
+  # push-to-server-view and never destroy it.
+  dispose: ->
+    # TODO: Dispose block views.  We don't keep references to them.
+    decouple.removeAllForTarget(@)
 
 export default { BlockView, PlayingFieldView }
