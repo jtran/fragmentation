@@ -11,13 +11,17 @@ export class Block
     @id = options.id ? _.uniqueId('b')
     @pieceType = piece.type
     @playerId = field.playerId if field.playerId?
+    @isActivated = false
 
   setXy: ([@x, @y]) ->
     decouple.trigger(@, 'move Block')
 
   getXy: -> [@x, @y]
 
-  activate: -> decouple.trigger(@, 'activate Block')
+  activate: ->
+    @isActivated = true
+    decouple.trigger(@, 'isActivatedChange', @isActivated)
+    @isActivated
 
 
 export class FloatingBlock
@@ -168,30 +172,32 @@ export class PlayingField
       row.push(null) for j in [0 ... @fieldWidth]
       @blocks.push(row)
 
-    decouple.trigger(game, 'new PlayingField', @)
+    decouple.trigger(game, 'newPlayingFieldBeforeInit', @)
 
     useDebugFill = @viewType == 'local' and @DEBUG
     if useDebugFill
       for i in [0 ... @fieldHeight] when i > @fieldHeight - 5
         for j in [0 ... @fieldWidth] when j != 0
           blk = new Block(@, { type: 'opponent' }, j, i)
-          decouple.trigger(@, 'new Block', blk)
           @storeBlock(blk, blk.getXy())
           blk.activate()
 
-    # Initialize blocks after new PlayingField event so that
-    # listeners can be installed.
+    copyPiece = (piece) =>
+      new FloatingBlock @,
+        type: piece.type
+        blocks: piece.blocks
+        playerId: options.playerId
+
     if options.curFloating?
-      @commitNewPiece('curFloating', new FloatingBlock(@, { type: options.curFloating.type, blocks: options.curFloating.blocks, playerId: options.playerId }))
+      @curFloating = copyPiece(options.curFloating)
       # Activate immediately.
       blk.activate() for blk in @curFloating.blocks
     if options.nextFloating?
-      @commitNewPiece('nextFloating', new FloatingBlock(@, { type: options.nextFloating.type, blocks: options.nextFloating.blocks, playerId: options.playerId }))
+      @nextFloating = copyPiece(options.nextFloating)
     if options.blocks?
       for row in options.blocks
         for b, x in row when b
           block = new Block(@, { type: b.pieceType }, b.x, b.y, { id: b.id })
-          decouple.trigger(@, 'new Block', block)
           @storeBlock(block, [b.x, b.y])
           # Activate immediately.
           block.activate()
@@ -215,8 +221,8 @@ export class PlayingField
   # Stores piece in key and triggers events.
   commitNewPiece: (key, piece) ->
     @[key] = piece
-    decouple.trigger(@, 'new Block', blk) for blk in piece.blocks
-    decouple.trigger(@, 'new FloatingBlock', piece)
+    decouple.trigger(@, 'addBlock', blk) for blk in piece.blocks
+    decouple.trigger(@, 'addPiece', piece)
     piece
 
   allBlocks: ->
@@ -347,12 +353,12 @@ export class PlayingField
         xs.splice(util.randInt(xs.length), 1) for g in [1 .. numGaps]
         for x in xs
           blk = new Block(@, { type: 'opponent' }, x, y)
-          decouple.trigger(@, 'new Block', blk)
+          decouple.trigger(@, 'addBlock', blk)
           @storeBlock(blk, [x, y])
           blk.activate()
           blk
     )
-    decouple.trigger(@, 'newNoiseBlocks', n, newBlocks)
+    decouple.trigger(@, 'addNoiseBlocks', n, newBlocks)
 
   addLinesSequence: (n, createNoise, callback = null) ->
     @shiftLinesUp(n)
@@ -499,6 +505,7 @@ export class ModelEventReceiver
     player = new Player(player.id, player.socketId, field)
     console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
     @players[player.id] = player
+    decouple.trigger(@game, 'addPlayer', player)
 
   # playerId may be null.
   removePlayer: (playerId, socketId) =>
@@ -544,19 +551,19 @@ export class ModelEventReceiver
       console.log 'receive afterAttachPiece', (b.id for b in field.curFloating.blocks), playerId
       for blk in field.curFloating.blocks
         field.storeBlock(blk, blk.getXy())
-    else if event == 'new FloatingBlock'
+    else if event == 'addPiece'
       [opts] = args
       field.curFloating = field.nextFloating
       field.commitNewPiece('nextFloating', new FloatingBlock(field, Object.assign(opts, { playerId: playerId })))
       blk.activate() for blk in field.curFloating.blocks
-    else if event == 'newNoiseBlocks'
+    else if event == 'addNoiseBlocks'
       # Someone else received noise, and is telling us about their
       # new noise blocks.
       [n, blks] = args
       field.addLinesSequence n, false, =>
         for b in blks
           block = new Block(field, { type: b.pieceType }, b.x, b.y, { id: b.id })
-          decouple.trigger(field, 'new Block', block)
+          decouple.trigger(field, 'addBlock', block)
           field.storeBlock(block, block.getXy())
           block.activate()
     else if event == 'clear'
