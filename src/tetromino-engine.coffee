@@ -529,6 +529,7 @@ export class ModelEventReceiver
     #console.log 'receiveBlockEvent', playerId, blockId, event, args...
     player = @players[playerId]
     unless player
+      return if not @game.joinedRemoteGame
       throw new Error("couldn't find player #{playerId} for block event #{blockId}")
     block = player.field.blockFromId(blockId)
     if not block
@@ -543,7 +544,12 @@ export class ModelEventReceiver
   receiveFieldEvent: (playerId, event, args...) =>
     return if playerId == @localPlayerId
     console.log 'receiveFieldEvent', playerId, event, args...
-    field = @players[playerId].field
+    player = @players[playerId]
+    unless player?
+      return if not @game.joinedRemoteGame
+      console.error "received field event for unknown player #{playerId}"
+      return
+    field = player.field
     if event == 'stateChange'
       field.state = args[0]
       decouple.trigger(field, event, args...)

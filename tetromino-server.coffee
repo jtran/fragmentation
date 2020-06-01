@@ -17,14 +17,13 @@ class TetrominoServer
         console.log("Disconnected #{connectionPlayer.id} #{socket.id}")
         models.removePlayer(connectionPlayer.id, socket.id)
         socket.broadcast.emit('removePlayer', connectionPlayer.id, socket.id)
-      socket.on 'getPlayers', (callback) ->
+      socket.on 'join', (playerHash, callback) ->
+        console.log("Joined #{playerHash.id} #{socket.id}", playerHash)
+        connectionPlayer.id = playerHash.id
         ps = {}
         for k, p of models.players
           ps[k] = p.asJson()
         callback(ps)
-      socket.on 'join', (playerHash) ->
-        console.log("Joined #{playerHash.id} #{socket.id}", playerHash)
-        connectionPlayer.id = playerHash.id
         models.addPlayer(playerHash)
         socket.broadcast.emit('addPlayer', playerHash)
       socket.on 'distributeMessage', (playerId, msg) ->

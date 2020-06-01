@@ -27,10 +27,9 @@ export class Game
       @serverSocket.on 'receiveBlockEvent', @models.receiveBlockEvent
       @serverSocket.on 'receiveFieldEvent', @models.receiveFieldEvent
       @serverSocket.on 'receiveUpdatePlayingField', @models.receiveUpdatePlayingField
-      @serverSocket.emit 'getPlayers', (players) =>
-        console.log 'getPlayers', players
+      @serverSocket.emit 'join', @localPlayer.asJson(), (players) =>
+        console.log 'initial players on join', players
         @models.addPlayer(p) for id, p of players
-        @serverSocket.emit('join', @localPlayer.asJson())
         @joinedRemoteGame = true
 
   initSocketCallbacks: ->
