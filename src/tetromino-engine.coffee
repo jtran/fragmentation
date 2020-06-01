@@ -11,7 +11,7 @@ export class Block
     @id = options.id ? _.uniqueId('b')
     @pieceType = piece.type
     @playerId = field.playerId if field.playerId?
-    @isActivated = false
+    @isActivated = options.isActivated ? false
 
   setXy: ([@x, @y]) ->
     decouple.trigger(@, 'move Block')
@@ -533,9 +533,24 @@ export class ModelEventReceiver
       throw new Error("couldn't find player #{playerId} for block event #{blockId}")
     block = player.field.blockFromId(blockId)
     if not block
-      console.log 'receiveBlockEvent', playerId, blockId, event, args...
-      console.log 'field', player.field.blocks, player.field.curFloating?.blocks, player.field.nextFloating?.blocks
-      throw new Error("couldn't find block #{blockId}")
+      console.warn 'receiveBlockEvent', playerId, blockId, event, args...
+      console.log 'field', player.field, player.field.curFloating, player.field.nextFloating
+      console.log 'curFloating'
+      console.table player.field.curFloating?.blocks
+      console.log 'nextFloating'
+      console.table player.field.nextFloating?.blocks
+      console.log 'blocks'
+      console.table player.field.blocks
+      if event == 'move Block'
+        xy = args[0]
+        block = new Block(player.field, { type: 0 }, xy[0], xy[1], id: blockId, isActivated: true)
+        console.warn "couldn't find block #{blockId}; fabricating block #{event} block:", block
+        decouple.trigger(player.field, 'addBlock', block)
+        player.field.storeBlock(block, xy)
+        return
+      else
+        console.error "couldn't find block #{blockId} for unknown event #{event} args=#{args}"
+        return
     if event == 'move Block'
       block.setXy(args[0])
     else
