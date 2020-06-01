@@ -479,13 +479,13 @@ export class PlayingField
 # can create another model that mirrors the original, allowing us to
 # have a local instance of the remote model.
 export class ModelEventReceiver
-  # players is a hash : playerId -> Player
+  # players is a Map : playerId -> Player
   constructor: (@game, @localPlayerId = null) ->
-    @players = {}
+    @players = new Map()
 
   # player : Player | playerHash (returned from Player::asJson())
   addPlayer: (player) =>
-    existingPlayer = @players[player.id]
+    existingPlayer = @players.get(player.id)
     if existingPlayer?
       # Existing player got a new socket ID.
       existingPlayer.socketId = player.socketId if player.socketId?
@@ -504,16 +504,16 @@ export class ModelEventReceiver
       )
     player = new Player(player.id, player.socketId, field)
     console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
-    @players[player.id] = player
+    @players.set(player.id, player)
     decouple.trigger(@game, 'addPlayer', player)
 
   # playerId may be null.
   removePlayer: (playerId, socketId) =>
     console.log("removePlayer", playerId, socketId)
-    player = @players[playerId] if playerId?
+    player = @players.get(playerId) if playerId?
     if not player? and socketId?
       # TODO: Make this a constant time lookup, not linear.
-      player = _.find(_.values(@players), (p) -> p.socketId == socketId)
+      player = _.find(Array.from(@players.values()), (p) -> p.socketId == socketId)
     unless player?
       console.log "skipping remove; player not found", playerId, socketId
       return
@@ -521,13 +521,13 @@ export class ModelEventReceiver
       console.log "skipping remove of local player", player.id
       return
     decouple.trigger(@game, 'beforeRemovePlayer', player)
-    delete @players[player.id]
+    @players.delete(player.id)
     decouple.trigger(@game, 'afterRemovePlayer', player)
 
   receiveBlockEvent: (playerId, blockId, event, args...) =>
     return if playerId == @localPlayerId
     #console.log 'receiveBlockEvent', playerId, blockId, event, args...
-    player = @players[playerId]
+    player = @players.get(playerId)
     unless player
       return if not @game.joinedRemoteGame
       throw new Error("couldn't find player #{playerId} for block event #{blockId}")
@@ -559,7 +559,7 @@ export class ModelEventReceiver
   receiveFieldEvent: (playerId, event, args...) =>
     return if playerId == @localPlayerId
     console.log 'receiveFieldEvent', playerId, event, args...
-    player = @players[playerId]
+    player = @players.get(playerId)
     unless player?
       return if not @game.joinedRemoteGame
       console.error "received field event for unknown player #{playerId}"
@@ -593,14 +593,14 @@ export class ModelEventReceiver
       # Someone else cleared lines, which means they're sending us
       # noise.
       linesSent = if ys.length < 4 then ys.length - 1 else ys.length
-      @players[@localPlayerId]?.field.addLinesSequence(linesSent, true)
+      @players.get(@localPlayerId)?.field.addLinesSequence(linesSent, true)
     else
       decouple.trigger(field, event, args...)
 
   # The server calls this when a player has sent a full refresh to
   # his/her playing field.
   receiveUpdatePlayingField: (playerId, field) =>
-    player = @players[playerId]
+    player = @players.get(playerId)
     unless player
       console.warn "I got an updateClient for an unknown player id=#{playerId}"
       return

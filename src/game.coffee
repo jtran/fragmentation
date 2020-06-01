@@ -51,7 +51,7 @@ export class Game
 
   playersMap: -> @models.players
 
-  players: -> _.values(@models.players)
+  players: -> Array.from(@models.players.values())
 
 
 export default {

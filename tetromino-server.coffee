@@ -21,7 +21,7 @@ class TetrominoServer
         console.log("Joined #{playerHash.id} #{socket.id}", playerHash)
         connectionPlayer.id = playerHash.id
         ps = {}
-        for k, p of models.players
+        for [k, p] from models.players
           ps[k] = p.asJson()
         callback(ps)
         models.addPlayer(playerHash)
