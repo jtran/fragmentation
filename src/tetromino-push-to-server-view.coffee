@@ -27,28 +27,28 @@ export class PlayingFieldView
       for blk in row when blk?
         new BlockView(blk, @game, @socket)
 
-    decouple.on @fieldModel, 'stateChange', (caller, event, newState) =>
+    decouple.on @fieldModel, 'stateChange', @, (caller, event, newState) =>
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, newState)
 
-    decouple.on @fieldModel, 'addBlock', (caller, event, block) =>
+    decouple.on @fieldModel, 'addBlock', @, (caller, event, block) =>
       new BlockView(block, @game, @socket)
       # We don't distribute this event because the 'addPiece' or
       # 'addNoiseBlocks' event handles it.
 
-    decouple.on @fieldModel, 'addNoiseBlocks', (caller, event, n, blocks) =>
+    decouple.on @fieldModel, 'addNoiseBlocks', @, (caller, event, n, blocks) =>
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, n, blocks)
 
-    decouple.on @fieldModel, 'addPiece', (caller, event, piece) =>
+    decouple.on @fieldModel, 'addPiece', @, (caller, event, piece) =>
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, piece.asJson())
 
-    decouple.on @fieldModel, 'clear',          (caller, event, ys, blksToRemove) =>
+    decouple.on @fieldModel, 'clear', @, (caller, event, ys, blksToRemove) =>
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, ys, blksToRemove)
 
-    decouple.on @fieldModel, 'afterAttachPiece', (caller, event) =>
+    decouple.on @fieldModel, 'afterAttachPiece', @, (caller, event) =>
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', @game.localPlayer.id, event)
 
