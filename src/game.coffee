@@ -11,7 +11,6 @@ export class Game
     @localPlayer = null
     @models = new ModelEventReceiver(@, localPlayerId)
     @addLocalPlayer(localPlayerId)
-    @localField.useNextPiece()
     game = @
     # This gets called when the client connects to the server, and
     # again each time it reconnects.
@@ -45,6 +44,7 @@ export class Game
     throw new Error("You tried to add a local player, but I already have one.") if @localField
     @localField = new PlayingField(@, viewType: 'local')
     @localPlayer = new Player(localPlayerId, null, @localField)
+    @localField.useNextPiece()
     @localPlayer
 
   start: -> @localField?.setUseGravity(true)
