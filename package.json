@@ -8,7 +8,8 @@
     },
     "scripts": {
         "app": "coffee -p app.coffee | node --input-type=module",
-        "start": "npm run build && npm run app",
+        "start": "npm run version && npm run build && npm run app",
+        "version": "echo export default \\\"$(git rev-parse HEAD)\\\" > ./lib/version.js",
         "build": "coffee -cbo lib src && coffee -cb tetromino-server.coffee && coffee -cbo test-build spec",
         "watch": "coffee -cb tetromino-server.coffee && coffee -wcbo lib src",
         "test": "npm run build && mocha test-build/*.spec.js"

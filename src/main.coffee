@@ -7,6 +7,7 @@ import { PlayingFieldDomView } from './tetromino-dom-view.js'
 import { PlayingFieldView as PushToServerView } from './tetromino-push-to-server-view.js'
 import decouple from './decouple.js'
 import util from './util.js'
+import version from './version.js'
 
 socket = null
 game = null
@@ -239,7 +240,7 @@ appendLine = (line, callback = null) ->
       $line.append(chars[0])
       _.delay (-> k(chars.substr(1))), 50
     else
-      callback?()
+      callback?($line)
   if line == ''
     $line.append('&nbsp;')
     _.delay (-> k('')), 50
@@ -257,6 +258,7 @@ appendMessage = (msg, callback = null) ->
 
 # Set the status.
 $('#status').html('')
+
 appendMessage """
   Player, defragment this sector...
   Arrow Keys = move
@@ -270,6 +272,9 @@ appendMessage """
     appendLine 'Execute', =>
       game.start()
   ), 2000)
+
+appendLine version, ($versionLine) =>
+  _.delay((=> $versionLine.addClass('hideText') ), 1000);
 
 # Listen for messages.
 game.receiveMessage = (playerName, msg) ->
