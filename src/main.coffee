@@ -91,6 +91,8 @@ $(document).bind 'keydown', (event) ->
     when 'd'                     then localField.rotateCounterclockwise(); true
     when ' ' ### spacebar    ### then localField.drop(); true
     when 'm'                     then toggleMusic(); true
+    when 'n'                     then localField.nuke(); localField.resume(); true
+
   event.preventDefault() if handled
 
 ##############################

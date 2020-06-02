@@ -307,7 +307,7 @@ export class PlayingField
         @moveBlock([x, y - shift], [x, y])
     null
 
-  clearLines: (ys) ->
+  clearLines: (ys, add = false) ->
     blksToRemove = []
     for y in ys
       for x in [0 ... @fieldWidth]
@@ -315,12 +315,12 @@ export class PlayingField
         @storeBlock(null, [x, y])
         continue unless blk
         blksToRemove.push(blk)
-    decouple.trigger(@, 'clear', ys, blksToRemove)
+    decouple.trigger(@, 'clear', ys, blksToRemove, add)
     null
 
-  clearLinesSequence: (ys, callback = null) ->
+  clearLinesSequence: (ys, callback = null, add = false) ->
     return false if ys.length == 0
-    @clearLines(ys)
+    @clearLines(ys, add)
     _.delay((=>
       @fillLinesFromAbove(ys)
       callback?()
@@ -418,6 +418,9 @@ export class PlayingField
         return false if @checkForGameOver()
     fell
 
+  nuke: ->
+    @clearLinesSequence [@fieldHeight-1..0], @startGravity.bind(@)
+
   drop: ->
     return false unless @acceptingMoveInput()
 
@@ -441,7 +444,7 @@ export class PlayingField
     true
 
   resume: ->
-    return false unless @state == STATE_PAUSED
+    return false if @state == STATE_PLAYING
     @startGravity()
     @state = STATE_PLAYING
     decouple.trigger(@, 'stateChange', @state)
@@ -592,6 +595,7 @@ export class ModelEventReceiver
       field.clearLinesSequence(ys)
       # Someone else cleared lines, which means they're sending us
       # noise.
+      return if not args[2] # nuke
       linesSent = if ys.length < 4 then ys.length - 1 else ys.length
       @players.get(@localPlayerId)?.field.addLinesSequence(linesSent, true)
     else
