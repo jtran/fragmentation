@@ -13,11 +13,17 @@ export cloneObject = (obj) ->
 export randInt = (n) ->
   Math.floor(Math.random() * (n+1))
 
+# Returns unique elements in array, preserving order.  Same-value-zero equality
+# is used.
+export unique = (arr) ->
+  [new Set(arr)...]
+
 export without = (arr, item) ->
   x for x in arr when not _.isEqual(x, item)
 
 export default {
   cloneObject,
   randInt,
+  unique,
   without,
 }

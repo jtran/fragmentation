@@ -29,6 +29,16 @@ describe 'util', ->
     expect(v.capacity()).to.equal 1
     expect(Object.getPrototypeOf(v)).to.equal Car.prototype
 
+  it "returns unique numbers in array", ->
+    expect(util.unique([0, 1, 1, 2, 3, 4, 3, 4, 0, 3])).to.deep.equal [0, 1, 2, 3, 4]
+
+  it "returns unique objects in array", ->
+    a = {}
+    b = {}
+    c = null
+    d = undefined
+    expect(util.unique([a, a, b, b, c, c, d, d])).to.deep.equal [a, b, c, d]
+
   it "returns array without a number element", ->
     arr = [1, 2, 3]
     r = util.without(arr, 3)
