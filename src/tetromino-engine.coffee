@@ -293,9 +293,9 @@ export class PlayingField
 
 
   # Returns array of y's of lines that need to be cleared.
-  linesToClear: (flt) ->
-    linesToCheck = _(blk.getXy()[1] for blk in flt.blocks).uniq()
-    y for y in linesToCheck when @blocks[y].every(_.identity)
+  linesToClear: (piece) ->
+    linesToCheck = util.unique(blk.y for blk in piece.blocks)
+    linesToCheck.filter (y) => @blocks[y].every((blk) -> blk?)
 
   fillLinesFromAbove: (ys) ->
     return if _.isEmpty(ys)
