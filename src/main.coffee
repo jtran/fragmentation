@@ -49,6 +49,7 @@ handleAddPlayer = (game, event, player) ->
 urlParams = new URLSearchParams(window.location.search)
 decouple.on null, 'newPlayingFieldBeforeInit', (game, event, field) =>
   field.DEBUG = urlParams.get('debug')
+  field.pieceGenerator.DEBUG = urlParams.get('debug')
 
 socket = io()
 game = new Game(socket, genUuid())

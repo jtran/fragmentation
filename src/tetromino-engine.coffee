@@ -1,4 +1,6 @@
 import _ from './underscore.js'
+import seedrandom from './seedrandom.js'
+
 import util from './util.js'
 import { Player }  from './tetromino-player.js'
 import decouple from './decouple.js'
@@ -25,7 +27,7 @@ export class Block
 
 
 export class FloatingPiece
-  NUM_TYPES_OF_BLOCKS = 7
+  @NUM_TYPES_OF_BLOCKS = NUM_TYPES_OF_BLOCKS = 7
 
   constructor: (@field, options = {}) ->
     @type = options.type ? util.randInt(NUM_TYPES_OF_BLOCKS - 1)
@@ -145,6 +147,34 @@ export class FloatingPiece
       @transform(rotateWithShift(-1))
 
 
+export class PieceBagGenerator
+
+  # Seed can be a string, or undefined to use local entropy.
+  constructor: (seed) ->
+    @rng = new seedrandom(seed)
+    @bag = [1, 4, 5, 6]
+
+  # Iterator protocol.  Values are the piece type.
+  next: ->
+    if @DEBUG
+      return { value: 6, done: false} # I piece
+
+    len = @bag.length
+    if len == 1
+      value = @bag.pop()
+      return { value, done: false }
+
+    if len == 0
+      @bag = [0 ... FloatingPiece.NUM_TYPES_OF_BLOCKS]
+
+    n = @bag.length
+    x = @rng.quick()
+    i = Math.floor(x * n)
+    value = @bag[i]
+    @bag.splice(i, 1)
+
+    { value, done: false }
+
 
 export class PlayingField
   @STATE_PLAYING = STATE_PLAYING = 0
@@ -160,6 +190,7 @@ export class PlayingField
     @fieldWidth = 10
     @blocks = []
 
+    @pieceGenerator = options.pieceGenerator ? new PieceBagGenerator()
     @curFloating = null
     @nextFloating = null
     @fallTimer = null
@@ -368,10 +399,10 @@ export class PlayingField
     ), 500)
 
   useNextPiece: ->
-    opts = {type: 6} if @DEBUG # debug mode always long
     # The first time this is called, next will be null.
     if ! @nextFloating
-      @commitNewPiece('nextFloating', new FloatingPiece(@, opts))
+      type = @pieceGenerator.next().value
+      @commitNewPiece('nextFloating', new FloatingPiece(@, type: type))
 
     # Make next be current.
     @curFloating = @nextFloating
@@ -380,7 +411,8 @@ export class PlayingField
       blk.activate()
       blk.setXy([blk.x, blk.y + 2])
     # Spawn a new next.
-    @commitNewPiece('nextFloating', new FloatingPiece(@, opts))
+    type = @pieceGenerator.next().value
+    @commitNewPiece('nextFloating', new FloatingPiece(@, type: type))
     null
 
   # Returns true if game is over.
@@ -611,6 +643,7 @@ export class ModelEventReceiver
 export default {
   Block,
   FloatingPiece,
+  PieceBagGenerator,
   PlayingField,
   ModelEventReceiver,
 }
