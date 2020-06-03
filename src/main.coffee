@@ -274,7 +274,7 @@ appendMessage """
   ), 2000)
 
 appendLine version, ($versionLine) =>
-  _.delay((=> $versionLine.addClass('hideText') ), 1000);
+  _.delay((=> $versionLine.addClass('hide_text') ), 1000);
 
 # Listen for messages.
 game.receiveMessage = (playerName, msg) ->
