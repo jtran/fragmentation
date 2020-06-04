@@ -384,10 +384,13 @@ export class PlayingField
     blksToRemove = @allBlocksInRows(ys)
     decouple.trigger(@, 'clear', ys, blksToRemove)
     decouple.trigger(blk, 'clearBlock') for blk in blksToRemove
-    @delay 500, ys, (ys) =>
+    setTimeout =>
       @storeBlock(null, blk.getXy()) for blk in blksToRemove
+      # Blocks may have moved, so reconstruct which rows were cleared.
+      ys = util.unique(blk.y for blk in blksToRemove)
       @shiftLinesDownDueToClear(ys)
       callback?()
+    , 500
     true
 
   shiftLinesUp: (n) ->
