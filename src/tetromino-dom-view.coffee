@@ -51,6 +51,8 @@ export class BlockDomView
 
     decouple.on @blockModel, 'afterBlockFlickerOut', @, (caller, event) => @dispose()
 
+    decouple.on @blockModel, 'dispose', @, (caller, event) => @dispose()
+
     # This gets triggered when a parent element is about to be removed from the
     # DOM, and we should stop listening to the model.  We shouldn't bother
     # removing from the DOM.

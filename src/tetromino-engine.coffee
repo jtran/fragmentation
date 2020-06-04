@@ -393,16 +393,27 @@ export class PlayingField
   shiftLinesUp: (n) ->
     return if n <= 0
     @updateYRefs (y) -> y - n
-    for y in [n ... @fieldHeight]
+    blksShiftedOffTop = []
+    for y in [0 ... @fieldHeight]
       for x in [0 ... @fieldWidth]
         fieldBlk = @blockFromXy([x, y])
+        continue unless fieldBlk?
         yPrime = y - n
-        # If the current piece occupies any coordinate we're moving
-        # through, push the piece up.
-        if fieldBlk
+        # If the current piece occupies any coordinate we're moving through,
+        # push the piece up.
+        if @curFloating?
           while @curFloating.blocks.some((blk) -> blk.x == x && blk.y in [y..yPrime])
             break if not @curFloating.moveUp()
         @moveBlock([x, y], [x, yPrime])
+        if yPrime < 0
+          # The block is getting pushed up off the top.
+          blksShiftedOffTop.push(fieldBlk)
+    if blksShiftedOffTop.length > 0
+      # TODO: What should happen?  Right now, we're just making the blocks
+      # disappear.
+      setTimeout =>
+        decouple.trigger(blk, 'dispose') for blk in blksShiftedOffTop
+      , 500
 
   fillBottomLinesWithNoise: (n) ->
     return if n <= 0
