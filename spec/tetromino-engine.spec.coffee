@@ -108,27 +108,4 @@ describe 'tetromino-engine PlayingField', ->
     expect(field.blockFromXy([1, 9])).to.equal(null)
     expect(field.curFloating.blocks[0].getXy()).to.have.ordered.members([1, 6])
 
-  describe 'when delaying', ->
-
-    it "shifts ys up", (done) ->
-      field = new engine.PlayingField({}, {})
-      field.delay 1, [10], (ys) =>
-        expect(ys).to.deep.equal [9]
-        done()
-      field.shiftLinesUp(1)
-
-    it "shifts ys down due to clearing lines below", (done) ->
-      field = new engine.PlayingField({}, {})
-      field.delay 1, [10], (ys) =>
-        expect(ys).to.deep.equal [11]
-        done()
-      field.shiftLinesDownDueToClear([13])
-
-    it "doesn't shift ys down due to clearing lines above", (done) ->
-      field = new engine.PlayingField({}, {})
-      field.delay 1, [10], (ys) =>
-        expect(ys).to.deep.equal [10]
-        done()
-      field.shiftLinesDownDueToClear([3])
-
 # TODO: Test piece move, piece transform, and clearing lines.
