@@ -412,9 +412,12 @@ export class PlayingField
       for i in [1 .. n]
         y = @fieldHeight - i
         xs = [0 ... @fieldWidth]
-        # TODO: Remove current piece block positions.
-        xs.splice(x, 1) for x in xs when @isXyTaken([x, y])
-        xs.splice(util.randInt(xs.length), 1) for g in [1 .. numGaps]
+        # Remove existing block positions.
+        xs = util.without(xs, x) for x in xs when @isXyTaken([x, y])
+        if @curFloating?
+          for blk in @curFloating.blocks when blk.y == y
+            xs = util.without(xs, blk.x)
+        xs.splice(util.randInt(xs.length), 1) for [1 .. numGaps]
         for x in xs
           blk = new Block(@, { type: 'opponent' }, x, y)
           decouple.trigger(@, 'addBlock', blk)
