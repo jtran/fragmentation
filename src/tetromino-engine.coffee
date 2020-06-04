@@ -190,10 +190,6 @@ export class PlayingField
     @fieldWidth = 10
     @blocks = []
 
-    @refDelayId = 0
-    # Map : refId -> [ys]
-    @yRefs = new Map()
-
     @pieceGenerator = options.pieceGenerator ? new PieceBagGenerator()
     @curFloating = null
     @nextFloating = null
@@ -327,29 +323,6 @@ export class PlayingField
     null
 
 
-  delay: (msec, ys, callback) ->
-    refId = @nextRefDelayId()
-    # Clone the input array since we'll mutate it.
-    @yRefs.set(refId, ys[..])
-    setTimeout =>
-      ys = @yRefs.get(refId)
-      @yRefs.delete(refId)
-      callback(ys)
-    , msec
-
-  nextRefDelayId: ->
-    id = @refDelayId
-    @refDelayId++
-    # Wrap around instead of spilling into floating point.
-    @refDelayId = 0 if @refDelayId == Number.MAX_SAFE_INTEGER
-    id
-
-  updateYRefs: (f) ->
-    for ys from @yRefs.values()
-      for i in [0 ... ys.length]
-        ys[i] = f(ys[i])
-    return
-
   # Returns array of y's of lines that need to be cleared.
   linesToClear: (piece) ->
     linesToCheck = util.unique(blk.y for blk in piece.blocks)
@@ -357,12 +330,6 @@ export class PlayingField
 
   shiftLinesDownDueToClear: (ys) ->
     return if ys.length == 0
-
-    @updateYRefs (y) ->
-      # Shift down for every line cleared below it.
-      y++ for yCleared in ys when yCleared > y
-      y
-
     shift = 1
     ys.sort()
     for y in [_.last(ys) .. 0]
@@ -395,7 +362,6 @@ export class PlayingField
 
   shiftLinesUp: (n) ->
     return if n <= 0
-    @updateYRefs (y) -> y - n
     blksShiftedOffTop = []
     for y in [0 ... @fieldHeight]
       for x in [0 ... @fieldWidth]
