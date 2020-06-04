@@ -383,6 +383,7 @@ export class PlayingField
     return false if ys.length == 0
     blksToRemove = @allBlocksInRows(ys)
     decouple.trigger(@, 'clear', ys, blksToRemove)
+    decouple.trigger(blk, 'clearBlock') for blk in blksToRemove
     @delay 500, ys, (ys) =>
       @storeBlock(null, blk.getXy()) for blk in blksToRemove
       @shiftLinesDownDueToClear(ys)
