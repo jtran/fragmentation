@@ -11,6 +11,9 @@ logRemote = if DEBUG != 'local' then console.log else () ->
 logLocal = if DEBUG == 'local' then console.log else () ->
 logGeneral = console.log
 
+export DebugLogger = {DEBUG, logRemote, logLocal, logGeneral}
+
+
 # Represents a single square.
 export class Block
 
@@ -339,7 +342,10 @@ export class PlayingField
     return if ys.length == 0
     shift = 1
     ys.sort()
-    topOfField =  [_.last(ys) .. 0]
+    logLocal("sorted lines cleared: ", ys)
+    lastLine = _.last(ys);
+    logLocal("lastLine", lastLine)
+    topOfField =  [lastLine .. 0]
     logLocal("shift lines down: ", topOfField)
     for y in topOfField
       shift++ while y - shift in ys
