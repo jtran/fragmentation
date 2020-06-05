@@ -338,10 +338,7 @@ export class PlayingField
   shiftLinesDownDueToClear: (ys) ->
     return if ys.length == 0
     shift = 1
-    ys.sort()
-    topOfField =  [_.last(ys) .. 0]
-    logLocal("shift lines down: ", topOfField)
-    for y in topOfField
+    for y in [util.max(ys) .. 0]
       shift++ while y - shift in ys
       for x in [0 ... @fieldWidth]
         @moveBlock([x, y - shift], [x, y])

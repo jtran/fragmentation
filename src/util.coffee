@@ -9,6 +9,14 @@ export cloneObject = (obj) ->
     clone[k] = v
   clone
 
+# Return the max of an array or undefined if it's empty.  Unlike splatting
+# Math.max(), this works on large arrays.
+export max = (arr) ->
+  return undefined if arr.length == 0
+  x = arr[0]
+  x = y for y in arr when y > x
+  x
+
 # Return random integer in interval [0...n].
 export randInt = (n) ->
   Math.floor(Math.random() * (n+1))
@@ -23,6 +31,7 @@ export without = (arr, item) ->
 
 export default {
   cloneObject,
+  max,
   randInt,
   unique,
   without,
