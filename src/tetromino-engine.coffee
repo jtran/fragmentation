@@ -5,6 +5,12 @@ import util from './util.js'
 import { Player }  from './tetromino-player.js'
 import decouple from './decouple.js'
 
+DEBUG = 'local'
+
+logRemote = if DEBUG != 'local' then console.log else () ->
+logLocal = if DEBUG == 'local' then console.log else () ->
+logGeneral = console.log
+
 # Represents a single square.
 export class Block
 
@@ -333,7 +339,9 @@ export class PlayingField
     return if ys.length == 0
     shift = 1
     ys.sort()
-    for y in [_.last(ys) .. 0]
+    topOfField =  [_.last(ys) .. 0]
+    logLocal("shift lines down: ", topOfField)
+    for y in topOfField
       shift++ while y - shift in ys
       for x in [0 ... @fieldWidth]
         @moveBlock([x, y - shift], [x, y])
@@ -560,22 +568,22 @@ export class ModelEventReceiver
         state: field.state
       )
     player = new Player(player.id, player.socketId, field)
-    console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
+    logGeneral 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
     @players.set(player.id, player)
     decouple.trigger(@game, 'addPlayer', player)
 
   # playerId may be null.
   removePlayer: (playerId, socketId) =>
-    console.log("removePlayer", playerId, socketId)
+    logRemote("removePlayer", playerId, socketId)
     player = @players.get(playerId) if playerId?
     if not player? and socketId?
       # TODO: Make this a constant time lookup, not linear.
       player = _.find(Array.from(@players.values()), (p) -> p.socketId == socketId)
     unless player?
-      console.log "skipping remove; player not found", playerId, socketId
+      logRemote "skipping remove; player not found", playerId, socketId
       return
     if player.id == @localPlayerId
-      console.log "skipping remove of local player", player.id
+      logRemote "skipping remove of local player", player.id
       return
     decouple.trigger(@game, 'beforeRemovePlayer', player)
     @players.delete(player.id)
@@ -583,7 +591,7 @@ export class ModelEventReceiver
 
   receiveBlockEvent: (playerId, blockId, event, args...) =>
     return if playerId == @localPlayerId
-    #console.log 'receiveBlockEvent', playerId, blockId, event, args...
+    #logRemote 'receiveBlockEvent', playerId, blockId, event, args...
     player = @players.get(playerId)
     unless player
       return if not @game.joinedRemoteGame
@@ -591,12 +599,12 @@ export class ModelEventReceiver
     block = player.field.blockFromId(blockId)
     if not block
       console.warn 'receiveBlockEvent', playerId, blockId, event, args...
-      console.log 'field', player.field, player.field.curFloating, player.field.nextFloating
-      console.log 'curFloating'
+      logGeneral 'field', player.field, player.field.curFloating, player.field.nextFloating
+      logGeneral 'curFloating'
       console.table player.field.curFloating?.blocks
-      console.log 'nextFloating'
+      logGeneral 'nextFloating'
       console.table player.field.nextFloating?.blocks
-      console.log 'blocks'
+      logGeneral 'blocks'
       console.table player.field.blocks
       if event == 'move Block'
         xy = args[0]
@@ -615,7 +623,7 @@ export class ModelEventReceiver
 
   receiveFieldEvent: (playerId, event, args...) =>
     return if playerId == @localPlayerId
-    console.log 'receiveFieldEvent', playerId, event, args...
+    logRemote 'receiveFieldEvent', playerId, event, args...
     player = @players.get(playerId)
     unless player?
       return if not @game.joinedRemoteGame
@@ -626,7 +634,7 @@ export class ModelEventReceiver
       field.state = args[0]
       decouple.trigger(field, event, args...)
     else if event == 'afterAttachPiece'
-      console.log 'receive afterAttachPiece', (b.id for b in field.curFloating.blocks), playerId
+      logRemote 'receive afterAttachPiece', (b.id for b in field.curFloating.blocks), playerId
       for blk in field.curFloating.blocks
         field.storeBlock(blk, blk.getXy())
     else if event == 'addPiece'
@@ -656,7 +664,7 @@ export class ModelEventReceiver
     unless player
       console.warn "I got an updateClient for an unknown player id=#{playerId}"
       return
-    console.log("updatePlayingField #{playerId}", field)
+    logRemote("updatePlayingField #{playerId}", field)
     player.field.updateFromJson(field) if playerId != @localPlayerId
 
 
