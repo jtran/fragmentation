@@ -108,4 +108,39 @@ describe 'tetromino-engine PlayingField', ->
     expect(field.blockFromXy([1, 9])).to.equal(null)
     expect(field.curFloating.blocks[0].getXy()).to.have.ordered.members([1, 6])
 
+  describe "when clearing lines", ->
+
+    describe "when other players send noise twice", ->
+
+      it "adds noise blocks to all shifted lines", (done) ->
+        field = new engine.PlayingField({}, {})
+        field.useNextPiece()
+        # Make the test run faster.
+        field.transitionMsec = 10
+        # Put blocks at the bottom.
+        y = field.fieldHeight - 1
+        for x in [0 ... field.fieldWidth]
+          blk = new engine.Block(field, {}, x, y)
+          field.storeBlock(blk, blk.getXy())
+        # Clear lines.
+        field.clearLinesSequence [y], =>
+          # console.log('after clear')
+          # console.table(field.blocks)
+          expect(field.isXyFree([0, y-8]), "(0, y-8=#{y-8}) should be free").to.be.true
+        # Add noise.
+        field.addLinesSequence 4, null, =>
+          # console.log('after first add')
+          # console.table(field.blocks)
+        field.addLinesSequence 4, null, =>
+          # console.log('after second add')
+          # console.table(field.blocks)
+          expect(field.isXyFree([0, y-8]), "(0, y-8=#{y-8}) free after second add").to.be.true
+          for n in [0 ... 8]
+            numTaken = 0
+            numTaken++ for x in [0...field.fieldWidth] when field.isXyTaken([x, y-n])
+            expect(numTaken, "when rows from bottom=#{n}, numTaken=#{numTaken} should be > 0").to.be.above(0)
+            expect(numTaken, "when rows from bottom=#{n}, numTaken=#{numTaken} should be < field width").to.be.below(field.fieldWidth)
+          done()
+        # console.table(field.blocks)
+
 # TODO: Test piece move, piece transform, and clearing lines.

@@ -189,6 +189,7 @@ export class PlayingField
     @fieldHeight = 22
     @fieldWidth = 10
     @blocks = []
+    @transitionMsec = 500
 
     @pieceGenerator = options.pieceGenerator ? new PieceBagGenerator()
     @curFloating = null
@@ -357,7 +358,7 @@ export class PlayingField
       ys = util.unique(blk.y for blk in blksToRemove)
       @shiftLinesDownDueToClear(ys)
       callback?()
-    , 500
+    , @transitionMsec
     true
 
   shiftLinesUp: (n) ->
@@ -382,10 +383,10 @@ export class PlayingField
       # disappear.
       setTimeout =>
         decouple.trigger(blk, 'dispose') for blk in blksShiftedOffTop
-      , 500
+      , @transitionMsec
 
-  fillBottomLinesWithNoise: (n) ->
-    return if n <= 0
+  createNoiseToFillBottom: (n) ->
+    return [] if n <= 0
     n = Math.min(n, @fieldHeight)
     numGaps = Math.ceil(0.3 * @fieldWidth)
     newBlocks = _.flatten(
@@ -399,20 +400,28 @@ export class PlayingField
             xs = util.without(xs, blk.x)
         xs.splice(util.randInt(xs.length), 1) for [1 .. numGaps]
         for x in xs
-          blk = new Block(@, { type: 'opponent' }, x, y)
-          decouple.trigger(@, 'addBlock', blk)
-          @storeBlock(blk, [x, y])
-          blk.activate()
+          blk = new Block(@, { type: 'opponent' }, x, y, isActivated: true)
           blk
     )
-    decouple.trigger(@, 'addNoiseBlocks', n, newBlocks)
+    newBlocks
 
-  addLinesSequence: (n, createNoise, callback = null) ->
+  addLinesSequence: (n, noiseBlocksFromJson = null, callback = null) ->
     @shiftLinesUp(n)
-    _.delay((=>
-      @fillBottomLinesWithNoise(n) if createNoise
+    if noiseBlocksFromJson?
+      noiseBlocks = for b in noiseBlocksFromJson
+        new Block(@, { type: b.pieceType }, b.x, b.y, id: b.id, isActivated: true)
+    else
+      noiseBlocks = @createNoiseToFillBottom(n)
+      createdNoise = true
+    for blk in noiseBlocks
+      @storeBlock(blk, blk.getXy())
+    setTimeout =>
+      # This is what displays the blocks.
+      decouple.trigger(@, 'addBlock', blk) for blk in noiseBlocks
       callback?()
-    ), 500)
+    , @transitionMsec
+    if createdNoise && noiseBlocks.length > 0
+      decouple.trigger(@, 'addNoiseBlocks', n, noiseBlocks)
 
   useNextPiece: ->
     # The first time this is called, next will be null.
@@ -626,22 +635,17 @@ export class ModelEventReceiver
       field.commitNewPiece('nextFloating', new FloatingPiece(field, Object.assign(opts, { playerId: playerId })))
       blk.activate() for blk in field.curFloating.blocks
     else if event == 'addNoiseBlocks'
-      # Someone else received noise, and is telling us about their
-      # new noise blocks.
+      # Someone else received noise, and is telling us about their new noise
+      # blocks.
       [n, blks] = args
-      field.addLinesSequence n, false, =>
-        for b in blks
-          block = new Block(field, { type: b.pieceType }, b.x, b.y, { id: b.id })
-          decouple.trigger(field, 'addBlock', block)
-          field.storeBlock(block, block.getXy())
-          block.activate()
+      field.addLinesSequence(n, blks)
     else if event == 'clear'
+      # Someone else cleared lines.
       [ys, blks] = args
       field.clearLinesSequence(ys)
-      # Someone else cleared lines, which means they're sending us
-      # noise.
+      # Someone else cleared lines, which means they're sending us noise.
       linesSent = if ys.length < 4 then ys.length - 1 else ys.length
-      @players.get(@localPlayerId)?.field.addLinesSequence(linesSent, true)
+      @players.get(@localPlayerId)?.field.addLinesSequence(linesSent)
     else
       decouple.trigger(field, event, args...)
 
