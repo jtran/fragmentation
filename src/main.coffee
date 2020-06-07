@@ -258,8 +258,6 @@ appendMessage = (msg, callback = null) ->
   k(msg.split(/\n/))
 
 # Set the status.
-$('#status').html('')
-
 appendMessage """
   Player, defragment this sector...
   Arrow Keys = move
@@ -269,6 +267,9 @@ appendMessage """
 
 """, =>
   _.delay((=>
+    # Hide the welcome.
+    $('#welcome').removeClass('visible')
+
     # Start the game.
     appendLine 'Execute', =>
       game.start()
