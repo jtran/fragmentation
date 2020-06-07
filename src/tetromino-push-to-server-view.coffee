@@ -9,7 +9,7 @@ export class BlockView
       if @game.joinedRemoteGame
         @socket.emit('distributeBlockEvent', @game.localPlayer.id, @blockModel.id, event, @blockModel.getXy())
 
-    decouple.on @blockModel, 'afterClear Block', @, (caller, event) => @dispose()
+    decouple.on @blockModel, 'removeBlock', @, (caller, event) => @dispose()
 
   dispose: ->
     # Remove references to prevent memory leak.

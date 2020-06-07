@@ -49,9 +49,7 @@ export class BlockDomView
 
     decouple.on @blockModel, 'clearBlock', @, (caller, event) => @flickerOut()
 
-    decouple.on @blockModel, 'afterBlockFlickerOut', @, (caller, event) => @dispose()
-
-    decouple.on @blockModel, 'dispose', @, (caller, event) => @dispose()
+    decouple.on @blockModel, 'removeBlock', @, (caller, event) => @dispose()
 
     # This gets triggered when a parent element is about to be removed from the
     # DOM, and we should stop listening to the model.  We shouldn't bother
@@ -137,11 +135,6 @@ export class PlayingFieldDomView
 
     decouple.on @fieldModel, 'beforeDrop', @, (caller, event) => @beforeDrop()
     decouple.on @fieldModel, 'afterDrop',  @, (caller, event) => @afterDrop()
-
-    decouple.on @fieldModel, 'clear', @, (caller, event, ys, blocks) =>
-      # TODO: The view shouldn't be triggering events on the model.  We're
-      # currently doing this so that we update the DOM for all blocks at once.
-      _.delay((-> decouple.trigger(blk, 'afterBlockFlickerOut') for blk in blocks), 500)
 
     decouple.on @fieldModel, 'stateChange', @, (caller, event, newState) =>
       if newState == PlayingField.STATE_PAUSED

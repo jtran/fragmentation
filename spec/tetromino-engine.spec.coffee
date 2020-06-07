@@ -110,6 +110,32 @@ describe 'tetromino-engine PlayingField', ->
 
   describe "when clearing lines", ->
 
+    fillRowWithNewBlocks = (field, y) ->
+      for x in [0 ... field.fieldWidth]
+        blk = new engine.Block(field, {}, x, y)
+        field.storeBlock(blk, blk.getXy())
+        blk
+
+    it "triggers removeBlock on every block", (done) ->
+      field = new engine.PlayingField({}, {})
+      field.useNextPiece()
+      # Make the test run faster.
+      field.transitionMsec = 10
+      # Put blocks at the bottom.
+      y = field.fieldHeight - 1
+      x = 0
+      blks = fillRowWithNewBlocks(field, y)
+
+      spyOn(decouple, 'trigger')
+      # Clear lines.
+      field.clearLinesSequence [y], =>
+        for blk in blks
+          expect(decouple.trigger).to.have.been.calledWith(blk, 'removeBlock')
+        done()
+      expect(decouple.trigger).to.have.been.calledWith(field, 'clear', [y], blks)
+      for blk in blks
+        expect(decouple.trigger).to.have.been.calledWith(blk, 'clearBlock')
+
     describe "when other players send noise twice", ->
 
       it "adds noise blocks to all shifted lines", (done) ->
@@ -119,9 +145,7 @@ describe 'tetromino-engine PlayingField', ->
         field.transitionMsec = 10
         # Put blocks at the bottom.
         y = field.fieldHeight - 1
-        for x in [0 ... field.fieldWidth]
-          blk = new engine.Block(field, {}, x, y)
-          field.storeBlock(blk, blk.getXy())
+        fillRowWithNewBlocks(field, y)
         # Clear lines.
         field.clearLinesSequence [y], =>
           # console.log('after clear')

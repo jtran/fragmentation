@@ -373,6 +373,7 @@ export class PlayingField
     decouple.trigger(blk, 'clearBlock') for blk in blksToRemove
     setTimeout =>
       @storeBlock(null, blk.getXy()) for blk in blksToRemove
+      decouple.trigger(blk, 'removeBlock') for blk in blksToRemove
       # Blocks may have moved, so reconstruct which rows were cleared.
       ys = util.unique(blk.y for blk in blksToRemove)
       @shiftLinesDownDueToClear(ys)
@@ -401,7 +402,7 @@ export class PlayingField
       # TODO: What should happen?  Right now, we're just making the blocks
       # disappear.
       setTimeout =>
-        decouple.trigger(blk, 'dispose') for blk in blksShiftedOffTop
+        decouple.trigger(blk, 'removeBlock') for blk in blksShiftedOffTop
       , @transitionMsec
 
   createNoiseToFillBottom: (n) ->
