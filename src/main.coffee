@@ -81,16 +81,16 @@ decouple.on localField, 'stateChange', (caller, event, newState) =>
 $(document).bind 'keydown', (event) ->
   # console.log('keydown', event.which, String.fromCharCode(event.which))
   handled = switch event.which
-    when 37  ### left arrow  ### then localField.moveLeft(); true
-    when 39  ### right arrow ### then localField.moveRight(); true
-    when 40  ### down arrow  ### then localField.moveDownOrAttach(); true
-    when 38  ### up arrow    ### then localField.rotateClockwise(); true
-    when 191 ### slash       ### then localField.drop(); true
-    when 27  ### escape      ### then localField.togglePause(); true
+    when 37  ### left arrow  ### then localField.onInput(action: 'left'); true
+    when 39  ### right arrow ### then localField.onInput(action: 'right'); true
+    when 40  ### down arrow  ### then localField.onInput(action: 'down'); true
+    when 38  ### up arrow    ### then localField.onInput(action: 'up'); true
+    when 191 ### slash       ### then localField.onInput(action: 'slash'); true
+    when 27  ### escape      ### then localField.onInput(action: 'escape'); true
   handled or= switch String.fromCharCode(event.which).toLowerCase()
-    when 'f'                     then localField.rotateClockwise(); true
-    when 'd'                     then localField.rotateCounterclockwise(); true
-    when ' ' ### spacebar    ### then localField.drop(); true
+    when 'f'                     then localField.onInput(action: 'f'); true
+    when 'd'                     then localField.onInput(action: 'd'); true
+    when ' ' ### spacebar    ### then localField.onInput(action: 'spacebar'); true
     when 'm'                     then toggleMusic(); true
   event.preventDefault() if handled
 
@@ -107,7 +107,7 @@ handleHorizontalSwipe = (e) ->
   x1 = currentPieceX()
   distDiff = Math.floor(e.totalDeltaX / 20)
   #logStatus "#{e.distance} #{e.totalDeltaX} #{distDiff} #{x0} #{x1}"
-  localField.moveToX(x0 + distDiff)
+  localField.onInput(action: 'swipeHorizontal', x: x0 + distDiff)
 
 handleSwipeDown = (e) ->
   #logStatus "begin down #{e.distance} #{e.distance}"
@@ -116,10 +116,10 @@ handleSwipeDown = (e) ->
   distDiff = Math.floor(e.distance / 20)
   yDiff = (y0 + distDiff) - y1
   #logStatus "#{e.distance} #{e.distance} #{distDiff} #{y0} #{y1}"
-  while localField.curFloating == touchData.piece && localField.moveDown() && yDiff >= 0
-    yDiff--
+  if localField.curFloating == touchData.piece
+    localField.onInput(action: 'swipeDown', yDiff: yDiff)
 
-handleTap = (pageX, pageY) -> localField.rotateClockwise()
+handleTap = (pageX, pageY) -> localField.onInput(action: 'tap')
 
 dispatchTouchEvent = (allowTap) ->
   #logStatus "dispatching #{touchData.time1.getTime()}"

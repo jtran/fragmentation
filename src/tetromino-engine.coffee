@@ -256,6 +256,26 @@ export class PlayingField
   @fromJson = (playerId, game, fieldHash) ->
     new PlayingField(game, Object.assign(fieldHash, { playerId: playerId, viewType: 'remote' }))
 
+  # All user input should come through here.
+  onInput: (event) =>
+    switch event.action
+      when 'escape' then @togglePause(); return true
+    return false unless @acceptingMoveInput()
+    switch event.action
+      when 'left'      then @moveLeft()
+      when 'right'     then @moveRight()
+      when 'down'      then @moveDownOrAttach()
+      when 'up'        then @rotateClockwise()
+      when 'slash'     then @drop()
+      when 'f'         then @rotateClockwise()
+      when 'd'         then @rotateCounterclockwise()
+      when 'spacebar'  then @drop()
+      when 'tap'       then @rotateClockwise()
+      when 'swipeHorizontal' then @moveToX(event.x)
+      when 'swipeDown' then @moveDownBy(event.yDiff)
+      else return false
+    true
+
   # Stores piece in key and triggers events.
   commitNewPiece: (key, piece) ->
     @[key] = piece
@@ -299,32 +319,26 @@ export class PlayingField
 
   acceptingMoveInput: -> @state == STATE_PLAYING
 
-  rotateClockwise: ->
-    return false unless @acceptingMoveInput()
-    @curFloating.rotateClockwise()
+  rotateClockwise: -> @curFloating.rotateClockwise()
 
-  rotateCounterclockwise: ->
-    return false unless @acceptingMoveInput()
-    @curFloating.rotateCounterclockwise()
+  rotateCounterclockwise: -> @curFloating.rotateCounterclockwise()
 
-  moveLeft: ->
-    return false unless @acceptingMoveInput()
-    @curFloating.moveLeft()
+  moveLeft: -> @curFloating.moveLeft()
 
-  moveRight: ->
-    return false unless @acceptingMoveInput()
-    @curFloating.moveRight()
+  moveRight: -> @curFloating.moveRight()
 
-  moveDown: ->
-    return false unless @acceptingMoveInput()
-    @curFloating.moveDown()
+  moveDown: -> @curFloating.moveDown()
 
-  moveToX: (x) ->
-    return false unless @acceptingMoveInput()
-    @curFloating.moveToX(x)
+  moveToX: (x) -> @curFloating.moveToX(x)
+
+  moveDownBy: (yDiff) ->
+    moved = false
+    while yDiff > 0 && @moveDown()
+      moved = true
+      yDiff--
+    moved
 
   attachPiece: (piece) ->
-    return false unless @acceptingMoveInput()
     for blk in piece.blocks
       @storeBlock(blk, blk.getXy())
     null
@@ -458,7 +472,6 @@ export class PlayingField
     true
 
   moveDownOrAttach: =>
-    return false unless @acceptingMoveInput()
     fell = @moveDown()
     if ! fell
       decouple.trigger(@, 'beforeAttachPiece')
@@ -481,8 +494,6 @@ export class PlayingField
     fell
 
   drop: ->
-    return false unless @acceptingMoveInput()
-
     decouple.trigger(@, 'beforeDrop')
 
     # Drop.
