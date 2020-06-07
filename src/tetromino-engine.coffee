@@ -521,11 +521,13 @@ export class PlayingField
   startGravity: ->
     return unless @useGravity
     return if @fallTimer?
-    @fallTimer = window.setInterval(@moveDownOrAttach, @gravityInterval())
+    @fallTimer = setInterval(@advanceGravity, @gravityInterval())
+
+  advanceGravity: => @moveDownOrAttach()
 
   stopGravity: ->
     return unless @useGravity && @fallTimer?
-    window.clearInterval(@fallTimer)
+    clearInterval(@fallTimer)
     @fallTimer = null
 
   setUseGravity: (@useGravity) ->
