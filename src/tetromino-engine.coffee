@@ -5,6 +5,12 @@ import util from './util.js'
 import { Player }  from './tetromino-player.js'
 import decouple from './decouple.js'
 
+DEBUG = 'local'
+
+logRemote = if DEBUG != 'local' then console.log else () ->
+logLocal = if DEBUG == 'local' then console.log else () ->
+logGeneral = console.log
+
 # Represents a single square.
 export class Block
 
@@ -189,6 +195,7 @@ export class PlayingField
     @fieldHeight = 22
     @fieldWidth = 10
     @blocks = []
+    @transitionMsec = 500
 
     @pieceGenerator = options.pieceGenerator ? new PieceBagGenerator()
     @curFloating = null
@@ -328,75 +335,98 @@ export class PlayingField
     linesToCheck = util.unique(blk.y for blk in piece.blocks)
     linesToCheck.filter (y) => @blocks[y].every((blk) -> blk?)
 
-  fillLinesFromAbove: (ys) ->
-    return if _.isEmpty(ys)
+  shiftLinesDownDueToClear: (ys) ->
+    return if ys.length == 0
     shift = 1
-    ys.sort()
-    for y in [_.last(ys) .. 0]
+    for y in [util.max(ys) .. 0]
       shift++ while y - shift in ys
       for x in [0 ... @fieldWidth]
         @moveBlock([x, y - shift], [x, y])
     null
 
-  clearLines: (ys) ->
-    blksToRemove = []
+  allBlocksInRows: (ys) ->
+    blocks = []
     for y in ys
       for x in [0 ... @fieldWidth]
         blk = @blocks[y][x]
-        @storeBlock(null, [x, y])
-        continue unless blk
-        blksToRemove.push(blk)
-    decouple.trigger(@, 'clear', ys, blksToRemove)
-    null
+        blocks.push(blk) if blk?
+    blocks
 
   clearLinesSequence: (ys, callback = null) ->
     return false if ys.length == 0
-    @clearLines(ys)
-    _.delay((=>
-      @fillLinesFromAbove(ys)
+    blksToRemove = @allBlocksInRows(ys)
+    decouple.trigger(@, 'clear', ys, blksToRemove)
+    decouple.trigger(blk, 'clearBlock') for blk in blksToRemove
+    setTimeout =>
+      @storeBlock(null, blk.getXy()) for blk in blksToRemove
+      # Blocks may have moved, so reconstruct which rows were cleared.
+      ys = util.unique(blk.y for blk in blksToRemove)
+      @shiftLinesDownDueToClear(ys)
       callback?()
-    ), 500)
+    , @transitionMsec
     true
 
   shiftLinesUp: (n) ->
     return if n <= 0
-    for y in [n ... @fieldHeight]
+    blksShiftedOffTop = []
+    for y in [0 ... @fieldHeight]
       for x in [0 ... @fieldWidth]
         fieldBlk = @blockFromXy([x, y])
+        continue unless fieldBlk?
         yPrime = y - n
-        # If the current piece occupies any coordinate we're moving
-        # through, push the piece up.
-        if fieldBlk
+        # If the current piece occupies any coordinate we're moving through,
+        # push the piece up.
+        if @curFloating?
           while @curFloating.blocks.some((blk) -> blk.x == x && blk.y in [y..yPrime])
             break if not @curFloating.moveUp()
         @moveBlock([x, y], [x, yPrime])
+        if yPrime < 0
+          # The block is getting pushed up off the top.
+          blksShiftedOffTop.push(fieldBlk)
+    if blksShiftedOffTop.length > 0
+      # TODO: What should happen?  Right now, we're just making the blocks
+      # disappear.
+      setTimeout =>
+        decouple.trigger(blk, 'dispose') for blk in blksShiftedOffTop
+      , @transitionMsec
 
-  fillBottomLinesWithNoise: (n) ->
-    return if n <= 0
+  createNoiseToFillBottom: (n) ->
+    return [] if n <= 0
     n = Math.min(n, @fieldHeight)
     numGaps = Math.ceil(0.3 * @fieldWidth)
     newBlocks = _.flatten(
       for i in [1 .. n]
         y = @fieldHeight - i
         xs = [0 ... @fieldWidth]
-        # TODO: Remove current piece block positions.
-        xs.splice(x, 1) for x in xs when @isXyTaken([x, y])
-        xs.splice(util.randInt(xs.length), 1) for g in [1 .. numGaps]
+        # Remove existing block positions.
+        xs = util.without(xs, x) for x in xs when @isXyTaken([x, y])
+        if @curFloating?
+          for blk in @curFloating.blocks when blk.y == y
+            xs = util.without(xs, blk.x)
+        xs.splice(util.randInt(xs.length), 1) for [1 .. numGaps]
         for x in xs
-          blk = new Block(@, { type: 'opponent' }, x, y)
-          decouple.trigger(@, 'addBlock', blk)
-          @storeBlock(blk, [x, y])
-          blk.activate()
+          blk = new Block(@, { type: 'opponent' }, x, y, isActivated: true)
           blk
     )
-    decouple.trigger(@, 'addNoiseBlocks', n, newBlocks)
+    newBlocks
 
-  addLinesSequence: (n, createNoise, callback = null) ->
+  addLinesSequence: (n, noiseBlocksFromJson = null, callback = null) ->
     @shiftLinesUp(n)
-    _.delay((=>
-      @fillBottomLinesWithNoise(n) if createNoise
+    if noiseBlocksFromJson?
+      noiseBlocks = for b in noiseBlocksFromJson
+        new Block(@, { type: b.pieceType }, b.x, b.y, id: b.id, isActivated: true)
+    else
+      noiseBlocks = @createNoiseToFillBottom(n)
+      createdNoise = true
+    for blk in noiseBlocks
+      @storeBlock(blk, blk.getXy())
+    setTimeout =>
+      # This is what displays the blocks.
+      decouple.trigger(@, 'addBlock', blk) for blk in noiseBlocks
       callback?()
-    ), 500)
+    , @transitionMsec
+    if createdNoise && noiseBlocks.length > 0
+      decouple.trigger(@, 'addNoiseBlocks', n, noiseBlocks)
 
   useNextPiece: ->
     # The first time this is called, next will be null.
@@ -535,22 +565,22 @@ export class ModelEventReceiver
         state: field.state
       )
     player = new Player(player.id, player.socketId, field)
-    console.log 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
+    logGeneral 'addPlayer', (b.id for b in player.field.curFloating.blocks), player.id
     @players.set(player.id, player)
     decouple.trigger(@game, 'addPlayer', player)
 
   # playerId may be null.
   removePlayer: (playerId, socketId) =>
-    console.log("removePlayer", playerId, socketId)
+    logRemote("removePlayer", playerId, socketId)
     player = @players.get(playerId) if playerId?
     if not player? and socketId?
       # TODO: Make this a constant time lookup, not linear.
       player = _.find(Array.from(@players.values()), (p) -> p.socketId == socketId)
     unless player?
-      console.log "skipping remove; player not found", playerId, socketId
+      logRemote "skipping remove; player not found", playerId, socketId
       return
     if player.id == @localPlayerId
-      console.log "skipping remove of local player", player.id
+      logRemote "skipping remove of local player", player.id
       return
     decouple.trigger(@game, 'beforeRemovePlayer', player)
     @players.delete(player.id)
@@ -558,7 +588,7 @@ export class ModelEventReceiver
 
   receiveBlockEvent: (playerId, blockId, event, args...) =>
     return if playerId == @localPlayerId
-    #console.log 'receiveBlockEvent', playerId, blockId, event, args...
+    #logRemote 'receiveBlockEvent', playerId, blockId, event, args...
     player = @players.get(playerId)
     unless player
       return if not @game.joinedRemoteGame
@@ -566,12 +596,12 @@ export class ModelEventReceiver
     block = player.field.blockFromId(blockId)
     if not block
       console.warn 'receiveBlockEvent', playerId, blockId, event, args...
-      console.log 'field', player.field, player.field.curFloating, player.field.nextFloating
-      console.log 'curFloating'
+      logGeneral 'field', player.field, player.field.curFloating, player.field.nextFloating
+      logGeneral 'curFloating'
       console.table player.field.curFloating?.blocks
-      console.log 'nextFloating'
+      logGeneral 'nextFloating'
       console.table player.field.nextFloating?.blocks
-      console.log 'blocks'
+      logGeneral 'blocks'
       console.table player.field.blocks
       if event == 'move Block'
         xy = args[0]
@@ -590,7 +620,7 @@ export class ModelEventReceiver
 
   receiveFieldEvent: (playerId, event, args...) =>
     return if playerId == @localPlayerId
-    console.log 'receiveFieldEvent', playerId, event, args...
+    logRemote 'receiveFieldEvent', playerId, event, args...
     player = @players.get(playerId)
     unless player?
       return if not @game.joinedRemoteGame
@@ -601,7 +631,7 @@ export class ModelEventReceiver
       field.state = args[0]
       decouple.trigger(field, event, args...)
     else if event == 'afterAttachPiece'
-      console.log 'receive afterAttachPiece', (b.id for b in field.curFloating.blocks), playerId
+      logRemote 'receive afterAttachPiece', (b.id for b in field.curFloating.blocks), playerId
       for blk in field.curFloating.blocks
         field.storeBlock(blk, blk.getXy())
     else if event == 'addPiece'
@@ -610,22 +640,17 @@ export class ModelEventReceiver
       field.commitNewPiece('nextFloating', new FloatingPiece(field, Object.assign(opts, { playerId: playerId })))
       blk.activate() for blk in field.curFloating.blocks
     else if event == 'addNoiseBlocks'
-      # Someone else received noise, and is telling us about their
-      # new noise blocks.
+      # Someone else received noise, and is telling us about their new noise
+      # blocks.
       [n, blks] = args
-      field.addLinesSequence n, false, =>
-        for b in blks
-          block = new Block(field, { type: b.pieceType }, b.x, b.y, { id: b.id })
-          decouple.trigger(field, 'addBlock', block)
-          field.storeBlock(block, block.getXy())
-          block.activate()
+      field.addLinesSequence(n, blks)
     else if event == 'clear'
+      # Someone else cleared lines.
       [ys, blks] = args
       field.clearLinesSequence(ys)
-      # Someone else cleared lines, which means they're sending us
-      # noise.
+      # Someone else cleared lines, which means they're sending us noise.
       linesSent = if ys.length < 4 then ys.length - 1 else ys.length
-      @players.get(@localPlayerId)?.field.addLinesSequence(linesSent, true)
+      @players.get(@localPlayerId)?.field.addLinesSequence(linesSent)
     else
       decouple.trigger(field, event, args...)
 
@@ -636,7 +661,7 @@ export class ModelEventReceiver
     unless player
       console.warn "I got an updateClient for an unknown player id=#{playerId}"
       return
-    console.log("updatePlayingField #{playerId}", field)
+    logRemote("updatePlayingField #{playerId}", field)
     player.field.updateFromJson(field) if playerId != @localPlayerId
 
 
