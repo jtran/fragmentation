@@ -87,9 +87,8 @@ export class PlayingFieldDomView
 
   THEMES = ['blue', 'orange', 'yellow']
 
-  constructor: (@fieldModel, options) ->
+  constructor: (@fieldModel, @domId, options) ->
     @ordinal = options.ordinal
-    @domId = _.uniqueId()
     @blockHeight = 20
     @blockWidth = 20
     @borderWidth = 1

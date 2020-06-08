@@ -11,12 +11,14 @@ logRemote = if DEBUG != 'local' then console.log else () ->
 logLocal = if DEBUG == 'local' then console.log else () ->
 logGeneral = console.log
 
+blockIdGenerator = util.autoIncGenerator('b')
+
 # Represents a single square.
 export class Block
 
   # Need the piece to style it.  After that it's discarded.
   constructor: (field, piece, @x, @y, options = {}) ->
-    @id = options.id ? _.uniqueId('b')
+    @id = options.id ? blockIdGenerator.nextIdStr()
     @pieceType = piece.type
     @playerId = field.playerId if field.playerId?
     @isActivated = options.isActivated ? false

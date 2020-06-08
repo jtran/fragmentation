@@ -1,5 +1,22 @@
 import _ from './underscore.js'
 
+class AutoIncGenerator
+  constructor: (@prefix) ->
+    @prefix ?= ''
+    @curId = 0
+
+  nextId: ->
+    id = @curId
+    @curId++
+    # Wrap around instead of spilling into floating point.
+    @curId = 0 if @curId == Number.MAX_SAFE_INTEGER
+    id
+
+  nextIdStr: ->
+    @prefix + @nextId()
+
+export autoIncGenerator = (prefix) -> new AutoIncGenerator(prefix)
+
 # Clones non-null objects.  Not arrays or other primitives.  Maybe.  It
 # depends on browser version.
 export cloneObject = (obj) ->
@@ -40,6 +57,7 @@ export without = (arr, item) ->
   x for x in arr when not _.isEqual(x, item)
 
 export default {
+  autoIncGenerator,
   cloneObject,
   max,
   randInt,

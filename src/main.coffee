@@ -27,6 +27,8 @@ genUuid = () ->
   ([1e7]+-1e3+-4e3+-8e3+-1e11).replace /[018]/g, (c) ->
     (c ^ window.crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
 
+domIdGenerator = util.autoIncGenerator()
+
 handleAddPlayer = (game, event, player) ->
   # This gets called after connecting to the server, but we don't wait for that
   # for the local player.  We run this proactively so that we have a view of our
@@ -37,7 +39,7 @@ handleAddPlayer = (game, event, player) ->
   options =
     ordinal: fieldViews.length
     themeIndex: if field.viewType == 'local' then 0 else 2
-  fieldView = new PlayingFieldDomView(field, options)
+  fieldView = new PlayingFieldDomView(field, domIdGenerator.nextId(), options)
   fieldViews.push(fieldView)
   if field.viewType == 'local'
     # Keep a reference to the local view.

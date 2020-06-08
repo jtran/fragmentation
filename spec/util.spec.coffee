@@ -5,6 +5,16 @@ import { cloneObject } from '../lib/util.js'
 
 describe 'util', ->
 
+  it "creates auto incrementing generator", ->
+    gen = util.autoIncGenerator()
+    expect(gen.nextId()).to.equal 0
+    expect(gen.nextId()).to.equal 1
+
+  it "creates auto incrementing generator with prefix", ->
+    gen = util.autoIncGenerator('s')
+    expect(gen.nextIdStr()).to.equal 's0'
+    expect(gen.nextIdStr()).to.equal 's1'
+
   class Vehicle
     capacity: -> 1
 
