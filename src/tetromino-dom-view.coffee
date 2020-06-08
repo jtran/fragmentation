@@ -70,7 +70,7 @@ export class BlockDomView
     seq = options.delaySequence
     [msecDelay, options.delaySequence...] = seq if seq?
     if msecDelay?
-      _.delay (=> @transition(options)), msecDelay
+      setTimeout (=> @transition(options)), msecDelay
     else
       options.callback?()
 
@@ -203,7 +203,7 @@ export class PlayingFieldDomView
 
     # Show tail and hide after delay.
     $(@tailSelector()).show()
-    _.delay((=>
+    setTimeout((=>
       $e = $(@tailSelector())
       $e.animate({'height': 0, 'top': $e.position().top + $e.height()}, 500, 'easeOutExpo')
     ), 500)

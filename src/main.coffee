@@ -241,12 +241,12 @@ appendLine = (line, callback = null) ->
   k = (chars) ->
     if chars.length > 0
       $line.append(chars[0])
-      _.delay (-> k(chars.substr(1))), 50
+      setTimeout (-> k(chars.substr(1))), 50
     else
       callback?($line)
   if line == ''
     $line.append('&nbsp;')
-    _.delay (-> k('')), 50
+    setTimeout (-> k('')), 50
   else
     k(line)
 
@@ -254,7 +254,7 @@ appendMessage = (msg, callback = null) ->
   k = (lines) ->
     if lines.length > 0
       line = lines.shift()
-      appendLine line, -> _.delay((-> k(lines)), 200)
+      appendLine line, -> setTimeout((-> k(lines)), 200)
     else
       callback?()
   k(msg.split(/\n/))
@@ -268,7 +268,7 @@ appendMessage """
   Spacebar = hard drop
 
 """, =>
-  _.delay((=>
+  setTimeout((=>
     # Hide the welcome.
     $('#welcome').removeClass('visible')
 
@@ -278,7 +278,7 @@ appendMessage """
   ), 2000)
 
 appendLine version, ($versionLine) =>
-  _.delay((=> $versionLine.addClass('hide_text') ), 1000);
+  setTimeout((=> $versionLine.addClass('hide_text') ), 1000);
 
 # Listen for messages.
 game.receiveMessage = (playerName, msg) ->
