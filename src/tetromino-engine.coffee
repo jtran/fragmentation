@@ -271,9 +271,9 @@ export class PlayingField
         if event.action == 'escape' then @pause(); return true
         return false unless @acceptingMoveInput()
         switch event.action
-          when 'left'      then @moveLeft()
-          when 'right'     then @moveRight()
-          when 'down'      then @moveDownOrAttach()
+          when 'left'      then @moveLeft() and decouple.trigger this, 'move'
+          when 'right'     then @moveRight() and decouple.trigger this, 'move'
+          when 'down'      then @moveDownOrAttach() and decouple.trigger this, 'move'
           when 'up'        then @rotateClockwise()
           when 'slash'     then @drop()
           when 'f'         then @rotateClockwise()
@@ -355,9 +355,13 @@ export class PlayingField
 
   acceptingMoveInput: -> @state == STATE_PLAYING
 
-  rotateClockwise: -> @curFloating.rotateClockwise()
+  rotateClockwise: -> 
+    decouple.trigger this, 'rotate'
+    @curFloating.rotateClockwise()
 
-  rotateCounterclockwise: -> @curFloating.rotateCounterclockwise()
+  rotateCounterclockwise: -> 
+    decouple.trigger this, 'rotate'
+    @curFloating.rotateCounterclockwise()
 
   moveLeft: -> @curFloating.moveLeft()
 
@@ -380,6 +384,7 @@ export class PlayingField
       if @isXyTaken(xy)
         console.error("Orphaning block at xy while attaching piece:", xy...)
       @storeBlock(blk, xy)
+    decouple.trigger this, 'pieceAttached', piece.type
     null
 
 

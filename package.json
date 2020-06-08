@@ -21,7 +21,8 @@
         "express": "4.17.x",
         "jquery": "^3.5.0",
         "seedrandom": "^3.0.5",
-        "socket.io": "2.3.x"
+        "socket.io": "2.3.x",
+        "tone": "^13.8.25"
     },
     "devDependencies": {
         "chai": "4.2.0",
