@@ -70,7 +70,7 @@ decouple.on game, 'afterRemovePlayer', (caller, event, player) =>
       fieldViews = util.without(fieldViews, fieldView)
       # Set ordinals of remaining views.
       i = 0
-      for fv in _.sortBy fieldViews, (fv) -> fv.getOrdinal()
+      for fv in util.sortBy fieldViews, (fv) -> fv.getOrdinal()
         fv.setOrdinal(i)
         i++
 

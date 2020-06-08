@@ -29,6 +29,19 @@ describe 'util', ->
     expect(v.capacity()).to.equal 1
     expect(Object.getPrototypeOf(v)).to.equal Car.prototype
 
+  it "sorts by numbers", ->
+    expect(util.sortBy([3, 4, 2, 1], (x) -> x)).to.deep.equal [1, 2, 3, 4]
+
+  it "sorts by a field", ->
+    objs = []
+    a = { name: 'a', val: 1 }
+    b = { name: 'b', val: 2 }
+    c = { name: 'c', val: 3 }
+    objs.push(c)
+    objs.push(a)
+    objs.push(b)
+    expect(util.sortBy(objs, (x) -> x.val)).to.deep.equal [a, b, c]
+
   it "returns unique numbers in array", ->
     expect(util.unique([0, 1, 1, 2, 3, 4, 3, 4, 0, 3])).to.deep.equal [0, 1, 2, 3, 4]
 

@@ -21,6 +21,16 @@ export max = (arr) ->
 export randInt = (n) ->
   Math.floor(Math.random() * (n+1))
 
+export sortBy = (arr, fn) ->
+  objs = arr.map (x) -> { value: x, criterion: fn(x) }
+  objs.sort (x, y) ->
+    a = x.criterion
+    b = y.criterion
+    if a < b then -1
+    else if a > b then 1
+    else 0
+  objs.map (obj) -> obj.value
+
 # Returns unique elements in array, preserving order.  Same-value-zero equality
 # is used.
 export unique = (arr) ->
@@ -33,6 +43,7 @@ export default {
   cloneObject,
   max,
   randInt,
+  sortBy,
   unique,
   without,
 }
