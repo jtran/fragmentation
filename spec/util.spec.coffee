@@ -39,6 +39,14 @@ describe 'util', ->
     expect(v.capacity()).to.equal 1
     expect(Object.getPrototypeOf(v)).to.equal Car.prototype
 
+  it "gets max", ->
+    expect(util.max([5, 7, 9, 2, 4])).to.equal 9
+    expect(util.max([])).to.be.undefined
+
+  it "gets min", ->
+    expect(util.min([9, 5, 7, 2, 4])).to.equal 2
+    expect(util.min([])).to.be.undefined
+
   it "sorts by numbers", ->
     expect(util.sortBy([3, 4, 2, 1], (x) -> x)).to.deep.equal [1, 2, 3, 4]
 

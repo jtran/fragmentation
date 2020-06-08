@@ -34,6 +34,14 @@ export max = (arr) ->
   x = y for y in arr when y > x
   x
 
+# Return the min of an array or undefined if it's empty.  Unlike splatting
+# Math.min(), this works on large arrays.
+export min = (arr) ->
+  return undefined if arr.length == 0
+  x = arr[0]
+  x = y for y in arr when y < x
+  x
+
 # Return random integer in interval [0...n].
 export randInt = (n) ->
   Math.floor(Math.random() * (n+1))
@@ -60,6 +68,7 @@ export default {
   autoIncGenerator,
   cloneObject,
   max,
+  min,
   randInt,
   sortBy,
   unique,
