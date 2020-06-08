@@ -1,4 +1,3 @@
-import _ from './underscore.js'
 import seedrandom from './seedrandom.js'
 
 import util from './util.js'
