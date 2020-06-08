@@ -28,6 +28,12 @@ export cloneObject = (obj) ->
 export eq = (x, y) ->
   x == y or x != x and y != y
 
+# Return the first value in array that passes the predicate, or undefined if not
+# found.
+export find = (arr, predicate) ->
+  return x for x in arr when predicate(x)
+  undefined
+
 # Return the max of an array or undefined if it's empty.  Unlike splatting
 # Math.max(), this works on large arrays.
 export max = (arr) ->
@@ -71,6 +77,7 @@ export default {
   autoIncGenerator,
   cloneObject,
   eq,
+  find,
   max,
   min,
   randInt,

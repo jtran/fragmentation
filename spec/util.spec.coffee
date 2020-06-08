@@ -59,6 +59,13 @@ describe 'util', ->
     expect(util.eq(a, a)).to.be.true
     expect(util.eq(a, b)).to.be.false
 
+  it "can find object reference", ->
+    a = { value: 1 }
+    b = { value: 2 }
+    c = { value: 3 }
+    expect(util.find([a, b, c], (x) -> x.value == 2)).to.equal b
+    expect(util.find([a, b, c], (x) -> false)).to.be.undefined
+
   it "gets max", ->
     expect(util.max([5, 7, 9, 2, 4])).to.equal 9
     expect(util.max([])).to.be.undefined

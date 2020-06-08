@@ -590,7 +590,7 @@ export class ModelEventReceiver
     player = @players.get(playerId) if playerId?
     if not player? and socketId?
       # TODO: Make this a constant time lookup, not linear.
-      player = _.find(Array.from(@players.values()), (p) -> p.socketId == socketId)
+      player = util.find(Array.from(@players.values()), (p) -> p.socketId == socketId)
     unless player?
       logRemote "skipping remove; player not found", playerId, socketId
       return
