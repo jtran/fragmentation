@@ -1,5 +1,3 @@
-import _ from './underscore.js'
-
 class AutoIncGenerator
   constructor: (@prefix) ->
     @prefix ?= ''
@@ -25,6 +23,10 @@ export cloneObject = (obj) ->
   for k, v of obj
     clone[k] = v
   clone
+
+# Same-value-zero.
+export eq = (x, y) ->
+  x == y or x != x and y != y
 
 # Return the max of an array or undefined if it's empty.  Unlike splatting
 # Math.max(), this works on large arrays.
@@ -61,12 +63,14 @@ export sortBy = (arr, fn) ->
 export unique = (arr) ->
   [new Set(arr)...]
 
+# TODO: Use structural equality.
 export without = (arr, item) ->
-  x for x in arr when not _.isEqual(x, item)
+  x for x in arr when not eq(x, item)
 
 export default {
   autoIncGenerator,
   cloneObject,
+  eq,
   max,
   min,
   randInt,

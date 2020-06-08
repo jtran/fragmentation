@@ -39,6 +39,26 @@ describe 'util', ->
     expect(v.capacity()).to.equal 1
     expect(Object.getPrototypeOf(v)).to.equal Car.prototype
 
+  it "treats NaN as eq", ->
+    expect(util.eq(NaN, NaN)).to.be.true
+
+  it "treats nulls and as eq", ->
+    expect(util.eq(null, null)).to.be.true
+    expect(util.eq(null, undefined)).to.be.false
+    expect(util.eq(undefined, undefined)).to.be.true
+    expect(util.eq(undefined, null)).to.be.false
+
+  it "treats same numbers as eq", ->
+    expect(util.eq(0, -0)).to.be.true
+    expect(util.eq(1, 1)).to.be.true
+    expect(util.eq(1, 2)).to.be.false
+
+  it "treats object references as eq", ->
+    a = {}
+    b = {}
+    expect(util.eq(a, a)).to.be.true
+    expect(util.eq(a, b)).to.be.false
+
   it "gets max", ->
     expect(util.max([5, 7, 9, 2, 4])).to.equal 9
     expect(util.max([])).to.be.undefined
