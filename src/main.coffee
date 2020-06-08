@@ -77,7 +77,13 @@ decouple.on game, 'afterRemovePlayer', (caller, event, player) =>
 
 decouple.on localField, 'stateChange', (caller, event, newState) =>
   switch newState
-    when PlayingField.STATE_GAMEOVER then music?.pause()
+    when PlayingField.STATE_GAMEOVER
+      music?.pause()
+      # Show stats.
+      $('#status').html('')
+      appendMessage """
+        Blocks Defragmented: #{localField.numBlocksCleared}
+      """
 
 $(document).bind 'keydown', (event) ->
   # console.log('keydown', event.which, String.fromCharCode(event.which))

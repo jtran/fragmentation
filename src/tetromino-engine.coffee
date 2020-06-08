@@ -205,6 +205,11 @@ export class PlayingField
 
     @state = options.state ? STATE_PLAYING
 
+    # Stats
+    @numLinesCleared = 0
+    @numBlocksCleared = 0
+    @blocksClearedByType = new Map()
+
     # Initialize blocks matrix.
     for i in [0 ... @fieldHeight]
       row = []
@@ -276,6 +281,13 @@ export class PlayingField
       when 'swipeDown' then @moveDownBy(event.yDiff)
       else return false
     true
+
+  trackClearStats: (ys, blks) ->
+    @numLinesCleared += ys.length
+    @numBlocksCleared += blks.length
+    for blk in blks
+      n = @blocksClearedByType.get(blk.type) ? 0
+      @blocksClearedByType.set(blk.type, n + 1)
 
   # Stores piece in key and triggers events.
   commitNewPiece: (key, piece) ->
@@ -372,6 +384,7 @@ export class PlayingField
     blksToRemove = @allBlocksInRows(ys)
     decouple.trigger(@, 'clear', ys, blksToRemove)
     decouple.trigger(blk, 'clearBlock') for blk in blksToRemove
+    @trackClearStats(ys, blksToRemove)
     setTimeout =>
       @storeBlock(null, blk.getXy()) for blk in blksToRemove
       decouple.trigger(blk, 'removeBlock') for blk in blksToRemove
