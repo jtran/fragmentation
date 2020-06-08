@@ -1,8 +1,8 @@
 #import './jquery-1.6.2.min.js'
-#import './underscore.js'
 
 import decouple from './decouple.js'
 import { PlayingField } from './tetromino-engine.js'
+import util from './util.js'
 
 export class BlockDomView
   constructor: (@fieldView, @blockModel) ->
@@ -70,7 +70,7 @@ export class BlockDomView
     seq = options.delaySequence
     [msecDelay, options.delaySequence...] = seq if seq?
     if msecDelay?
-      _.delay (=> @transition(options)), msecDelay
+      setTimeout (=> @transition(options)), msecDelay
     else
       options.callback?()
 
@@ -87,9 +87,8 @@ export class PlayingFieldDomView
 
   THEMES = ['blue', 'orange', 'yellow']
 
-  constructor: (@fieldModel, options) ->
+  constructor: (@fieldModel, @domId, options) ->
     @ordinal = options.ordinal
-    @domId = _.uniqueId()
     @blockHeight = 20
     @blockWidth = 20
     @borderWidth = 1
@@ -187,8 +186,8 @@ export class PlayingFieldDomView
     @dropState =
       piece: @fieldModel.curFloating
       xys: xys
-      minX1: _(xy[0] for xy in xys).min()
-      minY1: _(xy[1] for xy in xys).min()
+      minX1: util.min(xy[0] for xy in xys)
+      minY1: util.min(xy[1] for xy in xys)
 
 
   afterDrop: ->
@@ -196,15 +195,15 @@ export class PlayingFieldDomView
     xys2 = (blk.getXy() for blk in @dropState.piece.blocks)
     @setElementXy(@tailSelector(), [@dropState.minX1, @dropState.minY1])
 
-    minX = _(xy[0] for xy in @dropState.xys ).min()
-    maxX = _(xy[0] for xy in xys2           ).max()
-    minY = _(xy[1] for xy in @dropState.xys ).min()
-    maxY = _(xy[1] for xy in xys2           ).min()
+    minX = util.min(xy[0] for xy in @dropState.xys)
+    maxX = util.max(xy[0] for xy in xys2)
+    minY = util.min(xy[1] for xy in @dropState.xys)
+    maxY = util.min(xy[1] for xy in xys2)
     $(@tailSelector()).width(@blockWidth * (maxX - minX + 1) - 2 * @borderWidth).height(@blockHeight * (maxY - minY + 1) - 2 * @borderHeight)
 
     # Show tail and hide after delay.
     $(@tailSelector()).show()
-    _.delay((=>
+    setTimeout((=>
       $e = $(@tailSelector())
       $e.animate({'height': 0, 'top': $e.position().top + $e.height()}, 500, 'easeOutExpo')
     ), 500)

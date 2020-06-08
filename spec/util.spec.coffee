@@ -5,6 +5,16 @@ import { cloneObject } from '../lib/util.js'
 
 describe 'util', ->
 
+  it "creates auto incrementing generator", ->
+    gen = util.autoIncGenerator()
+    expect(gen.nextId()).to.equal 0
+    expect(gen.nextId()).to.equal 1
+
+  it "creates auto incrementing generator with prefix", ->
+    gen = util.autoIncGenerator('s')
+    expect(gen.nextIdStr()).to.equal 's0'
+    expect(gen.nextIdStr()).to.equal 's1'
+
   class Vehicle
     capacity: -> 1
 
@@ -28,6 +38,54 @@ describe 'util', ->
     expect(v.wheels()).to.equal 4
     expect(v.capacity()).to.equal 1
     expect(Object.getPrototypeOf(v)).to.equal Car.prototype
+
+  it "treats NaN as eq", ->
+    expect(util.eq(NaN, NaN)).to.be.true
+
+  it "treats nulls and as eq", ->
+    expect(util.eq(null, null)).to.be.true
+    expect(util.eq(null, undefined)).to.be.false
+    expect(util.eq(undefined, undefined)).to.be.true
+    expect(util.eq(undefined, null)).to.be.false
+
+  it "treats same numbers as eq", ->
+    expect(util.eq(0, -0)).to.be.true
+    expect(util.eq(1, 1)).to.be.true
+    expect(util.eq(1, 2)).to.be.false
+
+  it "treats object references as eq", ->
+    a = {}
+    b = {}
+    expect(util.eq(a, a)).to.be.true
+    expect(util.eq(a, b)).to.be.false
+
+  it "can find object reference", ->
+    a = { value: 1 }
+    b = { value: 2 }
+    c = { value: 3 }
+    expect(util.find([a, b, c], (x) -> x.value == 2)).to.equal b
+    expect(util.find([a, b, c], (x) -> false)).to.be.undefined
+
+  it "gets max", ->
+    expect(util.max([5, 7, 9, 2, 4])).to.equal 9
+    expect(util.max([])).to.be.undefined
+
+  it "gets min", ->
+    expect(util.min([9, 5, 7, 2, 4])).to.equal 2
+    expect(util.min([])).to.be.undefined
+
+  it "sorts by numbers", ->
+    expect(util.sortBy([3, 4, 2, 1], (x) -> x)).to.deep.equal [1, 2, 3, 4]
+
+  it "sorts by a field", ->
+    objs = []
+    a = { name: 'a', val: 1 }
+    b = { name: 'b', val: 2 }
+    c = { name: 'c', val: 3 }
+    objs.push(c)
+    objs.push(a)
+    objs.push(b)
+    expect(util.sortBy(objs, (x) -> x.val)).to.deep.equal [a, b, c]
 
   it "returns unique numbers in array", ->
     expect(util.unique([0, 1, 1, 2, 3, 4, 3, 4, 0, 3])).to.deep.equal [0, 1, 2, 3, 4]

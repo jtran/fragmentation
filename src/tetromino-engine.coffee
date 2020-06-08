@@ -1,4 +1,3 @@
-import _ from './underscore.js'
 import seedrandom from './seedrandom.js'
 
 import util from './util.js'
@@ -11,12 +10,14 @@ logRemote = if DEBUG != 'local' then console.log else () ->
 logLocal = if DEBUG == 'local' then console.log else () ->
 logGeneral = console.log
 
+blockIdGenerator = util.autoIncGenerator('b')
+
 # Represents a single square.
 export class Block
 
   # Need the piece to style it.  After that it's discarded.
   constructor: (field, piece, @x, @y, options = {}) ->
-    @id = options.id ? _.uniqueId('b')
+    @id = options.id ? blockIdGenerator.nextIdStr()
     @pieceType = piece.type
     @playerId = field.playerId if field.playerId?
     @isActivated = options.isActivated ? false
@@ -108,7 +109,7 @@ export class FloatingPiece
   # transformation was possible.
   transform: (f) ->
     xys2 = (f(blk) for blk in @blocks)
-    return false if _(xys2).some(@field.isXyTaken)
+    return false if xys2.some(@field.isXyTaken)
     for blk, i in @blocks
       blk.setXy(xys2[i])
     true
@@ -409,20 +410,19 @@ export class PlayingField
     return [] if n <= 0
     n = Math.min(n, @fieldHeight)
     numGaps = Math.ceil(0.3 * @fieldWidth)
-    newBlocks = _.flatten(
-      for i in [1 .. n]
-        y = @fieldHeight - i
-        xs = [0 ... @fieldWidth]
-        # Remove existing block positions.
-        xs = util.without(xs, x) for x in xs when @isXyTaken([x, y])
-        if @curFloating?
-          for blk in @curFloating.blocks when blk.y == y
-            xs = util.without(xs, blk.x)
-        xs.splice(util.randInt(xs.length), 1) for [1 .. numGaps]
-        for x in xs
-          blk = new Block(@, { type: 'opponent' }, x, y, isActivated: true)
-          blk
-    )
+    newBlocks = []
+    for i in [1 .. n]
+      y = @fieldHeight - i
+      xs = [0 ... @fieldWidth]
+      # Remove existing block positions.
+      xs = util.without(xs, x) for x in xs when @isXyTaken([x, y])
+      if @curFloating?
+        for blk in @curFloating.blocks when blk.y == y
+          xs = util.without(xs, blk.x)
+      xs.splice(util.randInt(xs.length), 1) for [1 .. numGaps]
+      for x in xs
+        blk = new Block(@, { type: 'opponent' }, x, y, isActivated: true)
+        newBlocks.push(blk)
     newBlocks
 
   addLinesSequence: (n, noiseBlocksFromJson = null, callback = null) ->
@@ -589,7 +589,7 @@ export class ModelEventReceiver
     player = @players.get(playerId) if playerId?
     if not player? and socketId?
       # TODO: Make this a constant time lookup, not linear.
-      player = _.find(Array.from(@players.values()), (p) -> p.socketId == socketId)
+      player = util.find(Array.from(@players.values()), (p) -> p.socketId == socketId)
     unless player?
       logRemote "skipping remove; player not found", playerId, socketId
       return
