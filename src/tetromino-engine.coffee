@@ -262,12 +262,14 @@ export class PlayingField
       when 'escape' then @togglePause(); return true
     return false unless @acceptingMoveInput()
     switch event.action
-      when 'left'      then @moveLeft()
-      when 'right'     then @moveRight()
-      when 'down'      then @moveDownOrAttach()
+      when 'left'      then @moveLeft() and decouple.trigger this, 'move'
+
+      when 'right'     then @moveRight() and decouple.trigger this, 'move'
+      when 'down'      then @moveDownOrAttach() and decouple.trigger this, 'move'
       when 'up'        then @rotateClockwise()
+
       when 'slash'     then @drop()
-      when 'f'         then @rotateClockwise()
+      when 'f'         then @rotateClockwise() 
       when 'd'         then @rotateCounterclockwise()
       when 'spacebar'  then @drop()
       when 'tap'       then @rotateClockwise()
@@ -319,9 +321,13 @@ export class PlayingField
 
   acceptingMoveInput: -> @state == STATE_PLAYING
 
-  rotateClockwise: -> @curFloating.rotateClockwise()
+  rotateClockwise: -> 
+    decouple.trigger this, 'rotate'
+    @curFloating.rotateClockwise()
 
-  rotateCounterclockwise: -> @curFloating.rotateCounterclockwise()
+  rotateCounterclockwise: -> 
+    decouple.trigger this, 'rotate'
+    @curFloating.rotateCounterclockwise()
 
   moveLeft: -> @curFloating.moveLeft()
 
@@ -341,6 +347,7 @@ export class PlayingField
   attachPiece: (piece) ->
     for blk in piece.blocks
       @storeBlock(blk, blk.getXy())
+    decouple.trigger this, 'pieceAttached', piece.type
     null
 
 

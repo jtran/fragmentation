@@ -3,6 +3,25 @@
 
 import decouple from './decouple.js'
 import { PlayingField } from './tetromino-engine.js'
+import './tone.js' # BINDS TO WINDOW /-O-\
+
+synth = new Tone.Synth().toMaster()
+
+polySynth = new Tone.PolySynth(6, Tone.Synth).toMaster()
+polySynth.volume.value = -15
+
+botSynth = new Tone.Synth(
+  oscillator:
+    type: 'fmsquare'
+    modulationType: 'sawtooth'
+    modulationIndex: 3
+    harmonicity: 3.4
+  envelope:
+    attack: 0.001
+    decay: 0.1
+    sustain: 0.1
+    release: 0.1
+).toMaster()
 
 export class BlockDomView
   constructor: (@fieldView, @blockModel) ->
@@ -142,6 +161,28 @@ export class PlayingFieldDomView
       else
         $(@pausedSelector()).removeClass('visible')
 
+    # for now just playing on local field
+    if @fieldModel.viewType == 'local'
+      decouple.on @fieldModel, 'pieceAttached', @playSound
+      decouple.on @fieldModel, 'rotate', @playSound
+      decouple.on @fieldModel, 'stateChange', @playSound
+      decouple.on @fieldModel, 'clear', @playSound
+      decouple.on @fieldModel, 'move', @playSound
+
+  playSound: (caller, name, args...) ->
+    switch name
+      when 'pieceAttached' 
+        synth.triggerAttackRelease 'G0', '8n', undefined, 2
+      when 'rotate' 
+        synth.triggerAttackRelease 'E2', '16n'
+      when 'stateChange' 
+        if args[0] == PlayingField.STATE_GAMEOVER
+          polySynth.triggerAttackRelease(['C4', 'F#4'], '2n')
+        else 
+          synth.triggerAttackRelease 'A6', '16n', undefined, 0.3
+      when 'move'
+        synth.triggerAttackRelease 'F1', '16n'
+      
 
   leaveGame: (callback = null) =>
     $(@fieldSelector()).fadeOut 'slow', =>
@@ -207,8 +248,12 @@ export class PlayingFieldDomView
     _.delay((=>
       $e = $(@tailSelector())
       $e.animate({'height': 0, 'top': $e.position().top + $e.height()}, 500, 'easeOutExpo')
+      botSynth.triggerRelease()
     ), 500)
 
+    console.log('afterDrop')
+
     @dropState = null
+
 
 export default { BlockDomView, PlayingFieldDomView }
