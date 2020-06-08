@@ -7,7 +7,7 @@ Play by sharing a link.
 
 ### Installation
 
-Requires node v13.
+Requires node v14.
 
     npm install
 
@@ -17,11 +17,14 @@ Run the server.
 
     npm start
 
-This also builds the project from src/*.coffee to lib/*.js using the CoffeeScript2 compiler. Running
+This also builds the project from `src/*.coffee` to `lib/*.js` using the
+CoffeeScript2 compiler.
+
+Run the following in another shell to recompile files in `src/` that have
+changed so that you can update the client by refreshing the web browser.  This
+will not update server-side code.
 
     npm run watch
-
-will automatically recompile files in src/ that have changed so that you can update the client by refreshing the web browser.
 
 ### Testing
 
