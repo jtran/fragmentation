@@ -110,7 +110,7 @@ export class FloatingPiece
   # transformation was possible.
   transform: (f) ->
     xys2 = (f(blk) for blk in @blocks)
-    return false if _(xys2).some(@field.isXyTaken)
+    return false if xys2.some(@field.isXyTaken)
     for blk, i in @blocks
       blk.setXy(xys2[i])
     true
