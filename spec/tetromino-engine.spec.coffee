@@ -28,7 +28,7 @@ describe 'tetromino-engine PieceBagGenerator', ->
 
   it "generates a random sequence without reusing from the bag", ->
     gen = new engine.PieceBagGenerator('test seed')
-    vals = (gen.next().value for _ in [1..11])
+    vals = (gen.next().value for [1..11])
     expect(vals).to.deep.equal [6, 1, 4, 5, 5, 4, 0, 3, 2, 6, 1]
 
 describe 'tetromino-engine PlayingField', ->
