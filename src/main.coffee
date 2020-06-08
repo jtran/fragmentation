@@ -1,5 +1,4 @@
 #`import $ from './jquery-1.6.2.min.js'`
-#`import _ from './underscore.js'`
 
 import { Game } from './game.js'
 import { PlayingField } from './tetromino-engine.js'

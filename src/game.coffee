@@ -1,4 +1,3 @@
-import _ from './underscore.js'
 import { ModelEventReceiver, PlayingField } from './tetromino-engine.js'
 import { Player }  from './tetromino-player.js'
 

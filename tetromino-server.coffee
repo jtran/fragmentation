@@ -1,7 +1,6 @@
 import engine from './lib/tetromino-engine.js'
 import { Player } from './lib/tetromino-player.js'
 import socketio from 'socket.io'
-import _ from 'underscore'
 
 class TetrominoServer
   initializeGame: (@httpServer) ->
