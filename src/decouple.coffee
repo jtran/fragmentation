@@ -16,7 +16,7 @@ class Decouple
     @bindings.push({ caller, event, target, callback })
     callback
 
-  modify: (caller, event, target, operator = _.identity ) ->
+  modify: (caller, event, target, operator = (x) -> x ) ->
     @modifiers.push({ caller, event, target, operator })
     operator
 
