@@ -269,7 +269,7 @@ appendMessage """
 """, =>
   setTimeout((=>
     # Hide the welcome.
-    $('#welcome').removeClass('visible')
+    $('#welcome').addClass('invisible')
 
     # Start the game.
     appendLine 'Execute', =>

@@ -112,7 +112,43 @@ body {
 .next {
   opacity: 0.7;
 }
-.glow_text, .paused {
+.glow_text {
+  position: absolute;
+  z-index: 1000;
+  margin-top: 120px;
+  width: 100%;
+  cursor: default;
+  font-size: 34px;
+  font-weight: bold;
+  text-align: center;
+  color: #fff;
+  transition: transform, filter, opacity, visibility;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-out;
+  /* initially visible */
+  transform: scale(1);
+  opacity: 1;
+  visibility: visible;
+}
+.glow_text.invisible {
+  transition-timing-function: ease-in;
+  transform: scale(2);
+  opacity: 0;
+  visibility: hidden;
+}
+.glow_text.blue {
+  -webkit-text-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
+  text-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
+}
+.glow_text.orange {
+  -webkit-text-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
+  text-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
+}
+.glow_text.yellow {
+  -webkit-text-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
+  text-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
+}
+.paused {
   position: absolute;
   z-index: 1000;
   margin-top: 120px;
@@ -131,22 +167,22 @@ body {
   opacity: 0;
   visibility: hidden;
 }
-.glow_text.visible, .paused.visible {
+.paused.visible {
   transition-timing-function: ease-out;
   transform: scale(1);
   filter: blur(0px);
   opacity: 1;
   visibility: visible;
 }
-.glow_text.blue, .paused.blue {
+.paused.blue {
   -webkit-text-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
   text-shadow: 0 0 5px #000, 0 0 15px #0AD8FF;
 }
-.glow_text.orange, .paused.orange {
+.paused.orange {
   -webkit-text-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
   text-shadow: 0 0 5px #fff, 0 0 15px #EA502B;
 }
-.glow_text.yellow, .paused.yellow {
+.paused.yellow {
   -webkit-text-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
   text-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
 }
