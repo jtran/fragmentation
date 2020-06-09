@@ -260,11 +260,12 @@ appendMessage = (msg, callback = null) ->
 
 # Set the status.
 appendMessage """
-  Player, defragment this sector...
+  Player, defragment this sector.
   Arrow Keys = move
   D = rotate left
   F = rotate right
   Spacebar = hard drop
+  Escape = pause xor resume
 
 """, =>
   setTimeout((=>
