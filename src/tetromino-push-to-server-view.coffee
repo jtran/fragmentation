@@ -44,9 +44,9 @@ export class PlayingFieldView
       if @game.joinedRemoteGame
         @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, piece.asJson())
 
-    decouple.on @fieldModel, 'clear', @, (caller, event, ys, blksToRemove) =>
+    decouple.on @fieldModel, 'clear', @, (caller, event, ys, blksToRemove, sendNoise) =>
       if @game.joinedRemoteGame
-        @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, ys, blksToRemove)
+        @socket.emit('distributeFieldEvent', @game.localPlayer.id, event, ys, blksToRemove, sendNoise)
 
     decouple.on @fieldModel, 'afterAttachPiece', @, (caller, event) =>
       if @game.joinedRemoteGame

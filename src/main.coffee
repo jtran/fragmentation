@@ -16,7 +16,7 @@ pushToServerView = null
 fieldViews = []
 
 # For debugging.
-logStatus = (msg) -> $('#status').prepend("<div>#{msg}</div>")
+logStatus = (msg) -> $('#welcome_status').prepend("<div>#{msg}</div>")
 
 # Generate a UUIDv4.
 #
@@ -77,13 +77,15 @@ decouple.on game, 'afterRemovePlayer', (caller, event, player) =>
 
 decouple.on localField, 'stateChange', (caller, event, newState) =>
   switch newState
-    when PlayingField.STATE_GAMEOVER
+    when PlayingField.STATE_GAMEOVER_MESSAGE
       music?.pause()
+      # The welcome status message could still be animating.
+      $('#welcome_status').hide()
       # Show stats.
-      $('#status').html('')
-      appendMessage """
-        Blocks Defragmented: #{localField.numBlocksCleared}
-      """
+      $('#status').html('').show()
+      appendLine "Blocks Defragmented: #{localField.numBlocksCleared}",
+        '#status' , =>
+          localField.readyToRestart()
 
 $(document).bind 'keydown', (event) ->
   # console.log('keydown', event.which, String.fromCharCode(event.which))
@@ -240,9 +242,9 @@ do ->
   if window.localStorage.autoplayMusic in ['1', 'true']
     playMusic()
 
-appendLine = (line, callback = null) ->
+appendLine = (line, elm, callback = null) ->
   $line = $('<div></div>')
-  $line.appendTo('#status')
+  $line.appendTo(elm)
   k = (chars) ->
     if chars.length > 0
       $line.append(chars[0])
@@ -255,16 +257,16 @@ appendLine = (line, callback = null) ->
   else
     k(line)
 
-appendMessage = (msg, callback = null) ->
+appendMessage = (msg, elm, callback = null) ->
   k = (lines) ->
     if lines.length > 0
       line = lines.shift()
-      appendLine line, -> setTimeout((-> k(lines)), 200)
+      appendLine line, elm, -> setTimeout((-> k(lines)), 200)
     else
       callback?()
   k(msg.split(/\n/))
 
-# Set the status.
+# Set the welcome status.
 appendMessage """
   Player, defragment this sector.
   Arrow Keys = move
@@ -273,22 +275,22 @@ appendMessage """
   Spacebar = hard drop
   Escape = pause xor resume
 
-""", =>
+""", '#welcome_status', =>
   setTimeout((=>
     # Hide the welcome.
     $('#welcome').addClass('invisible')
 
     # Start the game.
-    appendLine 'Execute', =>
+    appendLine 'Execute', '#welcome_status', =>
       game.start()
   ), 2000)
 
-appendLine version, ($versionLine) =>
+appendLine version, '#welcome_status', ($versionLine) =>
   setTimeout((=> $versionLine.addClass('hide_text') ), 1000);
 
 # Listen for messages.
 game.receiveMessage = (playerName, msg) ->
-  appendLine "#{playerName}: #{msg}"
+  appendLine "#{playerName}: #{msg}", '#welcome_status'
 
 # Give us easy access from the console.
 window.game = game

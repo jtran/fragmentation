@@ -186,7 +186,8 @@ export class PieceBagGenerator
 export class PlayingField
   @STATE_PLAYING = STATE_PLAYING = 0
   @STATE_PAUSED = STATE_PAUSED = 1
-  @STATE_GAMEOVER = STATE_GAMEOVER = 2
+  @STATE_GAMEOVER_MESSAGE = STATE_GAMEOVER_MESSAGE = 2
+  @STATE_GAMEOVER_READY = STATE_GAMEOVER_READY = 3
 
   constructor: (game, options, @DEBUG = false) ->
     @playerId = options.playerId if options.playerId?
@@ -204,6 +205,7 @@ export class PlayingField
     @fallTimer = null
 
     @state = options.state ? STATE_PLAYING
+    @isRestarting = false
 
     # Stats
     @numLinesCleared = 0
@@ -264,30 +266,51 @@ export class PlayingField
 
   # All user input should come through here.
   onInput: (event) =>
-    switch event.action
-      when 'escape' then @togglePause(); return true
-    return false unless @acceptingMoveInput()
-    switch event.action
-      when 'left'      then @moveLeft()
-      when 'right'     then @moveRight()
-      when 'down'      then @moveDownOrAttach()
-      when 'up'        then @rotateClockwise()
-      when 'slash'     then @drop()
-      when 'f'         then @rotateClockwise()
-      when 'd'         then @rotateCounterclockwise()
-      when 'spacebar'  then @drop()
-      when 'tap'       then @rotateClockwise()
-      when 'swipeHorizontal' then @moveToX(event.x)
-      when 'swipeDown' then @moveDownBy(event.yDiff)
-      else return false
-    true
+    switch @state
+      when STATE_PLAYING
+        if event.action == 'escape' then @pause(); return true
+        return false unless @acceptingMoveInput()
+        switch event.action
+          when 'left'      then @moveLeft()
+          when 'right'     then @moveRight()
+          when 'down'      then @moveDownOrAttach()
+          when 'up'        then @rotateClockwise()
+          when 'slash'     then @drop()
+          when 'f'         then @rotateClockwise()
+          when 'd'         then @rotateCounterclockwise()
+          when 'spacebar'  then @drop()
+          when 'tap'       then @rotateClockwise()
+          when 'swipeHorizontal' then @moveToX(event.x)
+          when 'swipeDown' then @moveDownBy(event.yDiff)
+          else return false
+        true
+      when STATE_PAUSED
+        switch event.action
+          when 'escape' then @resume(); return true
+          else return false
+        true
+      when STATE_GAMEOVER_MESSAGE
+        return false
+      when STATE_GAMEOVER_READY
+        switch event.action
+          when 'spacebar', 'tap' then @restart()
+          else return false
+        true
+      else throw new Error("Unhandled game state: " + @state)
 
   trackClearStats: (ys, blks) ->
+    return unless @isPlaying()
     @numLinesCleared += ys.length
     @numBlocksCleared += blks.length
     for blk in blks
       n = @blocksClearedByType.get(blk.type) ? 0
       @blocksClearedByType.set(blk.type, n + 1)
+
+  resetClearStats: ->
+    @numLinesCleared = 0
+    @numBlocksCleared = 0
+    for type in [0 ... FloatingPiece.NUM_TYPES_OF_BLOCKS]
+      @blocksClearedByType.delete(type)
 
   # Stores piece in key and triggers events.
   commitNewPiece: (key, piece) ->
@@ -379,10 +402,10 @@ export class PlayingField
         blocks.push(blk) if blk?
     blocks
 
-  clearLinesSequence: (ys, callback = null) ->
+  clearLinesSequence: (ys, sendNoise, callback = null) ->
     return false if ys.length == 0
     blksToRemove = @allBlocksInRows(ys)
-    decouple.trigger(@, 'clear', ys, blksToRemove)
+    decouple.trigger(@, 'clear', ys, blksToRemove, sendNoise)
     decouple.trigger(blk, 'clearBlock') for blk in blksToRemove
     @trackClearStats(ys, blksToRemove)
     setTimeout =>
@@ -480,7 +503,7 @@ export class PlayingField
 
     @stopGravity()
 
-    @state = STATE_GAMEOVER
+    @state = STATE_GAMEOVER_MESSAGE
     decouple.trigger(@, 'stateChange', @state)
 
     true
@@ -499,7 +522,7 @@ export class PlayingField
         # Transfer control to next piece so player can get a head
         # start.
         @useNextPiece()
-        @clearLinesSequence ysToClear, =>
+        @clearLinesSequence ysToClear, true, =>
           if ! @checkForGameOver()
             @startGravity()
       else
@@ -534,12 +557,23 @@ export class PlayingField
     decouple.trigger(@, 'stateChange', @state)
     true
 
-  togglePause: ->
-    switch @state
-      when STATE_GAMEOVER then false
-      when STATE_PLAYING then @pause()
-      when STATE_PAUSED then @resume()
-      else throw new Error("Tried to toggle pause while in an unknown game state")
+  readyToRestart: ->
+    return false unless @state == STATE_GAMEOVER_MESSAGE
+    @state = STATE_GAMEOVER_READY
+    decouple.trigger(@, 'stateChange', @state)
+    true
+
+  restart: ->
+    return false unless @state == STATE_GAMEOVER_READY
+    return if @isRestarting
+    @isRestarting = true
+    @clearLinesSequence [0...@fieldHeight], false, =>
+      @state = STATE_PLAYING
+      decouple.trigger(@, 'stateChange', @state)
+      @isRestarting = false
+      @startGravity()
+    @resetClearStats()
+    true
 
   gravityInterval: -> 700
 
@@ -673,11 +707,12 @@ export class ModelEventReceiver
       field.addLinesSequence(n, blks)
     else if event == 'clear'
       # Someone else cleared lines.
-      [ys, blks] = args
-      field.clearLinesSequence(ys)
+      [ys, blks, sendNoise] = args
+      field.clearLinesSequence(ys, sendNoise)
       # Someone else cleared lines, which means they're sending us noise.
-      linesSent = if ys.length < 4 then ys.length - 1 else ys.length
-      @players.get(@localPlayerId)?.field.addLinesSequence(linesSent)
+      if sendNoise
+        linesSent = if ys.length < 4 then ys.length - 1 else ys.length
+        @players.get(@localPlayerId)?.field.addLinesSequence(linesSent)
     else
       decouple.trigger(field, event, args...)
 

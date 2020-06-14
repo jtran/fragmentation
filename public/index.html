@@ -186,20 +186,18 @@ body {
   -webkit-text-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
   text-shadow: 0 0 5px #fff, 0 0 15px #FF9D02;
 }
-#status {
+#welcome_status, #status {
   margin: 10px 20px;
   font-size: 14px;
 }
-#status .hide_text{
+#welcome_status .hide_text {
   animation: fade_out ease 4s;
   opacity: 0;
 }
-
 @keyframes fade_out {
   0% { opacity: 1; }
   100% { opacity: 0; }
 }
-
   </style>
 </head>
 <body>
@@ -210,7 +208,8 @@ body {
 
   <div id="background"></div>
 
-  <div id="status"></div>
+  <div id="status" style="display: none"></div>
+  <div id="welcome_status"></div>
 
   <audio id="music" src="sea-of-simulation.mp3" loop>
 
