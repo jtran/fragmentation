@@ -128,7 +128,7 @@ describe 'tetromino-engine PlayingField', ->
 
       spyOn(decouple, 'trigger')
       # Clear lines.
-      field.clearLinesSequence [y], =>
+      field.clearLinesSequence [y], true, =>
         for blk in blks
           expect(decouple.trigger).to.have.been.calledWith(blk, 'removeBlock')
         done()
@@ -147,7 +147,7 @@ describe 'tetromino-engine PlayingField', ->
         y = field.fieldHeight - 1
         fillRowWithNewBlocks(field, y)
         # Clear lines.
-        field.clearLinesSequence [y], =>
+        field.clearLinesSequence [y], true, =>
           # console.log('after clear')
           # console.table(field.blocks)
           expect(field.isXyFree([0, y-8]), "(0, y-8=#{y-8}) should be free").to.be.true
