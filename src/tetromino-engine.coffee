@@ -376,7 +376,10 @@ export class PlayingField
 
   attachPiece: (piece) ->
     for blk in piece.blocks
-      @storeBlock(blk, blk.getXy())
+      xy = blk.getXy()
+      if @isXyTaken(xy)
+        console.error("Orphaning block at xy while attaching piece:", xy...)
+      @storeBlock(blk, xy)
     null
 
 
