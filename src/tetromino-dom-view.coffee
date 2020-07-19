@@ -87,7 +87,27 @@ export class PlayingFieldDomView
 
   THEMES = ['blue', 'orange', 'yellow']
 
+  soundContext: new AudioContext()
+  allSounds: 
+    down: 
+      url: 'sounds/down.wav'
+      volume: 1
+    drop: 
+      url: 'sounds/drop.wav'
+      volume: 1
+    left: 
+      url: 'sounds/left.wav'
+      volume: 1
+    right: 
+      url: 'sounds/right.wav'
+      volume: 1
+    clear: 
+      url: 'sounds/clear.wav'
+      volume: 3
+
   constructor: (@fieldModel, @domId, options) ->
+    @isLocalPlayer = @fieldModel.isLocalPlayer()
+  
     @ordinal = options.ordinal
     @blockHeight = 20
     @blockWidth = 20
@@ -141,6 +161,53 @@ export class PlayingFieldDomView
       else
         $(@pausedSelector()).removeClass('visible')
 
+    # sound
+    if @isLocalPlayer
+      @initializeSounds()
+      decouple.on @fieldModel, 'afterAttachPiece',  @, (caller, event) => console.log("attach") 
+      decouple.on @fieldModel, 'onInput',  @, (caller, event, arg) => 
+        if arg in ['down','left','right']
+          @playSound arg 
+      decouple.on @fieldModel, 'clear', @, => @playSound('clear')
+      decouple.on @fieldModel, 'beforeDrop', @, => @playSound('drop')
+      
+  initializeSounds: () -> @loadSound(key, sound) for key, sound of @allSounds
+  loadSound: (name, sound) =>
+    req = new XMLHttpRequest()
+    req.open('GET', sound.url, true)
+    req.responseType = 'arraybuffer'
+    req.onload = =>
+      @soundContext.decodeAudioData req.response,
+        (buff) =>
+          sound.buffer = buff
+        (err) ->
+          console.error('E: ', err)
+    req.send()
+
+
+  playSound: (name, options) =>
+    if not sound = @allSounds[name]
+      console.warn(name, ' entry not found in allSounds')
+      return
+    
+    soundVolume = @allSounds[name].volume or 1
+    buffer = sound.buffer
+    if not buffer
+      console.warn(name, ' buffer not found in allSounds')
+      return
+    else
+      source = @soundContext.createBufferSource()
+      source.buffer = buffer
+      volume = @soundContext.createGain()
+      if options
+        if options.volume
+          volume.gain.value = soundVolume * options.volume
+      else
+        volume.gain.value = soundVolume
+      volume.connect @soundContext.destination
+      source.connect volume
+      source.start 0
+    return
 
   leaveGame: (callback = null) =>
     $(@fieldSelector()).fadeOut 'slow', =>
