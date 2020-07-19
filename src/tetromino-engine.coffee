@@ -188,7 +188,9 @@ export class PlayingField
   @STATE_PAUSED = STATE_PAUSED = 1
   @STATE_GAMEOVER_MESSAGE = STATE_GAMEOVER_MESSAGE = 2
   @STATE_GAMEOVER_READY = STATE_GAMEOVER_READY = 3
-
+  
+  isLocalPlayer: -> @viewType == 'local'
+  
   constructor: (game, options, @DEBUG = false) ->
     @playerId = options.playerId if options.playerId?
     @viewType = options.viewType
@@ -220,7 +222,7 @@ export class PlayingField
 
     decouple.trigger(game, 'newPlayingFieldBeforeInit', @)
 
-    useDebugFill = @viewType == 'local' and @DEBUG
+    useDebugFill = @isLocalPlayer() and @DEBUG
     if useDebugFill
       for i in [0 ... @fieldHeight] when i > @fieldHeight - 5
         for j in [0 ... @fieldWidth] when j != 0
@@ -270,6 +272,7 @@ export class PlayingField
       when STATE_PLAYING
         if event.action == 'escape' then @pause(); return true
         return false unless @acceptingMoveInput()
+        decouple.trigger(@, 'onInput', event.action)
         switch event.action
           when 'left'      then @moveLeft()
           when 'right'     then @moveRight()
