@@ -24,7 +24,7 @@
         "socket.io": "2.3.x"
     },
     "devDependencies": {
-        "chai": "4.2.0",
+        "chai": "^4.3.4",
         "mocha": "^8.3.2",
         "sinon": "9.0.2",
         "sinon-chai": "3.5.0"
