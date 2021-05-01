@@ -1,13 +1,13 @@
 import engine from './lib/tetromino-engine.js'
 import { Player } from './lib/tetromino-player.js'
-import socketio from 'socket.io'
+import { Server as SocketIoServer } from 'socket.io'
 
 class TetrominoServer
   initializeGame: (@httpServer) ->
     console.log 'init Game'
     server = @
     @models = models = new engine.ModelEventReceiver({ comment: 'dummy game' })
-    io = socketio(@httpServer, cookie: false)
+    io = new SocketIoServer(@httpServer)
     io.on 'connection', (socket) ->
       console.log("Connected #{socket.id}")
       # This is so we know the playerId when it disconnects without warning.
