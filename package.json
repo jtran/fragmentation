@@ -18,7 +18,7 @@
     "dependencies": {
         "coffeescript": "2.5.x",
         "errorhandler": "1.5.x",
-        "express": "4.17.x",
+        "express": "^4.18.2",
         "jquery": "^3.5.0",
         "seedrandom": "^3.0.5",
         "socket.io": "^4.5.4"
