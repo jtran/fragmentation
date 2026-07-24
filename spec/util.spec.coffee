@@ -1,5 +1,6 @@
 # this line is checking that there is a default export in util
 import util from '../lib/util.js'
+import { expect } from 'chai'
 
 import { cloneObject } from '../lib/util.js'
 

@@ -1,4 +1,5 @@
 import decouple from '../lib/decouple.js'
+import { expect } from 'chai'
 
 describe 'decouple', ->
 

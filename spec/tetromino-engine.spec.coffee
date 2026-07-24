@@ -1,5 +1,11 @@
 import decouple from '../lib/decouple.js'
 import engine from '../lib/tetromino-engine.js'
+import * as chai from 'chai'
+import { expect } from 'chai'
+import { spy } from 'sinon'
+import sinonChai from 'sinon-chai'
+
+chai.use(sinonChai);
 
 describe 'tetromino-engine Block', ->
 
@@ -13,13 +19,13 @@ describe 'tetromino-engine Block', ->
 
   it "triggers move block event when setting xy", ->
     blk = new engine.Block({}, {}, 1, 2)
-    spyOn(decouple, 'trigger')
+    spy(decouple, 'trigger')
     blk.setXy([3, 4])
     expect(decouple.trigger).to.have.been.calledWith(blk, 'move Block')
 
   it "updates isActivated and triggers activate event", ->
     blk = new engine.Block({}, {}, 1, 2)
-    spyOn(decouple, 'trigger')
+    spy(decouple, 'trigger')
     blk.activate()
     expect(blk.isActivated).to.equal(true)
     expect(decouple.trigger).to.have.been.calledWith(blk, 'isActivatedChange', true)
@@ -39,7 +45,7 @@ describe 'tetromino-engine PlayingField', ->
   describe 'when instantiating', ->
 
     it "triggers new playing field event", ->
-      spyOn(decouple, 'trigger')
+      spy(decouple, 'trigger')
       game = {}
       field = new engine.PlayingField(game, {})
       expect(decouple.trigger).to.have.been.calledWith(game, 'newPlayingFieldBeforeInit', field)
@@ -73,7 +79,7 @@ describe 'tetromino-engine PlayingField', ->
       blk1 = new engine.Block({}, { type: 0 }, 1, 2)
       blk2 = new engine.Block({}, { type: 0 }, 2, 3)
       piece = new engine.FloatingPiece(field, { blocks: [blk1, blk2], type: 0 })
-      spyOn(decouple, 'trigger')
+      spy(decouple, 'trigger')
       field.commitNewPiece('nextFloating', piece)
       expect(decouple.trigger).to.have.been.calledWith(field, 'addBlock', blk1)
       expect(decouple.trigger).to.have.been.calledWith(field, 'addBlock', blk2)
@@ -126,7 +132,7 @@ describe 'tetromino-engine PlayingField', ->
       x = 0
       blks = fillRowWithNewBlocks(field, y)
 
-      spyOn(decouple, 'trigger')
+      spy(decouple, 'trigger')
       # Clear lines.
       field.clearLinesSequence [y], true, =>
         for blk in blks
