@@ -7,8 +7,6 @@ Play by sharing a link.
 
 ### Installation
 
-Requires node v14.
-
     npm install
 
 ### Usage
